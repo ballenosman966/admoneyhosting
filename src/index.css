@@ -1,0 +1,345 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  html {
+    /* Enable smooth scrolling */
+    scroll-behavior: smooth;
+    /* Enable touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+    /* Ensure proper height */
+    height: 100%;
+  }
+  
+  body {
+    background: #0f0f23;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Remove overflow-x hidden to allow horizontal scrolling if needed */
+    /* overflow-x: hidden; */
+    /* Enable touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+    /* Allow touch actions */
+    touch-action: pan-x pan-y pinch-zoom;
+    /* Ensure proper height */
+    min-height: 100vh;
+    /* Fix for touchpad scrolling */
+    overscroll-behavior: auto;
+  }
+  
+  /* Root element fixes */
+  #root {
+    min-height: 100vh;
+    /* Enable touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+  
+  /* Enable scrolling on all scrollable elements */
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+  
+  /* Fix for modals and overlays */
+  .modal-content {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+  
+  /* Fix for main content areas */
+  main {
+    /* Enable touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+  
+  /* Fix for containers that might prevent scrolling */
+  .min-h-screen {
+    min-height: 100vh;
+    /* Ensure scrolling works */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+  
+  /* Ensure proper scrolling on mobile */
+  @media (max-width: 768px) {
+    body {
+      touch-action: pan-x pan-y pinch-zoom;
+      /* Fix for iOS Safari */
+      -webkit-overflow-scrolling: touch;
+      overflow-scrolling: touch;
+    }
+    
+    /* Fix for iOS Safari */
+    .mobile-scroll {
+      -webkit-overflow-scrolling: touch;
+      overflow-scrolling: touch;
+    }
+  }
+  
+  /* Fix for Windows touchpad scrolling */
+  @media (hover: none) and (pointer: coarse) {
+    body {
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+  }
+  
+  /* Fix for desktop touchpad scrolling */
+  @media (hover: hover) and (pointer: fine) {
+    body {
+      /* Enable smooth scrolling for touchpads */
+      scroll-behavior: smooth;
+      /* Allow all touch actions */
+      touch-action: manipulation;
+    }
+  }
+}
+
+html, body, #root, .min-h-screen {
+  min-height: 100vh;
+  height: auto;
+  overflow-y: auto !important;
+}
+
+@layer components {
+  /* Basic responsive text sizing */
+  .text-responsive {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-base sm:text-lg lg:text-xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  /* Basic responsive spacing */
+  .p-responsive {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+  
+  .px-responsive {
+    @apply px-3 sm:px-4 lg:px-6;
+  }
+  
+  .py-responsive {
+    @apply py-3 sm:py-4 lg:py-6;
+  }
+  
+  /* Basic responsive margins */
+  .m-responsive {
+    @apply m-3 sm:m-4 lg:m-6;
+  }
+  
+  .mx-responsive {
+    @apply mx-3 sm:mx-4 lg:mx-6;
+  }
+  
+  .my-responsive {
+    @apply my-3 sm:my-4 lg:my-6;
+  }
+  
+  /* Basic responsive gaps */
+  .gap-responsive {
+    @apply gap-3 sm:gap-4 lg:gap-6;
+  }
+  
+  /* Basic responsive grid */
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  
+  .grid-responsive-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2;
+  }
+  
+  /* Basic responsive flex */
+  .flex-responsive {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  /* Fully responsive container without max-width constraints */
+  .container-responsive {
+    @apply w-full px-3 sm:px-4 lg:px-6 xl:px-8;
+  }
+  
+  /* Mobile-first responsive utilities */
+  .mobile-first {
+    @apply w-full;
+  }
+  
+  /* Responsive text that scales properly */
+  .text-mobile-responsive {
+    @apply text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl;
+  }
+  
+  .text-mobile-responsive-lg {
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl;
+  }
+  
+  .text-mobile-responsive-xl {
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl;
+  }
+  
+  /* Responsive spacing that works on all devices */
+  .spacing-mobile-responsive {
+    @apply p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12;
+  }
+  
+  .spacing-x-mobile-responsive {
+    @apply px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12;
+  }
+  
+  .spacing-y-mobile-responsive {
+    @apply py-3 sm:py-4 md:py-6 lg:py-8 xl:py-12;
+  }
+  
+  /* Responsive margins */
+  .margin-mobile-responsive {
+    @apply m-3 sm:m-4 md:m-6 lg:m-8 xl:m-12;
+  }
+  
+  .margin-x-mobile-responsive {
+    @apply mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-12;
+  }
+  
+  .margin-y-mobile-responsive {
+    @apply my-3 sm:my-4 md:my-6 lg:my-8 xl:my-12;
+  }
+  
+  /* Responsive gaps */
+  .gap-mobile-responsive {
+    @apply gap-3 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-12;
+  }
+  
+  /* Responsive grid that adapts to all screen sizes */
+  .grid-mobile-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5;
+  }
+  
+  .grid-mobile-responsive-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
+  }
+  
+  /* Responsive flex layouts */
+  .flex-mobile-responsive {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .flex-mobile-responsive-wrap {
+    @apply flex flex-wrap gap-3 sm:gap-4 md:gap-6 lg:gap-8;
+  }
+}
+
+/* Force select and option text to black for dropdowns */
+select, select option {
+  color: #111 !important;
+  background-color: inherit;
+}
+
+/* Mobile-specific responsive improvements */
+@layer utilities {
+  /* Ensure proper viewport handling on mobile */
+  @media (max-width: 640px) {
+    .mobile-viewport {
+      width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* Improve touch targets on mobile */
+    .mobile-touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better text scaling for mobile */
+    .mobile-text {
+      font-size: clamp(14px, 4vw, 18px);
+      line-height: 1.4;
+    }
+    
+    .mobile-text-lg {
+      font-size: clamp(16px, 5vw, 24px);
+      line-height: 1.3;
+    }
+    
+    .mobile-text-xl {
+      font-size: clamp(18px, 6vw, 32px);
+      line-height: 1.2;
+    }
+  }
+  
+  /* Tablet optimizations */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .tablet-optimized {
+      padding: 1rem;
+    }
+    
+    .tablet-text {
+      font-size: clamp(16px, 3vw, 20px);
+    }
+  }
+  
+  /* Desktop optimizations */
+  @media (min-width: 1025px) {
+    .desktop-optimized {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+  }
+  
+  /* Universal responsive improvements */
+  .responsive-container {
+    width: 100%;
+    max-width: 100%;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .responsive-text {
+    font-size: clamp(14px, 2.5vw, 24px);
+    line-height: 1.4;
+  }
+  
+  .responsive-spacing {
+    padding: clamp(1rem, 3vw, 3rem);
+  }
+  
+  .responsive-margin {
+    margin: clamp(1rem, 3vw, 3rem);
+  }
+} 
+
+.shake-horizontal {
+  -webkit-animation: shake-horizontal 0.8s cubic-bezier(.455,.03,.515,.955) both;
+  animation: shake-horizontal 0.8s cubic-bezier(.455,.03,.515,.955) both;
+}
+@-webkit-keyframes shake-horizontal {
+  0%,100% { -webkit-transform: translateX(0); transform: translateX(0); }
+  10%,30%,50%,70%,90% { -webkit-transform: translateX(-10px); transform: translateX(-10px); }
+  20%,40%,60%,80% { -webkit-transform: translateX(10px); transform: translateX(10px); }
+}
+@keyframes shake-horizontal {
+  0%,100% { -webkit-transform: translateX(0); transform: translateX(0); }
+  10%,30%,50%,70%,90% { -webkit-transform: translateX(-10px); transform: translateX(-10px); }
+  20%,40%,60%,80% { -webkit-transform: translateX(10px); transform: translateX(10px); }
+} 
