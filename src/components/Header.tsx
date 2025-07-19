@@ -39,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'ads', label: 'Ads', icon: Play },
     { id: 'withdraw', label: 'Wallet', icon: Wallet },
-    { id: 'features', label: 'Features', icon: Gift },
+    ...(user ? [] : [{ id: 'features', label: 'Features', icon: Gift }]),
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'vip', label: 'VIP', icon: Crown }

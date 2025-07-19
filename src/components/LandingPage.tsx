@@ -102,17 +102,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
     '24/7 Support'
   ];
 
-  // Placeholder data
-  const testimonials = [
-    { name: 'Alice', text: 'I earned my first USDT in minutes! Super easy.' },
-    { name: 'Bob', text: 'Best ad platform for crypto rewards. Fast payouts.' },
-    { name: 'Charlie', text: 'I invited my friends and got bonuses instantly.' }
-  ];
-  const livePayouts = [
-    { name: 'Alice', amount: 5 },
-    { name: 'Bob', amount: 10 },
-    { name: 'Charlie', amount: 3 }
-  ];
+  // Remove or comment out the hardcoded testimonials array and its usage
+  // const testimonials = [
+  //   { name: 'Alice', text: 'I earned my first USDT in minutes! Super easy.' },
+  //   { name: 'Bob', text: 'Best ad platform for crypto rewards. Fast payouts.' },
+  //   { name: 'Charlie', text: 'I invited my friends and got bonuses instantly.' }
+  // ];
+  // const livePayouts = [
+  //   { name: 'Alice', amount: 5 },
+  //   { name: 'Bob', amount: 10 },
+  //   { name: 'Charlie', amount: 3 }
+  // ];
 
   const stats = [
     { rate: '22,398+', amount: 'Active Users' },

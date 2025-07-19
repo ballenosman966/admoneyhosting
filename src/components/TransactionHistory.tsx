@@ -43,83 +43,11 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Mock transaction data - in a real app, this would come from an API
-  const mockTransactions: Transaction[] = useMemo(() => [
-    {
-      id: '1',
-      type: 'ad_earnings',
-      amount: 0.5,
-      status: 'completed',
-      description: 'Ad watching reward',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-    },
-    {
-      id: '2',
-      type: 'referral',
-      amount: 2.0,
-      status: 'completed',
-      description: 'Referral bonus from user123',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-    },
-    {
-      id: '3',
-      type: 'withdrawal',
-      amount: -10.0,
-      status: 'completed',
-      description: 'Withdrawal to USDT wallet',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-      transactionHash: '0x1234567890abcdef',
-      fee: 0.5,
-      network: 'TRC20'
-    },
-    {
-      id: '4',
-      type: 'deposit',
-      amount: 25.0,
-      status: 'completed',
-      description: 'USDT deposit',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-      transactionHash: '0xabcdef1234567890',
-      network: 'TRC20'
-    },
-    {
-      id: '5',
-      type: 'vip_reward',
-      amount: 5.0,
-      status: 'completed',
-      description: 'VIP daily reward',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
-    },
-    {
-      id: '6',
-      type: 'ad_earnings',
-      amount: 0.3,
-      status: 'completed',
-      description: 'Ad watching reward',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(), // 4 days ago
-    },
-    {
-      id: '7',
-      type: 'withdrawal',
-      amount: -5.0,
-      status: 'pending',
-      description: 'Withdrawal to USDT wallet',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
-      fee: 0.5,
-      network: 'TRC20'
-    },
-    {
-      id: '8',
-      type: 'referral',
-      amount: 1.5,
-      status: 'completed',
-      description: 'Referral bonus from user456',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(), // 6 days ago
-    }
-  ], []);
+  // Only use real transactions from user, not mock/demo data
+  const realTransactions: Transaction[] = user?.transactions || [];
 
   const filteredTransactions = useMemo(() => {
-    let filtered = mockTransactions;
+    let filtered = realTransactions;
 
     // Filter by type
     if (filterState.type !== 'all') {
@@ -135,7 +63,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
     if (filterState.dateRange !== 'all') {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
       switch (filterState.dateRange) {
         case 'today':
           filtered = filtered.filter(tx => new Date(tx.timestamp) >= today);
@@ -218,7 +145,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
     });
 
     return filtered;
-  }, [mockTransactions, filterState, sortBy, sortOrder]);
+  }, [realTransactions, filterState, sortBy, sortOrder]);
 
   // Get transactions to display (first 3 if not expanded, all if expanded)
   const displayedTransactions = isExpanded ? filteredTransactions : filteredTransactions.slice(0, 3);
@@ -553,9 +480,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
       <div className="flex items-center justify-between mb-4">
         <div className="text-white/60 text-sm">
           Showing {displayedTransactions.length} of {filteredTransactions.length} transactions
-          {filteredTransactions.length !== mockTransactions.length && (
+          {filteredTransactions.length !== realTransactions.length && (
             <span className="ml-2 text-yellow-400">
-              (filtered from {mockTransactions.length} total)
+              (filtered from {realTransactions.length} total)
             </span>
           )}
         </div>
@@ -569,7 +496,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
 
       {/* Activity-style List */}
       <div className="space-y-4">
-        {displayedTransactions.length === 0 && (
+        {filteredTransactions.length === 0 ? (
           <div className="text-center py-8">
             <Zap className="w-8 h-8 text-white/40 mx-auto mb-2" />
             <p className="text-white/60 text-base">No transactions found</p>
@@ -582,66 +509,67 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
               </button>
             )}
           </div>
-        )}
-        {displayedTransactions.map((tx, index) => (
-          <div key={tx.id} className="relative">
-            <motion.div
-              className={`flex items-center justify-between p-4 bg-white/10 border border-white/10 rounded-2xl shadow-lg hover:scale-[1.02] transition-all duration-200 ${
-                !isExpanded && index === 2 ? 'blur-sm opacity-60' : ''
-              }`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.07 }}
-            >
-              <div className={`p-3 rounded-full shadow-lg ${
-                tx.type === 'ad_earnings' ? 'bg-yellow-400/20' :
-                tx.type === 'referral' ? 'bg-green-500/20' :
-                tx.type === 'withdrawal' ? 'bg-red-500/20' :
-                tx.type === 'deposit' ? 'bg-blue-500/20' :
-                tx.type === 'vip_reward' ? 'bg-purple-500/20' :
-                'bg-gray-500/20'
-              }`}>
-                {tx.type === 'ad_earnings' && <Play className="w-6 h-6 text-yellow-400" />}
-                {tx.type === 'referral' && <Gift className="w-6 h-6 text-green-400" />}
-                {tx.type === 'withdrawal' && <DollarSign className="w-6 h-6 text-red-400" />}
-                {tx.type === 'deposit' && <TrendingUp className="w-6 h-6 text-blue-400" />}
-                {tx.type === 'vip_reward' && <Crown className="w-6 h-6 text-purple-400" />}
-                {!['ad_earnings','referral','withdrawal','deposit','vip_reward'].includes(tx.type) && <Zap className="w-6 h-6 text-gray-400" />}
-              </div>
-              <div className="flex-1 min-w-0 ml-4">
-                <p className="text-white text-base truncate">{tx.description}</p>
-                <p className="text-white/60 text-xs mt-1">{tx.type.replace('_', ' ').toUpperCase()}</p>
-                <p className="text-white/40 text-xs mt-1">{formatDate(tx.timestamp)}</p>
-                {tx.transactionHash && (
-                  <p className="text-blue-400 text-xs mt-1 break-all">Hash: {tx.transactionHash}</p>
-                )}
-              </div>
-              <div className="text-right ml-4">
-                <span className={`font-bold text-base ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} USDT
-                </span>
-                <div>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${getStatusColor(tx.status)}`}>
-                    {tx.status.toUpperCase()}
-                  </span>
+        ) : (
+          displayedTransactions.map((tx, index) => (
+            <div key={tx.id} className="relative">
+              <motion.div
+                className={`flex items-center justify-between p-4 bg-white/10 border border-white/10 rounded-2xl shadow-lg hover:scale-[1.02] transition-all duration-200 ${
+                  !isExpanded && index === 2 ? 'blur-sm opacity-60' : ''
+                }`}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.07 }}
+              >
+                <div className={`p-3 rounded-full shadow-lg ${
+                  tx.type === 'ad_earnings' ? 'bg-yellow-400/20' :
+                  tx.type === 'referral' ? 'bg-green-500/20' :
+                  tx.type === 'withdrawal' ? 'bg-red-500/20' :
+                  tx.type === 'deposit' ? 'bg-blue-500/20' :
+                  tx.type === 'vip_reward' ? 'bg-purple-500/20' :
+                  'bg-gray-500/20'
+                }`}>
+                  {tx.type === 'ad_earnings' && <Play className="w-6 h-6 text-yellow-400" />}
+                  {tx.type === 'referral' && <Gift className="w-6 h-6 text-green-400" />}
+                  {tx.type === 'withdrawal' && <DollarSign className="w-6 h-6 text-red-400" />}
+                  {tx.type === 'deposit' && <TrendingUp className="w-6 h-6 text-blue-400" />}
+                  {tx.type === 'vip_reward' && <Crown className="w-6 h-6 text-purple-400" />}
+                  {!['ad_earnings','referral','withdrawal','deposit','vip_reward'].includes(tx.type) && <Zap className="w-6 h-6 text-gray-400" />}
                 </div>
-              </div>
-            </motion.div>
-            
-            {/* Show All Button Overlay for Third Transaction */}
-            {!isExpanded && index === 2 && hasMoreTransactions && (
-              <div className="absolute inset-0 flex items-center justify-center z-50">
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 hover:border-white/50 transition-all duration-300 shadow-xl shadow-black/20"
-                >
-                  <span>Show All ({filteredTransactions.length})</span>
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+                <div className="flex-1 min-w-0 ml-4">
+                  <p className="text-white text-base truncate">{tx.description}</p>
+                  <p className="text-white/60 text-xs mt-1">{tx.type.replace('_', ' ').toUpperCase()}</p>
+                  <p className="text-white/40 text-xs mt-1">{formatDate(tx.timestamp)}</p>
+                  {tx.transactionHash && (
+                    <p className="text-blue-400 text-xs mt-1 break-all">Hash: {tx.transactionHash}</p>
+                  )}
+                </div>
+                <div className="text-right ml-4">
+                  <span className={`font-bold text-base ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} USDT
+                  </span>
+                  <div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${getStatusColor(tx.status)}`}>
+                      {tx.status.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Show All Button Overlay for Third Transaction */}
+              {!isExpanded && index === 2 && hasMoreTransactions && (
+                <div className="absolute inset-0 flex items-center justify-center z-50">
+                  <button
+                    onClick={() => setIsExpanded(true)}
+                    className="flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 hover:border-white/50 transition-all duration-300 shadow-xl shadow-black/20"
+                  >
+                    <span>Show All ({filteredTransactions.length})</span>
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
 

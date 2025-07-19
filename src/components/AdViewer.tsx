@@ -85,10 +85,9 @@ export const AdViewer: React.FC<AdViewerProps> = ({ onNavigate, user, onUserUpda
   // Get today's ads (rotate based on date and available ads)
   const getTodaysAds = (): Ad[] => {
     if (availableAds.length === 0) {
-      // Fallback to demo ads if no admin ads available
-      return getDemoAds();
+      // No ads available
+      return [];
     }
-
     const today = new Date().getDate();
     const startIndex = (today - 1) % availableAds.length;
     const rotatedAds = [...availableAds.slice(startIndex), ...availableAds.slice(0, startIndex)];
@@ -502,24 +501,28 @@ export const AdViewer: React.FC<AdViewerProps> = ({ onNavigate, user, onUserUpda
           <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
             Available Ads
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableAds.map((ad, index) => (
-              <div
-                key={ad.id}
-                className="bg-white/10 border border-white/10 rounded-2xl p-4 hover:scale-105 transition-transform duration-200 cursor-pointer"
-              >
-                <div className="text-center">
-                  <Play className="w-8 h-8 text-yellow-400 mx-auto mb-2 drop-shadow-glow" />
-                  <h3 className="text-white font-semibold mb-1">{ad.title}</h3>
-                  <p className="text-white/70 text-sm mb-2">{ad.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/60 text-xs">{ad.duration}s</span>
-                    <span className="text-green-400 font-bold">${ad.reward.toFixed(2)}</span>
+          {getTodaysAds().length === 0 ? (
+            <div className="text-white/60 text-center py-8">No ads available right now.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {getTodaysAds().map((ad, index) => (
+                <div
+                  key={ad.id}
+                  className="bg-white/10 border border-white/10 rounded-2xl p-4 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                >
+                  <div className="text-center">
+                    <Play className="w-8 h-8 text-yellow-400 mx-auto mb-2 drop-shadow-glow" />
+                    <h3 className="text-white font-semibold mb-1">{ad.title}</h3>
+                    <p className="text-white/70 text-sm mb-2">{ad.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/60 text-xs">{ad.duration}s</span>
+                      <span className="text-green-400 font-bold">${ad.reward.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
