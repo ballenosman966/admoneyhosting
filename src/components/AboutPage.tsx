@@ -17,10 +17,10 @@ export default function AboutPage() {
       <div className="max-w-3xl w-full bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 sm:p-12 flex flex-col items-center text-center">
         <div className="mb-8">
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 via-green-300 to-pink-400 bg-clip-text text-transparent">
-            About CryptoRewards
+            About AdMoney
           </h1>
           <p className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto">
-            CryptoRewards is building the future of decentralized earning. Our mission is to empower everyone to earn crypto effortlessly, securely, and globally—no matter your background or experience.
+            AdMoney is building the future of decentralized earning. Our mission is to empower everyone to earn crypto effortlessly, securely, and globally—no matter your background or experience.
           </p>
         </div>
         <div className="mb-8">

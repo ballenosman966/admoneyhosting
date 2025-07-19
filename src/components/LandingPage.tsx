@@ -146,7 +146,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">CryptoRewards</span>
+              <span className="text-xl font-bold text-white">AdMoney</span>
             </button>
 
             {/* Navigation Links */}
@@ -175,12 +175,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
               </button>
               <button 
                 className="text-white/80 hover:text-white transition-colors font-medium"
-                onClick={() => {
-                  const featuresSection = document.querySelector('#features-section');
-                  if (featuresSection) {
-                    featuresSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
+                onClick={() => navigate('/features')}
               >
                 Features
               </button>
@@ -219,7 +214,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
           >
             <button className="absolute top-3 right-3 text-white/60 hover:text-white" onClick={() => setShowLearnMore(false)}><Info className="w-6 h-6" /></button>
             <h2 className="text-2xl font-bold mb-4 text-white">Learn More</h2>
-            <p className="text-white/80 mb-2">CryptoRewards lets you earn USDT by watching ads, referring friends, and more. Withdraw instantly, no KYC required!</p>
+            <p className="text-white/80 mb-2">AdMoney lets you earn USDT by watching ads, referring friends, and more. Withdraw instantly, no KYC required!</p>
             <ul className="list-disc pl-6 text-white/80 mb-2">
               <li>Watch ads, earn crypto</li>
               <li>Invite friends for bonuses</li>
@@ -263,7 +258,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
               <h2 
                 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4"
               >
-                Welcome to CryptoRewards
+                Welcome to AdMoney
               </h2>
               
               <h1 
@@ -277,7 +272,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
               <p 
                 className="text-xl text-white/80 mb-8 leading-relaxed"
               >
-                CryptoRewards is an ever-expanding ecosystem of interconnected earning opportunities, 
+                AdMoney is an ever-expanding ecosystem of interconnected earning opportunities, 
                 built for a decentralized future where everyone can earn crypto effortlessly.
               </p>
               
@@ -350,41 +345,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
 
 
 
-      {/* Features Section */}
-      <section id="features-section" className="relative z-10 py-20 px-6 lg:px-20">
-        <div className="max-w-7xl mx-auto">
-          <div 
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              Platform Features
-            </h2>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              Everything you need to start earning crypto rewards
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index}
-                className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-white/20 transition-all duration-300 h-full group"
-              >
-                <div className="flex flex-col items-center text-center h-full">
-                  <div 
-                    className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
-                  >
-                    <feature.icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-4">{feature.title}</h3>
-                  <p className="text-white/70 leading-relaxed flex-1">{feature.description}</p>
-              </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Benefits Section */}
       <section id="benefits-section" className="relative z-10 py-20 px-6 lg:px-20">
         <div className="max-w-7xl mx-auto">
@@ -392,7 +352,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              Why Choose CryptoRewards?
+              Why Choose AdMoney?
             </h2>
             <p className="text-xl text-white/80 max-w-3xl mx-auto">
               Discover the advantages that make us the leading choice for crypto earnings
@@ -512,7 +472,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
               { 
                 name: 'Marcus Rodriguez', 
                 role: 'Freelancer',
-                text: 'CryptoRewards has become my main source of passive income. I love how transparent and secure everything is.',
+                text: 'AdMoney has become my main source of passive income. I love how transparent and secure everything is.',
                 avatar: '👨‍💻',
                 earnings: '+$1,234 USDT'
               },
@@ -621,7 +581,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
           <p 
             className="text-xl text-white/80 mb-8 max-w-3xl mx-auto"
           >
-            Join thousands of users already earning passive income with CryptoRewards
+            Join thousands of users already earning passive income with AdMoney
           </p>
           <button
             onClick={handleAuth}
@@ -642,7 +602,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-white" />
           </div>
-                <span className="text-xl font-bold text-white">CryptoRewards</span>
+                <span className="text-xl font-bold text-white">AdMoney</span>
               </div>
               <p className="text-white/60 text-sm">
                 The future of crypto earnings. Earn USDT by watching ads, referring friends, and more.
@@ -771,7 +731,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
           
           <div className="border-t border-white/10 mt-8 pt-8 text-center">
             <p className="text-white/60 text-sm">
-              © 2024 CryptoRewards. All rights reserved. Made with ❤️ for the crypto community.
+              © 2024 AdMoney. All rights reserved. Made with ❤️ for the crypto community.
             </p>
           </div>
         </div>

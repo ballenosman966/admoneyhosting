@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, User, ArrowLeft, Loader2, Mail, Globe, Gift, CheckCircle, Info } from 'lucide-react';
 import { userStorage } from '../utils/userStorage';
 import Aurora from './Aurora';
@@ -39,11 +39,77 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   
-  // Ensure ballen user exists with correct credentials when component mounts
+  // Refs for form fields to enable keyboard navigation
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const birthdayRef = useRef<HTMLInputElement>(null);
+  const countryRef = useRef<HTMLSelectElement>(null);
+  const referralCodeRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
+  
+  // Remove automatic test user creation - new users should start with real accounts
+  // useEffect(() => {
+  //   userStorage.createTestBallenUser();
+  // }, []);
+  
+  // Detect mobile keyboard opening/closing
   useEffect(() => {
-    userStorage.createTestBallenUser();
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 768;
+      const viewportHeight = window.innerHeight;
+      const screenHeight = window.screen.height;
+      
+      if (isMobile && viewportHeight < screenHeight * 0.8) {
+        setIsKeyboardOpen(true);
+      } else {
+        setIsKeyboardOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
+  
+  // Handle Enter key navigation between fields
+  const handleKeyDown = (e: React.KeyboardEvent, nextFieldRef: React.RefObject<HTMLElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (nextFieldRef.current) {
+        nextFieldRef.current.focus();
+      }
+    }
+  };
+  
+  // Get the next field ref based on current field and form mode
+  const getNextFieldRef = (currentField: string): React.RefObject<HTMLElement> | null => {
+    if (isLogin) {
+      // Login form: username -> password
+      if (currentField === 'username') return passwordRef;
+      if (currentField === 'password') return null; // Submit form
+    } else {
+      // Signup form: username -> email -> firstName -> lastName -> birthday -> country -> referralCode -> password -> confirmPassword
+      if (currentField === 'username') return emailRef;
+      if (currentField === 'email') return firstNameRef;
+      if (currentField === 'firstName') return lastNameRef;
+      if (currentField === 'lastName') return birthdayRef;
+      if (currentField === 'birthday') return countryRef;
+      if (currentField === 'country') return referralCodeRef;
+      if (currentField === 'referralCode') return passwordRef;
+      if (currentField === 'password') return confirmPasswordRef;
+      if (currentField === 'confirmPassword') return null; // Submit form
+    }
+    return null;
+  };
   
   // Get referral ID from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -152,7 +218,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative">
+    <div className={`min-h-screen flex items-center justify-center px-4 relative transition-all duration-300 ${
+      isKeyboardOpen ? 'pt-0 pb-4' : ''
+    }`}>
       {/* Background */}
       <Aurora colorStops={["#5227FF", "#7cff67", "#5227FF"]} amplitude={1.2} blend={0.6} />
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 opacity-50" />
@@ -160,22 +228,32 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
       {/* Back Button */}
       <button
         onClick={onBack}
-        className="fixed top-6 left-6 z-50 flex items-center space-x-2 px-4 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-md text-white font-semibold shadow hover:bg-white/20 transition-all"
+        className={`fixed z-50 flex items-center space-x-2 px-4 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-md text-white font-semibold shadow hover:bg-white/20 transition-all ${
+          isKeyboardOpen ? 'top-2 left-2' : 'top-6 left-6'
+        }`}
       >
         <ArrowLeft className="w-5 h-5" />
-        <span>Back</span>
+        <span className={isKeyboardOpen ? 'hidden sm:inline' : ''}>Back</span>
       </button>
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className={`relative z-10 w-full max-w-md transition-all duration-300 ${
+        isKeyboardOpen ? 'mt-8' : ''
+      }`}>
+        <div className={`bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 w-full max-w-md mx-auto mt-16`}>
           
           {/* Tab Switcher */}
-          <div className="flex bg-white/10 rounded-full p-1 mb-6">
+          <div className="flex bg-white/10 rounded-full p-1 mb-6 relative overflow-hidden">
+            {/* Animated background indicator */}
+            <div 
+              className={`absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 transition-all duration-500 ease-in-out ${
+                isLogin ? 'left-1 right-1/2' : 'left-1/2 right-1'
+              }`}
+            />
             <button
-              className={`flex-1 py-2 px-4 rounded-full font-bold transition-all ${
+              className={`relative flex-1 py-2 px-4 rounded-full font-bold transition-all duration-300 ease-in-out ${
                 isLogin 
-                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg' 
+                  ? 'text-white shadow-lg' 
                   : 'text-white/70 hover:text-white'
               }`}
               onClick={() => setIsLogin(true)}
@@ -183,9 +261,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               Login
             </button>
             <button
-              className={`flex-1 py-2 px-4 rounded-full font-bold transition-all ${
+              className={`relative flex-1 py-2 px-4 rounded-full font-bold transition-all duration-300 ease-in-out ${
                 !isLogin 
-                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg' 
+                  ? 'text-white shadow-lg' 
                   : 'text-white/70 hover:text-white'
               }`}
               onClick={() => setIsLogin(false)}
@@ -194,12 +272,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
             </button>
           </div>
 
-          {/* Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-white mb-2">
-              {isLogin ? 'Welcome Back' : 'Join CryptoRewards'}
+          {/* Header with smooth animation */}
+          <div className={`text-center transition-all duration-500 ease-in-out ${
+            isKeyboardOpen ? 'mb-4' : 'mb-6'
+          }`}>
+            <h1 className={`font-bold text-white mb-2 transition-all duration-500 ease-in-out ${
+              isKeyboardOpen ? 'text-xl' : 'text-2xl'
+            }`}>
+              {isLogin ? 'Welcome Back' : 'Join AdMoney'}
             </h1>
-            <p className="text-white/80 text-sm">
+            <p className={`text-white/80 transition-all duration-500 ease-in-out ${
+              isKeyboardOpen ? 'text-xs' : 'text-sm'
+            }`}>
               {isLogin ? 'Sign in to continue earning' : 'Create your account and start earning'}
             </p>
           </div>
@@ -220,10 +304,23 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               </label>
               <div className="relative">
                 <input
+                  ref={usernameRef}
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    const nextField = getNextFieldRef('username');
+                    if (nextField) {
+                      handleKeyDown(e, nextField);
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                      if (submitButton && !submitButton.disabled) {
+                        submitButton.click();
+                      }
+                    }
+                  }}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
                   placeholder="Enter your username"
                   required
@@ -261,151 +358,239 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
 
             {/* Email Field - only for signup */}
             {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm ${
-                      formData.email ? 
-                        (emailValidation.format && !emailValidation.exists ? 
-                          'border-green-400/50 focus:border-green-400' : 
-                          'border-red-400/50 focus:border-red-400'
-                        ) : 
-                        'border-white/20 focus:border-yellow-400'
-                    }`}
-                    placeholder="Enter your email"
-                    required={!isLogin}
-                    disabled={isLoading}
-                  />
-                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+              <div className="transition-all duration-500 max-h-24 opacity-100 overflow-hidden">
+                <div>
+                  <label className="block text-sm font-medium text-white/90 mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <input
+                      ref={emailRef}
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        const nextField = getNextFieldRef('email');
+                        if (nextField) {
+                          handleKeyDown(e, nextField);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                          if (submitButton && !submitButton.disabled) {
+                            submitButton.click();
+                          }
+                        }
+                      }}
+                      className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm ${
+                        formData.email ? 
+                          (emailValidation.format && !emailValidation.exists ? 
+                            'border-green-400/50 focus:border-green-400' : 
+                            'border-red-400/50 focus:border-red-400'
+                          ) : 
+                          'border-white/20 focus:border-yellow-400'
+                      }`}
+                      placeholder="Enter your email"
+                      required={!isLogin}
+                      disabled={isLoading}
+                    />
+                    <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+                  </div>
+                  {formData.email && !emailValidation.format && (
+                    <p className="text-xs text-red-400 mt-1">Please enter a valid email</p>
+                  )}
+                  {formData.email && emailValidation.format && emailValidation.exists && (
+                    <p className="text-xs text-red-400 mt-1">Email already exists</p>
+                  )}
                 </div>
-                {formData.email && !emailValidation.format && (
-                  <p className="text-xs text-red-400 mt-1">Please enter a valid email</p>
-                )}
-                {formData.email && emailValidation.format && emailValidation.exists && (
-                  <p className="text-xs text-red-400 mt-1">Email already exists</p>
-                )}
               </div>
             )}
 
             {/* Name Fields - only for signup */}
             {!isLogin && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-white/90 mb-2">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
-                    placeholder="First name"
-                    required={!isLogin}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/90 mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
-                    placeholder="Last name"
-                    required={!isLogin}
-                    disabled={isLoading}
-                  />
+              <div className="transition-all duration-500 max-h-32 opacity-100 overflow-hidden">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-white/90 mb-2">
+                      First Name
+                    </label>
+                    <input
+                      ref={firstNameRef}
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        const nextField = getNextFieldRef('firstName');
+                        if (nextField) {
+                          handleKeyDown(e, nextField);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                          if (submitButton && !submitButton.disabled) {
+                            submitButton.click();
+                          }
+                        }
+                      }}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
+                      placeholder="First name"
+                      required={!isLogin}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/90 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      ref={lastNameRef}
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        const nextField = getNextFieldRef('lastName');
+                        if (nextField) {
+                          handleKeyDown(e, nextField);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                          if (submitButton && !submitButton.disabled) {
+                            submitButton.click();
+                          }
+                        }
+                      }}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
+                      placeholder="Last name"
+                      required={!isLogin}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Birthday Field - only for signup */}
             {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Birthday
-                </label>
-                <input
-                  type="date"
-                  name="birthday"
-                  value={formData.birthday}
-                  onChange={handleInputChange}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
-                  required={!isLogin}
-                  disabled={isLoading}
-                  max={new Date().toISOString().split('T')[0]}
-                />
+              <div className="transition-all duration-500 max-h-16 opacity-100 overflow-hidden">
+                <div>
+                  <label className="block text-sm font-medium text-white/90 mb-2">
+                    Birthday
+                  </label>
+                  <input
+                    ref={birthdayRef}
+                    type="date"
+                    name="birthday"
+                    value={formData.birthday}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      const nextField = getNextFieldRef('birthday');
+                      if (nextField) {
+                        handleKeyDown(e, nextField);
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                        if (submitButton && !submitButton.disabled) {
+                          submitButton.click();
+                        }
+                      }
+                    }}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
+                    required={!isLogin}
+                    disabled={isLoading}
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
               </div>
             )}
 
             {/* Country Field - only for signup */}
             {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Country
-                </label>
-                <div className="relative">
-                  <select
-                    name="country"
-                    value={formData.country}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm appearance-none"
-                    required={!isLogin}
-                    disabled={isLoading}
-                  >
-                    <option value="" disabled>Select your country</option>
-                    {countries.map((country) => (
-                      <option key={country} value={country} className="bg-white text-gray-800">
-                        {country}
-                      </option>
-                    ))}
-                  </select>
-                  <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+              <div className="transition-all duration-500 max-h-16 opacity-100 overflow-hidden">
+                <div>
+                  <label className="block text-sm font-medium text-white/90 mb-2">
+                    Country
+                  </label>
+                  <div className="relative">
+                    <select
+                      ref={countryRef}
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        const nextField = getNextFieldRef('country');
+                        if (nextField) {
+                          handleKeyDown(e, nextField);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                          if (submitButton && !submitButton.disabled) {
+                            submitButton.click();
+                          }
+                        }
+                      }}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm appearance-none"
+                      required={!isLogin}
+                      disabled={isLoading}
+                    >
+                      <option value="" disabled>Select your country</option>
+                      {countries.map((country) => (
+                        <option key={country} value={country} className="bg-white text-gray-800">
+                          {country}
+                        </option>
+                      ))}
+                    </select>
+                    <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Invite Code - only for signup */}
             {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Invite Code <span className="text-white/60">(optional)</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="referralCode"
-                    value={formData.referralCode}
-                    onChange={handleInputChange}
-                    className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm ${
-                      formData.referralCode ? 
-                        (userStorage.checkReferralCodeExists(formData.referralCode) ? 
-                          'border-green-400/50 focus:border-green-400' : 
-                          'border-red-400/50 focus:border-red-400'
-                        ) : 
-                        'border-white/20 focus:border-yellow-400'
-                    }`}
-                    placeholder="Enter invite code (optional)"
-                    disabled={isLoading}
-                  />
-                  <Gift className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+              <div className="transition-all duration-500 max-h-28 opacity-100 overflow-hidden">
+                <div>
+                  <label className="block text-sm font-medium text-white/90 mb-2">
+                    Invite Code <span className="text-white/60">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      ref={referralCodeRef}
+                      type="text"
+                      name="referralCode"
+                      value={formData.referralCode}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        const nextField = getNextFieldRef('referralCode');
+                        if (nextField) {
+                          handleKeyDown(e, nextField);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                          if (submitButton && !submitButton.disabled) {
+                            submitButton.click();
+                          }
+                        }
+                      }}
+                      className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm ${
+                        formData.referralCode ? 
+                          (userStorage.checkReferralCodeExists(formData.referralCode) ? 
+                            'border-green-400/50 focus:border-green-400' : 
+                            'border-red-400/50 focus:border-red-400'
+                          ) : 
+                          'border-white/20 focus:border-yellow-400'
+                      }`}
+                      placeholder="Enter invite code (optional)"
+                      disabled={isLoading}
+                    />
+                    <Gift className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+                  </div>
+                  {formData.referralCode && (
+                    <p className={`text-xs mt-1 ${userStorage.checkReferralCodeExists(formData.referralCode) ? 'text-green-400' : 'text-red-400'}`}>
+                      {userStorage.checkReferralCodeExists(formData.referralCode) ? '✓ Valid invite code!' : 'Invalid invite code'}
+                    </p>
+                  )}
                 </div>
-                {formData.referralCode && (
-                  <p className={`text-xs mt-1 ${userStorage.checkReferralCodeExists(formData.referralCode) ? 'text-green-400' : 'text-red-400'}`}>
-                    {userStorage.checkReferralCodeExists(formData.referralCode) ? '✓ Valid invite code!' : 'Invalid invite code'}
-                  </p>
-                )}
               </div>
             )}
 
@@ -416,10 +601,23 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               </label>
               <div className="relative">
                 <input
+                  ref={passwordRef}
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    const nextField = getNextFieldRef('password');
+                    if (nextField) {
+                      handleKeyDown(e, nextField);
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                      if (submitButton && !submitButton.disabled) {
+                        submitButton.click();
+                      }
+                    }
+                  }}
                   className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all pr-12 text-sm ${
                     formData.password ? 
                       (passwordValidation.length ? 
@@ -448,46 +646,63 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
             </div>
 
             {/* Confirm Password - only for signup */}
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all pr-12 text-sm ${
-                      formData.confirmPassword ? 
-                        (passwordValidation.match ? 
-                          'border-green-400/50 focus:border-green-400' : 
-                          'border-red-400/50 focus:border-red-400'
-                        ) : 
-                        'border-white/20 focus:border-yellow-400'
-                    }`}
-                    placeholder="Confirm your password"
-                    required={!isLogin}
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
-                    disabled={isLoading}
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!isLogin ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
+              {!isLogin && (
+                <div>
+                  <label className="block text-sm font-medium text-white/90 mb-2">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      ref={confirmPasswordRef}
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        const nextField = getNextFieldRef('confirmPassword');
+                        if (nextField) {
+                          handleKeyDown(e, nextField);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                          if (submitButton && !submitButton.disabled) {
+                            submitButton.click();
+                          }
+                        }
+                      }}
+                      className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all pr-12 text-sm ${
+                        formData.confirmPassword ? 
+                          (passwordValidation.match ? 
+                            'border-green-400/50 focus:border-green-400' : 
+                            'border-red-400/50 focus:border-red-400'
+                          ) : 
+                          'border-white/20 focus:border-yellow-400'
+                      }`}
+                      placeholder="Confirm your password"
+                      required={!isLogin}
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                      disabled={isLoading}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {formData.confirmPassword && !passwordValidation.match && (
+                    <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                  )}
                 </div>
-                {formData.confirmPassword && !passwordValidation.match && (
-                  <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
-                )}
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Remember me and Forgot password - only for login */}
-            {isLogin && (
+            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
+              isLogin ? 'max-h-12 opacity-100' : 'max-h-0 opacity-0'
+            }`}>
               <div className="flex items-center justify-between">
                 <label className="flex items-center space-x-2 text-white/80">
                   <input type="checkbox" className="rounded border-white/20 bg-white/10 text-yellow-400 focus:ring-yellow-400/50 w-4 h-4" disabled={isLoading} />
@@ -502,7 +717,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                   Forgot password?
                 </button>
               </div>
-            )}
+            </div>
 
             {/* Submit Button */}
             <button
@@ -511,7 +726,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
             >
               {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-              <span>{isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}</span>
+              <span className="transition-all duration-300 ease-in-out">
+                {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+              </span>
             </button>
           </form>
         </div>

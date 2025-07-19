@@ -52,7 +52,7 @@ export const DataRecovery: React.FC<DataRecoveryProps> = ({ onClose, onUserResto
         currentUser,
         timestamp: new Date().toISOString()
       };
-      localStorage.setItem('cryptoRewardsBackup', JSON.stringify(backup));
+      localStorage.setItem('adMoneyBackup', JSON.stringify(backup));
       setMessage('✅ Backup created successfully!');
     } catch (error) {
       setMessage(`❌ Failed to create backup: ${error instanceof Error ? error.message : 'Unknown error'}`);

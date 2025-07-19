@@ -147,7 +147,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       const users = userStorage.getAllUsers().map(u =>
         u.id === user.id ? { ...u, pendingDeletion: true } : u
       );
-      localStorage.setItem('cryptoRewardsUsers', JSON.stringify(users));
+      localStorage.setItem('adMoneyUsers', JSON.stringify(users));
       userStorage.setCurrentUser(null);
       setTimeout(() => {
         setFeedback(null);
@@ -165,7 +165,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const users = userStorage.getAllUsers().map(u =>
       u.id === user.id ? { ...u, pendingDeletion: false } : u
     );
-    localStorage.setItem('cryptoRewardsUsers', JSON.stringify(users));
+    localStorage.setItem('adMoneyUsers', JSON.stringify(users));
     setReactivateModal(false);
     setReactivateSuccess(true);
     setTimeout(() => setReactivateSuccess(false), 3000);

@@ -426,7 +426,7 @@ class UserStorage {
   }
 
   // Create a new user
-  createUser(userData: { username: string; email: string; firstName: string; lastName: string; password: string; birthday?: string; referralCode?: string; referrerId?: string }): User {
+  createUser(userData: { username: string; email: string; firstName: string; lastName: string; password: string; birthday?: string; country?: string; referralCode?: string; referrerId?: string }): User {
     const users = this.getUsers();
     
     // Check if email already exists
@@ -471,7 +471,7 @@ class UserStorage {
       firstName: userData.firstName,
       lastName: userData.lastName,
       password: userData.password, // In a real app, hash this password
-      balance: 0,
+      balance: 0, // Start with zero balance - no demo money
       totalEarned: 0,
       joinDate: new Date().toISOString(),
       // Referral fields
@@ -484,7 +484,7 @@ class UserStorage {
       displayName: userData.username,
       bio: '',
       phone: '',
-      country: '',
+      country: userData.country || '',
       timezone: 'UTC',
       language: 'en',
       birthday: userData.birthday || '',
@@ -504,23 +504,23 @@ class UserStorage {
       withdrawals: true,
       referrals: true,
       promotions: true,
-      // Initialize stats
+      // Initialize stats - start with zero
       currentStreak: 0,
       totalAdsWatched: 0,
-      // Initialize VIP fields
+      // Initialize VIP fields - start with no VIP
       vipTier: 0,
       vipStartDate: undefined,
       lastVipReward: undefined,
-      // Initialize subscription fields
+      // Initialize subscription fields - no subscriptions
       isSubscribed: false,
       subscriptionType: undefined,
       subscriptionStartDate: undefined,
       subscriptionEndDate: undefined,
       subscriptionStatus: undefined,
       subscriptionHistory: [],
-      // Email verification
+      // Email verification - start as verified for simplicity
       isEmailVerified: true,
-      // Activity log
+      // Activity log - start empty
       activityLog: []
     };
 
@@ -1807,103 +1807,111 @@ class UserStorage {
 
   // Ensure ballen user exists with proper balance (only create if doesn't exist)
   // Create a test ballen user with a known referral code for easy testing
+  // DISABLED: This creates demo accounts with fake balances - not for production
   createTestBallenUser(): void {
-    try {
-      const users = this.getUsers();
-      const ballenExists = users.find(u => u.username === 'ballen');
-      
-      if (ballenExists) {
-        // Update existing ballen user with correct password and referral code
-        const ballenIndex = users.findIndex(u => u.username === 'ballen');
-        users[ballenIndex].password = 'ballen'; // Set correct password
-        users[ballenIndex].referralCode = 'Hppr8Yke'; // Use the actual referral code
-        this.saveUsers(users);
-        console.log('Updated ballen user with password: ballen and referral code: Hppr8Yke');
-      } else {
-        // Create new ballen user with correct credentials
-        const ballenUser: User = {
-          id: 'ballen-001',
-          username: 'ballen',
-          email: 'ballen@example.com',
-          firstName: 'Ballen',
-          lastName: 'User',
-          password: 'ballen', // Correct password for ballen:ballen login
-          balance: 500,
-          totalEarned: 0,
-          joinDate: new Date().toISOString(),
-          referralCode: 'Hppr8Yke', // Use the actual referral code from your profile
-          referralEarnings: 0,
-          referralCount: 0,
-          referralHistory: [],
-          displayName: 'Ballen',
-          bio: 'Test User',
-          phone: '',
-          country: '',
-          timezone: 'UTC',
-          language: 'en',
-          theme: 'dark',
-          emailNotifications: true,
-          pushNotifications: true,
-          soundEnabled: true,
-          autoPlayAds: true,
-          showEarnings: true,
-          twoFactorAuth: false,
-          sessionTimeout: 30,
-          newAds: true,
-          earnings: true,
-          streak: true,
-          withdrawals: true,
-          referrals: true,
-          promotions: true,
-          currentStreak: 0,
-          totalAdsWatched: 0,
-          isEmailVerified: true,
-          activityLog: []
-        };
-        
-        users.push(ballenUser);
-        this.saveUsers(users);
-        console.log('Created ballen user with password: ballen and referral code: Hppr8Yke');
-      }
-    } catch (error) {
-      console.error('Error creating test ballen user:', error);
-    }
+    console.warn('createTestBallenUser is disabled - demo accounts not allowed in production');
+    return;
+    
+    // try {
+    //   const users = this.getUsers();
+    //   const ballenExists = users.find(u => u.username === 'ballen');
+    //   
+    //   if (ballenExists) {
+    //     // Update existing ballen user with correct password and referral code
+    //     const ballenIndex = users.findIndex(u => u.username === 'ballen');
+    //     users[ballenIndex].password = 'ballen'; // Set correct password
+    //     users[ballenIndex].referralCode = 'Hppr8Yke'; // Use the actual referral code
+    //     this.saveUsers(users);
+    //     console.log('Updated ballen user with password: ballen and referral code: Hppr8Yke');
+    //   } else {
+    //     // Create new ballen user with correct credentials
+    //     const ballenUser: User = {
+    //       id: 'ballen-001',
+    //       username: 'ballen',
+    //       email: 'ballen@example.com',
+    //       firstName: 'Ballen',
+    //       lastName: 'User',
+    //       password: 'ballen', // Correct password for ballen:ballen login
+    //       balance: 500,
+    //       totalEarned: 0,
+    //       joinDate: new Date().toISOString(),
+    //       referralCode: 'Hppr8Yke', // Use the actual referral code from your profile
+    //       referralEarnings: 0,
+    //       referralCount: 0,
+    //       referralHistory: [],
+    //       displayName: 'Ballen',
+    //       bio: 'Test User',
+    //       phone: '',
+    //       country: '',
+    //       timezone: 'UTC',
+    //       language: 'en',
+    //       theme: 'dark',
+    //       emailNotifications: true,
+    //       pushNotifications: true,
+    //       soundEnabled: true,
+    //       autoPlayAds: true,
+    //       showEarnings: true,
+    //       twoFactorAuth: false,
+    //       sessionTimeout: 30,
+    //       newAds: true,
+    //       earnings: true,
+    //       streak: true,
+    //       withdrawals: true,
+    //       referrals: true,
+    //       promotions: true,
+    //       currentStreak: 0,
+    //       totalAdsWatched: 0,
+    //       isEmailVerified: true,
+    //       activityLog: []
+    //     };
+    //     
+    //     users.push(ballenUser);
+    //     this.saveUsers(users);
+    //     console.log('Created ballen user with password: ballen and referral code: Hppr8Yke');
+    //   }
+    // } catch (error) {
+    //   console.error('Error creating test ballen user:', error);
+    // }
   }
 
+  // DISABLED: This creates demo accounts with fake balances - not for production
   ensureBallenUser(): void {
-    try {
-      const users = this.getUsers();
-      const ballenExists = users.find(u => u.username === 'ballen');
-      
-      if (!ballenExists) {
-        console.log('Creating ballen user...');
-        const ballenUser = this.createUser({
-          username: 'ballen',
-          email: 'ballen@example.com',
-          firstName: 'Ballen',
-          lastName: 'User',
-          password: 'password123'
-        });
-        
-        // Add balance and mark as email verified
-        this.addBalanceToUser('ballen', 500);
-        this.markEmailVerified(ballenUser.id);
-        
-        console.log('Created ballen user with $500 balance and email verified');
-      } else {
-        console.log('Ballen user already exists');
-        
-        // Ensure the existing ballen user has a referral code
-        const ballenUser = users.find(u => u.username === 'ballen');
-        if (ballenUser && (!ballenUser.referralCode || ballenUser.referralCode.trim() === '')) {
-          ballenUser.referralCode = this.generateReferralCode();
-          this.saveUsers(users);
-          console.log('Generated referral code for existing ballen user:', ballenUser.referralCode);
-        }
-      }
-    } catch (error) {
-      console.error('Error ensuring ballen user exists:', error);
-    }
+    console.warn('ensureBallenUser is disabled - demo accounts not allowed in production');
+    return;
+    
+    // try {
+    //   const users = this.getUsers();
+    //   const ballenExists = users.find(u => u.username === 'ballen');
+    //   
+    //   if (!ballenExists) {
+    //     console.log('Creating ballen user...');
+    //     const ballenUser = this.createUser({
+    //       username: 'ballen',
+    //       email: 'ballen@example.com',
+    //       firstName: 'Ballen',
+    //       lastName: 'User',
+    //       password: 'password123'
+    //     });
+    //     
+    //     // Add balance and mark as email verified
+    //     this.addBalanceToUser('ballen', 500);
+    //     this.markEmailVerified(ballenUser.id);
+    //     
+    //     console.log('Created ballen user with $500 balance and email verified');
+    //   } else {
+    //     console.log('Ballen user already exists');
+    //     
+    //     // Ensure the existing ballen user has a referral code
+    //     const ballenUser = users.find(u => u.username === 'ballen');
+    //     if (ballenUser && (!ballenUser.referralCode || ballenUser.referralCode.trim() === '')) {
+    //       ballenUser.referralCode = this.generateReferralCode();
+    //       this.saveUsers(users);
+    //       console.log('Generated referral code for existing ballen user:', ballenUser.referralCode);
+    //     }
+    //   }
+    // } catch (error) {
+    //   console.error('Error ensuring ballen user exists:', error);
+    // }
   }
 
   // Session Management Methods

@@ -130,7 +130,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ onBack }) => {
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">CryptoRewards</span>
+              <span className="text-xl font-bold text-white">AdMoney</span>
             </div>
           </div>
         </div>
@@ -245,7 +245,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ onBack }) => {
             transition={{ duration: 0.8, delay: 0.8 }}
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Why Choose CryptoRewards?
+              Why Choose AdMoney?
             </h2>
             <p className="text-xl text-white/80 max-w-3xl mx-auto">
               Discover the features that make us the leading choice for crypto earnings
@@ -302,7 +302,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ onBack }) => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Join thousands of users already earning passive income with CryptoRewards
+            Join thousands of users already earning passive income with AdMoney
           </motion.p>
           <motion.button
             onClick={onBack}

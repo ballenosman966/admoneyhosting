@@ -21,8 +21,9 @@ import KYCVerification from './components/KYCVerification';
 import AdminAnalytics from './components/AdminAnalytics';
 import SupportPage from './components/SupportPage';
 import AboutPage from './components/AboutPage';
+import FeaturesPage from './components/FeaturesPage';
 
-export type Page = 'landing' | 'auth' | 'dashboard' | 'ads' | 'withdraw' | 'profile' | 'admin' | 'referrals' | 'settings' | 'security' | 'notifications' | 'vip' | 'analytics' | 'support';
+export type Page = 'landing' | 'auth' | 'dashboard' | 'ads' | 'withdraw' | 'profile' | 'admin' | 'referrals' | 'settings' | 'security' | 'notifications' | 'vip' | 'analytics' | 'support' | 'features';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, user }: { children: React.ReactNode; user: User | null }) => {
@@ -196,6 +197,9 @@ const AppContent = () => {
       case 'support':
         navigate('/support');
         break;
+      case 'features':
+        navigate('/features');
+        break;
     }
   }, [navigate]);
 
@@ -340,6 +344,8 @@ const AppContent = () => {
         return 'analytics';
       case '/support':
         return 'support';
+      case '/features':
+        return 'features';
       default:
         return 'landing';
     }
@@ -360,11 +366,14 @@ const AppContent = () => {
     try {
         console.log('App initialization started');
         
-      // Create default admin account if it doesn't exist
-      userStorage.createDefaultAdmin();
+      // Only create admin account if no users exist (first time setup)
+      if (userStorage.getUserCount() === 0) {
+        userStorage.createDefaultAdmin();
+        console.log('Created default admin account (first time setup)');
+      }
       
-        // Ensure ballen user exists with proper balance
-        userStorage.ensureBallenUser();
+      // Remove automatic test user creation - new users should start with real accounts
+      // userStorage.ensureBallenUser();
         
         // Try to get current user from localStorage
       const savedUser = userStorage.getCurrentUser();
@@ -418,8 +427,11 @@ const AppContent = () => {
             if (userStorage.restoreFromBackup()) {
               console.log('Successfully restored from backup');
               // Retry initialization after backup restore
-            userStorage.createDefaultAdmin();
-              userStorage.ensureBallenUser();
+              // Only create admin if no users exist after restore
+              if (userStorage.getUserCount() === 0) {
+                userStorage.createDefaultAdmin();
+              }
+              // userStorage.ensureBallenUser();
             const savedUser = userStorage.getCurrentUser();
             if (savedUser) {
                 const isValid = userStorage.validateCurrentUser();
@@ -459,8 +471,11 @@ const AppContent = () => {
         )) {
           console.log('Critical storage error detected, clearing data...');
           userStorage.clearAllData();
-          userStorage.createDefaultAdmin();
-            userStorage.ensureBallenUser();
+          // Only create admin if no users exist after clearing
+          if (userStorage.getUserCount() === 0) {
+            userStorage.createDefaultAdmin();
+          }
+          // userStorage.ensureBallenUser();
         } else {
           console.log('Non-critical error, preserving user data');
         }
@@ -694,6 +709,7 @@ const AppContent = () => {
             } 
           />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

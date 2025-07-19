@@ -51,11 +51,11 @@ export const ReferralPage: React.FC<ReferralPageProps> = ({ onBack }) => {
 
   const shareReferralCode = () => {
     const referralLink = `${window.location.origin}?ref=${currentUser?.id}`;
-    const shareText = `Join CryptoRewards and start earning USDT! Use my referral link: ${referralLink}`;
+    const shareText = `Join AdMoney and start earning USDT! Use my referral link: ${referralLink}`;
     
     if (navigator.share) {
       navigator.share({
-        title: 'Join CryptoRewards',
+        title: 'Join AdMoney',
         text: shareText,
         url: referralLink
       });
