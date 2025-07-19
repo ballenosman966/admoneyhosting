@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Header } from './components/Header';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
@@ -8,11 +8,8 @@ import { Dashboard } from './components/Dashboard';
 import { AdViewer } from './components/AdViewer';
 import { WithdrawPage } from './components/WithdrawPage';
 import { ProfilePage } from './components/ProfilePage';
-import { AdminPanel } from './components/AdminPanel';
 import { ReferralPage } from './components/ReferralPage';
 import { SettingsPage } from './components/SettingsPage';
-import { SecurityPage } from './components/SecurityPage';
-import { NotificationsPage } from './components/NotificationsPage';
 import { VIPPage } from './components/VIPPage';
 import { userStorage, User } from './utils/userStorage';
 import { AdminLoginPage } from './components/AdminLoginPage';
@@ -22,10 +19,7 @@ import NotificationSettings from './components/NotificationSettings';
 import TwoFactorAuth from './components/TwoFactorAuth';
 import KYCVerification from './components/KYCVerification';
 import AdminAnalytics from './components/AdminAnalytics';
-import TransactionHistory from './components/TransactionHistory';
 import SupportPage from './components/SupportPage';
-import AuthCard from './components/AuthCard';
-import GlassAuthCard from './components/GlassAuthCard';
 import AboutPage from './components/AboutPage';
 
 export type Page = 'landing' | 'auth' | 'dashboard' | 'ads' | 'withdraw' | 'profile' | 'admin' | 'referrals' | 'settings' | 'security' | 'notifications' | 'vip' | 'analytics' | 'support';
@@ -51,6 +45,8 @@ const AdminRoute = ({ children, user }: { children: React.ReactNode; user: User 
 
 // Main App Content
 const AppContent = () => {
+  console.log('AppContent: Component rendering...');
+  
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -65,7 +61,7 @@ const AppContent = () => {
   const shouldShowHeader = currentUser && !isAdminMode && !hideHeaderRoutes.includes(location.pathname);
 
   // Memoize auth handler to prevent unnecessary re-renders
-  const handleAuth = useCallback(async (userData: { email?: string; password: string; username?: string; firstName?: string; lastName?: string; country?: string; referralCode?: string; referrerId?: string }) => {
+  const handleAuth = useCallback(async (userData: { email?: string; password: string; username?: string; firstName?: string; lastName?: string; birthday?: string; country?: string; referralCode?: string; referrerId?: string }) => {
     setIsLoading(true);
     setAuthError(null);
     
@@ -88,6 +84,7 @@ const AppContent = () => {
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
           password: userData.password,
+          birthday: userData.birthday,
           referralCode: userData.referralCode,
           referrerId: userData.referrerId
         });
@@ -702,7 +699,7 @@ const AppContent = () => {
       </main>
 
       {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
+      {/* <PWAInstallPrompt /> */}
 
       {/* Modals */}
       {showNotificationSettings && (
@@ -720,6 +717,12 @@ const AppContent = () => {
 
 // Main App Component
 function App() {
+  console.log('App: Component rendering...');
+  
+  useEffect(() => {
+    console.log('App: Component mounted');
+  }, []);
+  
   return (
     <Router>
       <AppContent />

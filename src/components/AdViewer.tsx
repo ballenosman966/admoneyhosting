@@ -37,7 +37,7 @@ export const AdViewer: React.FC<AdViewerProps> = ({ onNavigate, user, onUserUpda
   const [dailyStats, setDailyStats] = useState({
     adsWatched: 0,
     totalEarned: 0,
-    dailyLimit: 20
+    dailyLimit: 10 // changed from 20 to 10
   });
   const [showReward, setShowReward] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export const AdViewer: React.FC<AdViewerProps> = ({ onNavigate, user, onUserUpda
         adsWatched: user.vipAdProgress.adsWatched,
         totalAdsRequired: user.vipAdProgress.totalAdsRequired,
         dailyReward: user.vipAdProgress.dailyReward,
-        rewardPerAd: user.vipAdProgress.dailyReward / 20
+        rewardPerAd: user.vipAdProgress.dailyReward / 10 // changed from 20 to 10
       });
     }
   }, [isVIP, user.vipAdProgress]);

@@ -105,18 +105,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, onUserUp
 
         {/* Welcome Section */}
         <div
-          className="mt-4 sm:mt-6 lg:mt-8 xl:mt-10 2xl:mt-12 mb-6 sm:mb-8 lg:mb-12 xl:mb-16 2xl:mb-20"
+          className="mt-8 sm:mt-6 lg:mt-8 xl:mt-10 2xl:mt-12 mb-6 sm:mb-8 lg:mb-12 xl:mb-16 2xl:mb-20"
         >
-          <BlurText
-            text={`Welcome back, ${user.displayName || user.username}! 👋`}
-            className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-2 lg:mb-4 xl:mb-6 drop-shadow-lg"
-            animateBy="words"
-            direction="top"
-            delay={80}
-            animationFrom={undefined}
-            animationTo={undefined}
-            onAnimationComplete={undefined}
-          />
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-2 lg:mb-4 xl:mb-6 drop-shadow-lg">
+            {`Welcome back, ${user.displayName || user.username}!`}
+          </h1>
           <p className="text-white/80 text-base sm:text-lg lg:text-xl xl:text-2xl">
             Ready to earn more USDT today?
           </p>
@@ -150,35 +143,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, onUserUp
         >
           {[
             {
-              icon: <Eye className="w-10 h-10 mx-auto mb-2 text-yellow-400 drop-shadow-glow" />,
+              icon: <Eye className="w-12 h-12 mx-auto mb-3 text-yellow-400 drop-shadow-lg shadow-yellow-400/30" />,
               value: stats.adsWatched,
               label: 'Ads Watched',
             },
             {
-              icon: <Calendar className="w-10 h-10 mx-auto mb-2 text-green-400 drop-shadow-glow" />,
+              icon: <Calendar className="w-12 h-12 mx-auto mb-3 text-green-400 drop-shadow-lg shadow-green-400/30" />,
               value: stats.currentStreak,
               label: 'Day Streak',
             },
             {
-              icon: <Users className="w-10 h-10 mx-auto mb-2 text-purple-400 drop-shadow-glow" />,
+              icon: <Users className="w-12 h-12 mx-auto mb-3 text-purple-400 drop-shadow-lg shadow-purple-400/30" />,
               value: stats.referrals,
               label: 'Referrals',
             },
             {
-              icon: <TrendingUp className="w-10 h-10 mx-auto mb-2 text-pink-400 drop-shadow-glow" />,
+              icon: <TrendingUp className="w-12 h-12 mx-auto mb-3 text-pink-400 drop-shadow-lg shadow-pink-400/30" />,
               value: `$${user.referralEarnings.toFixed(2)}`,
               label: 'Referral Earnings',
             },
           ].map((stat, i) => (
             <div
               key={stat.label}
-              className="glass-card border border-white/10 rounded-2xl p-6 text-center hover:scale-105 hover:shadow-2xl transition-transform duration-300 cursor-pointer backdrop-blur-lg"
+              className="glass-card border border-white/20 rounded-2xl p-6 text-center hover:scale-105 hover:shadow-2xl transition-all duration-300 cursor-pointer backdrop-blur-lg shadow-xl shadow-black/20 bg-white/5"
             >
               {stat.icon}
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
+              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-xl shadow-black/50">
                 {stat.value}
               </span>
-              <p className="text-white/70 text-sm mt-1">{stat.label}</p>
+              <p className="text-white/90 text-sm mt-2 font-medium">{stat.label}</p>
             </div>
           ))}
         </div>

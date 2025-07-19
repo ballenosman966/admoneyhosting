@@ -1,20 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { 
   User, 
-  Eye, 
-  EyeOff, 
   Save, 
   Edit3, 
   Camera,
-  Download,
-  Trash2,
   Mail, 
   Smartphone,
-  Globe,
-  Upload,
-  X,
-  Gift
-} from 'lucide-react';
+  Gift,
+  CheckCircle,
+  XCircle,
+  Shield,
+  Copy,
+  Users,
+  DollarSign,
+  Instagram,
+  Twitter,
+  Facebook,
+  Linkedin,
+  Youtube,
+  Clock} from 'lucide-react';
 import type { User as UserType } from '../utils/userStorage';
 import Aurora from './Aurora';
 // Framer Motion removed
@@ -220,205 +224,6 @@ const countryTimezones: { [key: string]: string } = {
 };
 
 // Timezone display names
-const timezoneDisplayNames: { [key: string]: string } = {
-  'UTC': 'UTC (Coordinated Universal Time)',
-  'Asia/Kabul': 'Afghanistan Time (AFT)',
-  'Europe/Tirane': 'Central European Time (CET)',
-  'Africa/Algiers': 'Central European Time (CET)',
-  'Europe/Andorra': 'Central European Time (CET)',
-  'Africa/Luanda': 'West Africa Time (WAT)',
-  'America/Antigua': 'Atlantic Standard Time (AST)',
-  'America/Argentina/Buenos_Aires': 'Argentina Time (ART)',
-  'Asia/Yerevan': 'Armenia Time (AMT)',
-  'Australia/Sydney': 'Australian Eastern Time (AET)',
-  'Europe/Vienna': 'Central European Time (CET)',
-  'Asia/Baku': 'Azerbaijan Time (AZT)',
-  'America/Nassau': 'Eastern Standard Time (EST)',
-  'Asia/Bahrain': 'Arabia Standard Time (AST)',
-  'Asia/Dhaka': 'Bangladesh Time (BST)',
-  'America/Barbados': 'Atlantic Standard Time (AST)',
-  'Europe/Minsk': 'Moscow Time (MSK)',
-  'Europe/Brussels': 'Central European Time (CET)',
-  'America/Belize': 'Central Standard Time (CST)',
-  'Africa/Porto-Novo': 'West Africa Time (WAT)',
-  'Asia/Thimphu': 'Bhutan Time (BTT)',
-  'America/La_Paz': 'Bolivia Time (BOT)',
-  'Europe/Sarajevo': 'Central European Time (CET)',
-  'Africa/Gaborone': 'Central Africa Time (CAT)',
-  'America/Sao_Paulo': 'Brasilia Time (BRT)',
-  'Asia/Brunei': 'Brunei Time (BNT)',
-  'Europe/Sofia': 'Eastern European Time (EET)',
-  'Africa/Ouagadougou': 'Greenwich Mean Time (GMT)',
-  'Africa/Bujumbura': 'Central Africa Time (CAT)',
-  'Atlantic/Cape_Verde': 'Cape Verde Time (CVT)',
-  'Asia/Phnom_Penh': 'Indochina Time (ICT)',
-  'Africa/Douala': 'West Africa Time (WAT)',
-  'America/Toronto': 'Eastern Standard Time (EST)',
-  'Africa/Bangui': 'West Africa Time (WAT)',
-  'Africa/Ndjamena': 'West Africa Time (WAT)',
-  'America/Santiago': 'Chile Time (CLT)',
-  'Asia/Shanghai': 'China Standard Time (CST)',
-  'America/Bogota': 'Colombia Time (COT)',
-  'Indian/Comoro': 'East Africa Time (EAT)',
-  'Africa/Brazzaville': 'West Africa Time (WAT)',
-  'America/Costa_Rica': 'Central Standard Time (CST)',
-  'Europe/Zagreb': 'Central European Time (CET)',
-  'America/Havana': 'Cuba Standard Time (CST)',
-  'Asia/Nicosia': 'Eastern European Time (EET)',
-  'Europe/Prague': 'Central European Time (CET)',
-  'Africa/Kinshasa': 'West Africa Time (WAT)',
-  'Europe/Copenhagen': 'Central European Time (CET)',
-  'Africa/Djibouti': 'East Africa Time (EAT)',
-  'America/Dominica': 'Atlantic Standard Time (AST)',
-  'America/Santo_Domingo': 'Atlantic Standard Time (AST)',
-  'Asia/Dili': 'East Timor Time (TLT)',
-  'America/Guayaquil': 'Ecuador Time (ECT)',
-  'Africa/Cairo': 'Eastern European Time (EET)',
-  'America/El_Salvador': 'Central Standard Time (CST)',
-  'Africa/Malabo': 'West Africa Time (WAT)',
-  'Africa/Asmara': 'East Africa Time (EAT)',
-  'Europe/Tallinn': 'Eastern European Time (EET)',
-  'Africa/Mbabane': 'South Africa Standard Time (SAST)',
-  'Africa/Addis_Ababa': 'East Africa Time (EAT)',
-  'Pacific/Fiji': 'Fiji Time (FJT)',
-  'Europe/Helsinki': 'Eastern European Time (EET)',
-  'Europe/Paris': 'Central European Time (CET)',
-  'Africa/Libreville': 'West Africa Time (WAT)',
-  'Africa/Banjul': 'Greenwich Mean Time (GMT)',
-  'Asia/Tbilisi': 'Georgia Time (GET)',
-  'Europe/Berlin': 'Central European Time (CET)',
-  'Africa/Accra': 'Greenwich Mean Time (GMT)',
-  'Europe/Athens': 'Eastern European Time (EET)',
-  'America/Grenada': 'Atlantic Standard Time (AST)',
-  'America/Guatemala': 'Central Standard Time (CST)',
-  'Africa/Conakry': 'Greenwich Mean Time (GMT)',
-  'Africa/Bissau': 'Greenwich Mean Time (GMT)',
-  'America/Guyana': 'Guyana Time (GYT)',
-  'America/Port-au-Prince': 'Eastern Standard Time (EST)',
-  'America/Tegucigalpa': 'Central Standard Time (CST)',
-  'Europe/Budapest': 'Central European Time (CET)',
-  'Atlantic/Reykjavik': 'Greenwich Mean Time (GMT)',
-  'Asia/Kolkata': 'India Standard Time (IST)',
-  'Asia/Jakarta': 'Western Indonesian Time (WIB)',
-  'Asia/Tehran': 'Iran Standard Time (IRST)',
-  'Asia/Baghdad': 'Arabia Standard Time (AST)',
-  'Europe/Dublin': 'Greenwich Mean Time (GMT)',
-  'Asia/Jerusalem': 'Israel Standard Time (IST)',
-  'Europe/Rome': 'Central European Time (CET)',
-  'Africa/Abidjan': 'Greenwich Mean Time (GMT)',
-  'America/Jamaica': 'Eastern Standard Time (EST)',
-  'Asia/Tokyo': 'Japan Standard Time (JST)',
-  'Asia/Amman': 'Eastern European Time (EET)',
-  'Asia/Almaty': 'Kazakhstan Time (ALMT)',
-  'Africa/Nairobi': 'East Africa Time (EAT)',
-  'Pacific/Tarawa': 'Gilbert Islands Time (GILT)',
-  'Asia/Kuwait': 'Arabia Standard Time (AST)',
-  'Asia/Bishkek': 'Kyrgyzstan Time (KGT)',
-  'Asia/Vientiane': 'Indochina Time (ICT)',
-  'Europe/Riga': 'Eastern European Time (EET)',
-  'Asia/Beirut': 'Eastern European Time (EET)',
-  'Africa/Maseru': 'South Africa Standard Time (SAST)',
-  'Africa/Monrovia': 'Greenwich Mean Time (GMT)',
-  'Africa/Tripoli': 'Eastern European Time (EET)',
-  'Europe/Vaduz': 'Central European Time (CET)',
-  'Europe/Vilnius': 'Eastern European Time (EET)',
-  'Europe/Luxembourg': 'Central European Time (CET)',
-  'Indian/Antananarivo': 'East Africa Time (EAT)',
-  'Africa/Blantyre': 'Central Africa Time (CAT)',
-  'Asia/Kuala_Lumpur': 'Malaysia Time (MYT)',
-  'Indian/Maldives': 'Maldives Time (MVT)',
-  'Africa/Bamako': 'Greenwich Mean Time (GMT)',
-  'Europe/Malta': 'Central European Time (CET)',
-  'Pacific/Majuro': 'Marshall Islands Time (MHT)',
-  'Africa/Nouakchott': 'Greenwich Mean Time (GMT)',
-  'Indian/Mauritius': 'Mauritius Time (MUT)',
-  'America/Mexico_City': 'Central Standard Time (CST)',
-  'Pacific/Pohnpei': 'Ponape Time (PONT)',
-  'Europe/Chisinau': 'Eastern European Time (EET)',
-  'Europe/Monaco': 'Central European Time (CET)',
-  'Asia/Ulaanbaatar': 'Ulaanbaatar Time (ULAT)',
-  'Europe/Podgorica': 'Central European Time (CET)',
-  'Africa/Casablanca': 'Western European Time (WET)',
-  'Africa/Maputo': 'Central Africa Time (CAT)',
-  'Asia/Yangon': 'Myanmar Time (MMT)',
-  'Africa/Windhoek': 'Central Africa Time (CAT)',
-  'Pacific/Nauru': 'Nauru Time (NRT)',
-  'Asia/Kathmandu': 'Nepal Time (NPT)',
-  'Europe/Amsterdam': 'Central European Time (CET)',
-  'Pacific/Auckland': 'New Zealand Standard Time (NZST)',
-  'America/Managua': 'Central Standard Time (CST)',
-  'Africa/Niamey': 'West Africa Time (WAT)',
-  'Africa/Lagos': 'West Africa Time (WAT)',
-  'Asia/Pyongyang': 'Korea Standard Time (KST)',
-  'Europe/Skopje': 'Central European Time (CET)',
-  'Europe/Oslo': 'Central European Time (CET)',
-  'Asia/Muscat': 'Gulf Standard Time (GST)',
-  'Asia/Karachi': 'Pakistan Standard Time (PKT)',
-  'Pacific/Palau': 'Palau Time (PWT)',
-  'Asia/Gaza': 'Eastern European Time (EET)',
-  'America/Panama': 'Eastern Standard Time (EST)',
-  'Pacific/Port_Moresby': 'Papua New Guinea Time (PGT)',
-  'America/Asuncion': 'Paraguay Time (PYT)',
-  'America/Lima': 'Peru Time (PET)',
-  'Asia/Manila': 'Philippine Time (PHT)',
-  'Europe/Warsaw': 'Central European Time (CET)',
-  'Europe/Lisbon': 'Western European Time (WET)',
-  'Asia/Qatar': 'Arabia Standard Time (AST)',
-  'Europe/Bucharest': 'Eastern European Time (EET)',
-  'Europe/Moscow': 'Moscow Time (MSK)',
-  'Africa/Kigali': 'Central Africa Time (CAT)',
-  'America/St_Kitts': 'Atlantic Standard Time (AST)',
-  'America/St_Lucia': 'Atlantic Standard Time (AST)',
-  'America/St_Vincent': 'Atlantic Standard Time (AST)',
-  'Pacific/Apia': 'Samoa Standard Time (SST)',
-  'Europe/San_Marino': 'Central European Time (CET)',
-  'Africa/Sao_Tome': 'Greenwich Mean Time (GMT)',
-  'Asia/Riyadh': 'Arabia Standard Time (AST)',
-  'Africa/Dakar': 'Greenwich Mean Time (GMT)',
-  'Europe/Belgrade': 'Central European Time (CET)',
-  'Indian/Mahe': 'Seychelles Time (SCT)',
-  'Africa/Freetown': 'Greenwich Mean Time (GMT)',
-  'Asia/Singapore': 'Singapore Time (SGT)',
-  'Europe/Bratislava': 'Central European Time (CET)',
-  'Europe/Ljubljana': 'Central European Time (CET)',
-  'Pacific/Guadalcanal': 'Solomon Islands Time (SBT)',
-  'Africa/Mogadishu': 'East Africa Time (EAT)',
-  'Africa/Johannesburg': 'South Africa Standard Time (SAST)',
-  'Asia/Seoul': 'Korea Standard Time (KST)',
-  'Africa/Juba': 'East Africa Time (EAT)',
-  'Europe/Madrid': 'Central European Time (CET)',
-  'Asia/Colombo': 'Sri Lanka Time (SLT)',
-  'Africa/Khartoum': 'Central Africa Time (CAT)',
-  'America/Paramaribo': 'Suriname Time (SRT)',
-  'Europe/Stockholm': 'Central European Time (CET)',
-  'Europe/Zurich': 'Central European Time (CET)',
-  'Asia/Damascus': 'Eastern European Time (EET)',
-  'Asia/Taipei': 'Taiwan Time (TWT)',
-  'Asia/Dushanbe': 'Tajikistan Time (TJT)',
-  'Africa/Dar_es_Salaam': 'East Africa Time (EAT)',
-  'Asia/Bangkok': 'Indochina Time (ICT)',
-  'Africa/Lome': 'Greenwich Mean Time (GMT)',
-  'Pacific/Tongatapu': 'Tonga Time (TOT)',
-  'America/Port_of_Spain': 'Atlantic Standard Time (AST)',
-  'Africa/Tunis': 'Central European Time (CET)',
-  'Europe/Istanbul': 'Eastern European Time (EET)',
-  'Asia/Ashgabat': 'Turkmenistan Time (TMT)',
-  'Pacific/Funafuti': 'Tuvalu Time (TVT)',
-  'Africa/Kampala': 'East Africa Time (EAT)',
-  'Europe/Kiev': 'Eastern European Time (EET)',
-  'Asia/Dubai': 'Gulf Standard Time (GST)',
-  'Europe/London': 'Greenwich Mean Time (GMT)',
-  'America/New_York': 'Eastern Standard Time (EST)',
-  'America/Montevideo': 'Uruguay Time (UYT)',
-  'Asia/Tashkent': 'Uzbekistan Time (UZT)',
-  'Pacific/Efate': 'Vanuatu Time (VUT)',
-  'Europe/Vatican': 'Central European Time (CET)',
-  'America/Caracas': 'Venezuela Time (VET)',
-  'Asia/Ho_Chi_Minh': 'Indochina Time (ICT)',
-  'Asia/Aden': 'Arabia Standard Time (AST)',
-  'Africa/Lusaka': 'Central Africa Time (CAT)',
-  'Africa/Harare': 'Central Africa Time (CAT)'
-};
 
 interface ProfilePageProps {
   user: UserType;
@@ -432,6 +237,41 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
   const [showImageUpload, setShowImageUpload] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // New state for verification and settings
+  const [verificationStatus, setVerificationStatus] = useState({
+    emailVerified: user.isEmailVerified || false,
+    phoneVerified: user.isPhoneVerified || false,
+    kycVerified: user.kycData?.status === 'approved' || false,
+    kycStatus: user.kycData?.status || 'not_submitted' // not_submitted, pending, approved, rejected
+  });
+  
+  const [privacySettings, setPrivacySettings] = useState({
+    profileVisibility: user.profileVisibility || 'public', // public, private, friends
+    showEmail: user.showEmail || false,
+    showPhone: user.showPhone || false,
+    showReferralStats: user.showReferralStats || true
+  });
+  
+  const [socialLinks, setSocialLinks] = useState({
+    instagram: user.socialLinks?.instagram || '',
+    twitter: user.socialLinks?.twitter || '',
+    facebook: user.socialLinks?.facebook || '',
+    linkedin: user.socialLinks?.linkedin || '',
+    youtube: user.socialLinks?.youtube || ''
+  });
+  
+  const [referralStats, setReferralStats] = useState({
+    totalReferrals: user.referralStats?.totalReferrals || 0,
+    activeReferrals: user.referralStats?.activeReferrals || 0,
+    totalEarnings: user.referralStats?.totalEarnings || 0,
+    pendingEarnings: user.referralStats?.pendingEarnings || 0
+  });
+  
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationType, setVerificationType] = useState<'email' | 'phone' | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
+  
   // Form states
   const [formData, setFormData] = useState({
     username: user.username,
@@ -443,19 +283,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
     phone: user.phone || '',
     country: user.country || '',
     timezone: user.timezone || 'UTC',
-    language: user.language || 'en'
+    language: user.language || 'en',
+    birthday: user.birthday || ''
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Automatically set timezone when country is selected
-    if (field === 'country' && value && countryTimezones[value]) {
-      const timezone = countryTimezones[value];
-      console.log('Setting timezone for country:', value, 'to:', timezone);
-      setFormData(prev => ({ ...prev, timezone }));
-    }
-  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -482,10 +313,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
     }
   };
 
-  const handleRemoveImage = () => {
-    setProfileImage(null);
-    setShowImageUpload(false);
-  };
 
   const handleSaveProfile = () => {
     const updatedUser = {
@@ -500,6 +327,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
       country: formData.country,
       timezone: formData.timezone,
       language: formData.language,
+      birthday: formData.birthday,
       profileImage: profileImage || undefined
     };
     
@@ -507,26 +335,84 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
     setIsEditing(false);
   };
 
-  const exportUserData = () => {
-    const dataStr = JSON.stringify(user, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ad-money-data-${user.username}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+
+
+
+  // Verification functions
+  const sendVerificationCode = (type: 'email' | 'phone') => {
+    setVerificationType(type);
+    setShowVerificationModal(true);
+    // Simulate sending verification code
+    setTimeout(() => {
+      alert(`${type === 'email' ? 'Email' : 'SMS'} verification code sent! Check your ${type === 'email' ? 'email' : 'phone'}.`);
+    }, 1000);
   };
 
-  const deleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      // In a real app, you'd call backend API
-      alert('Account deletion request submitted. You will receive a confirmation email.');
+  const verifyCode = () => {
+    if (verificationCode.length === 6) {
+      // Simulate verification
+      if (verificationType === 'email') {
+        setVerificationStatus(prev => ({ ...prev, emailVerified: true }));
+        onUserUpdate({ ...user, isEmailVerified: true });
+      } else if (verificationType === 'phone') {
+        setVerificationStatus(prev => ({ ...prev, phoneVerified: true }));
+        onUserUpdate({ ...user, isPhoneVerified: true });
+      }
+      setShowVerificationModal(false);
+      setVerificationCode('');
+      setVerificationType(null);
+      alert(`${verificationType === 'email' ? 'Email' : 'Phone'} verified successfully!`);
+    } else {
+      alert('Please enter a valid 6-digit verification code');
     }
   };
 
-  const handleReferralClick = () => {
-    navigate('/referrals');
+  const copyReferralCode = async () => {
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(user.referralCode);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      } else {
+        // Fallback for older browsers or non-HTTPS
+        const textArea = document.createElement('textarea');
+        textArea.value = user.referralCode;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+        } catch (err) {
+          console.error('Failed to copy: ', err);
+          // Show error message to user
+          alert('Failed to copy referral code. Please copy it manually: ' + user.referralCode);
+        }
+        
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      // Show error message to user
+      alert('Failed to copy referral code. Please copy it manually: ' + user.referralCode);
+    }
+  };
+
+  const updatePrivacySettings = (setting: string, value: any) => {
+    setPrivacySettings(prev => ({ ...prev, [setting]: value }));
+    onUserUpdate({ ...user, [setting]: value });
+  };
+
+  const updateSocialLinks = (platform: string, value: string) => {
+    setSocialLinks(prev => ({ ...prev, [platform]: value }));
+    const updatedSocialLinks = { ...socialLinks, [platform]: value };
+    onUserUpdate({ ...user, socialLinks: updatedSocialLinks });
   };
 
   // Get current time in user's timezone
@@ -550,7 +436,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
     }
   };
 
-  const currentTimeInTimezone = getCurrentTimeInTimezone();
 
   return (
     <div className="relative min-h-screen w-full max-w-full overflow-x-hidden">
@@ -645,6 +530,48 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
               
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
+              <label className="block text-white/90 font-medium mb-2">First Name</label>
+                  <input
+                    type="text"
+                      value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      disabled={!isEditing}
+                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
+                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                }`}
+                      placeholder="Enter first name"
+                    />
+          </div>
+
+                  <div>
+              <label className="block text-white/90 font-medium mb-2">Last Name</label>
+                  <input
+                    type="text"
+                      value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      disabled={!isEditing}
+                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
+                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                }`}
+                      placeholder="Enter last name"
+                    />
+          </div>
+
+                  <div>
+              <label className="block text-white/90 font-medium mb-2">Username</label>
+                  <input
+                    type="text"
+                      value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      disabled={!isEditing}
+                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
+                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                }`}
+                      placeholder="Enter username"
+                    />
+          </div>
+
+                  <div>
               <label className="block text-white/90 font-medium mb-2">Display Name</label>
                   <input
                     type="text"
@@ -669,6 +596,20 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                   isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                 }`}
                       placeholder="Enter email"
+                    />
+                  </div>
+
+                  <div>
+              <label className="block text-white/90 font-medium mb-2">Birthday</label>
+                    <input
+                      type="date"
+                      value={formData.birthday}
+                onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                      disabled={!isEditing}
+                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
+                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                }`}
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
 
@@ -721,6 +662,364 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                 </div>
           {/* Remove the old button group from the bottom of the form */}
         </div>
+
+        {/* Verification Status Section */}
+        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+            Verification Status
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Email Verification */}
+            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-6 h-6 text-blue-400" />
+                  <span className="text-white font-semibold">Email</span>
+                </div>
+                {verificationStatus.emailVerified ? (
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-400" />
+                )}
+              </div>
+              <p className="text-white/70 text-sm mb-4">
+                {verificationStatus.emailVerified ? 'Email verified successfully' : 'Email not verified'}
+              </p>
+              {!verificationStatus.emailVerified && (
+                <button
+                  onClick={() => sendVerificationCode('email')}
+                  className="w-full px-4 py-2 bg-gradient-to-r from-blue-400 to-purple-400 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 transition-colors"
+                >
+                  Verify Email
+                </button>
+              )}
+            </div>
+
+            {/* Phone Verification */}
+            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Smartphone className="w-6 h-6 text-green-400" />
+                  <span className="text-white font-semibold">Phone</span>
+                </div>
+                {verificationStatus.phoneVerified ? (
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-400" />
+                )}
+              </div>
+              <p className="text-white/70 text-sm mb-4">
+                {verificationStatus.phoneVerified ? 'Phone verified successfully' : 'Phone not verified'}
+              </p>
+              {!verificationStatus.phoneVerified && (
+                <button
+                  onClick={() => sendVerificationCode('phone')}
+                  className="w-full px-4 py-2 bg-gradient-to-r from-green-400 to-teal-400 text-white rounded-lg hover:from-green-500 hover:to-teal-500 transition-colors"
+                >
+                  Verify Phone
+                </button>
+              )}
+            </div>
+
+            {/* KYC Verification */}
+            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Shield className="w-6 h-6 text-purple-400" />
+                  <span className="text-white font-semibold">KYC</span>
+                </div>
+                {verificationStatus.kycVerified ? (
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                ) : verificationStatus.kycStatus === 'pending' ? (
+                  <Clock className="w-6 h-6 text-yellow-400" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-400" />
+                )}
+              </div>
+              <p className="text-white/70 text-sm mb-4">
+                {verificationStatus.kycVerified ? 'KYC approved' : 
+                 verificationStatus.kycStatus === 'pending' ? 'KYC under review' :
+                 verificationStatus.kycStatus === 'rejected' ? 'KYC rejected' : 'KYC not submitted'}
+              </p>
+              {verificationStatus.kycStatus === 'not_submitted' && (
+                <button
+                  onClick={() => navigate('/kyc')}
+                  className="w-full px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors"
+                >
+                  Submit KYC
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Code Section */}
+        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+            Referral Code
+          </h2>
+          
+          <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <Gift className="w-6 h-6 text-yellow-400" />
+                <span className="text-white font-semibold">Your Referral Code</span>
+              </div>
+              <button
+                onClick={copyReferralCode}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-black rounded-lg hover:from-yellow-500 hover:to-orange-500 transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+                <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
+              </button>
+            </div>
+            
+            <div className="bg-white/10 border border-white/20 rounded-lg p-4 mb-4">
+              <code className="text-2xl font-mono text-white font-bold tracking-wider">
+                {user.referralCode}
+              </code>
+            </div>
+            
+            <p className="text-white/70 text-sm">
+              Share this code with friends to earn rewards when they join!
+            </p>
+          </div>
+        </div>
+
+        {/* Referral Statistics Section */}
+        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+            Referral Statistics
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
+              <Users className="w-8 h-8 text-blue-400 mx-auto mb-3" />
+              <div className="text-2xl font-bold text-white mb-1">{referralStats.totalReferrals}</div>
+              <div className="text-white/70 text-sm">Total Referrals</div>
+            </div>
+            
+            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
+              <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
+              <div className="text-2xl font-bold text-white mb-1">{referralStats.activeReferrals}</div>
+              <div className="text-white/70 text-sm">Active Referrals</div>
+            </div>
+            
+            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
+              <DollarSign className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
+              <div className="text-2xl font-bold text-white mb-1">${referralStats.totalEarnings.toFixed(2)}</div>
+              <div className="text-white/70 text-sm">Total Earnings</div>
+            </div>
+            
+            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
+              <Clock className="w-8 h-8 text-orange-400 mx-auto mb-3" />
+              <div className="text-2xl font-bold text-white mb-1">${referralStats.pendingEarnings.toFixed(2)}</div>
+              <div className="text-white/70 text-sm">Pending Earnings</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Privacy Settings Section */}
+        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+            Privacy Settings
+          </h2>
+          
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
+              <div>
+                <h3 className="text-white font-semibold mb-1">Profile Visibility</h3>
+                <p className="text-white/70 text-sm">Control who can see your profile</p>
+              </div>
+              <select
+                value={privacySettings.profileVisibility}
+                onChange={(e) => updatePrivacySettings('profileVisibility', e.target.value)}
+                className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50"
+              >
+                <option value="public">Public</option>
+                <option value="friends">Friends Only</option>
+                <option value="private">Private</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
+              <div>
+                <h3 className="text-white font-semibold mb-1">Show Email</h3>
+                <p className="text-white/70 text-sm">Display email on public profile</p>
+              </div>
+              <button
+                onClick={() => updatePrivacySettings('showEmail', !privacySettings.showEmail)}
+                className={`w-12 h-6 rounded-full transition-colors ${
+                  privacySettings.showEmail 
+                    ? 'bg-gradient-to-r from-green-400 to-teal-400' 
+                    : 'bg-white/20'
+                }`}
+              >
+                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
+                  privacySettings.showEmail ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
+              <div>
+                <h3 className="text-white font-semibold mb-1">Show Phone</h3>
+                <p className="text-white/70 text-sm">Display phone on public profile</p>
+              </div>
+              <button
+                onClick={() => updatePrivacySettings('showPhone', !privacySettings.showPhone)}
+                className={`w-12 h-6 rounded-full transition-colors ${
+                  privacySettings.showPhone 
+                    ? 'bg-gradient-to-r from-green-400 to-teal-400' 
+                    : 'bg-white/20'
+                }`}
+              >
+                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
+                  privacySettings.showPhone ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
+              <div>
+                <h3 className="text-white font-semibold mb-1">Show Referral Stats</h3>
+                <p className="text-white/70 text-sm">Display referral statistics publicly</p>
+              </div>
+              <button
+                onClick={() => updatePrivacySettings('showReferralStats', !privacySettings.showReferralStats)}
+                className={`w-12 h-6 rounded-full transition-colors ${
+                  privacySettings.showReferralStats 
+                    ? 'bg-gradient-to-r from-green-400 to-teal-400' 
+                    : 'bg-white/20'
+                }`}
+              >
+                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
+                  privacySettings.showReferralStats ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Social Media Links Section */}
+        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+            Social Media Links
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
+                <Instagram className="w-5 h-5 text-pink-400" />
+                <span>Instagram</span>
+              </label>
+              <input
+                type="text"
+                value={socialLinks.instagram}
+                onChange={(e) => updateSocialLinks('instagram', e.target.value)}
+                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
+                placeholder="Your Instagram username"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
+                <Twitter className="w-5 h-5 text-blue-400" />
+                <span>Twitter</span>
+              </label>
+              <input
+                type="text"
+                value={socialLinks.twitter}
+                onChange={(e) => updateSocialLinks('twitter', e.target.value)}
+                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
+                placeholder="Your Twitter username"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
+                <Facebook className="w-5 h-5 text-blue-600" />
+                <span>Facebook</span>
+              </label>
+              <input
+                type="text"
+                value={socialLinks.facebook}
+                onChange={(e) => updateSocialLinks('facebook', e.target.value)}
+                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
+                placeholder="Your Facebook profile URL"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
+                <Linkedin className="w-5 h-5 text-blue-500" />
+                <span>LinkedIn</span>
+              </label>
+              <input
+                type="text"
+                value={socialLinks.linkedin}
+                onChange={(e) => updateSocialLinks('linkedin', e.target.value)}
+                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
+                placeholder="Your LinkedIn profile URL"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
+                <Youtube className="w-5 h-5 text-red-500" />
+                <span>YouTube</span>
+              </label>
+              <input
+                type="text"
+                value={socialLinks.youtube}
+                onChange={(e) => updateSocialLinks('youtube', e.target.value)}
+                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
+                placeholder="Your YouTube channel URL"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Verification Modal */}
+        {showVerificationModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg max-w-md w-full">
+              <h3 className="text-xl font-bold text-white mb-4">
+                Verify {verificationType === 'email' ? 'Email' : 'Phone'}
+              </h3>
+              <p className="text-white/70 mb-6">
+                Enter the 6-digit verification code sent to your {verificationType === 'email' ? 'email' : 'phone'}.
+              </p>
+              <input
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10 text-center text-2xl font-mono tracking-widest mb-6"
+                placeholder="000000"
+                maxLength={6}
+              />
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => {
+                    setShowVerificationModal(false);
+                    setVerificationCode('');
+                    setVerificationType(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={verifyCode}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-black rounded-lg hover:from-yellow-500 hover:to-orange-500 transition-colors"
+                >
+                  Verify
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

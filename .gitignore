@@ -7,10 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
+# Build artifacts (unignored below)
+# node_modules
+# dist
 dist-ssr
 *.local
+
+# Include dist/ and node_modules/
+!dist/
+!node_modules/
+
+# Explicitly allow public/
+!public/
 
 # Editor directories and files
 .vscode/*
@@ -22,4 +30,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
 .env

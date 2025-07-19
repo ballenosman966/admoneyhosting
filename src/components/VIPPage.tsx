@@ -44,11 +44,11 @@ const vipTiers: VIPTier[] = [
     id: 1,
     name: "VIP 1",
     price: 50,
-    dailyReward: 0.60,
-    monthlyReward: 18.00,
-    yearlyReward: 219.00,
+    dailyReward: 10.00,
+    monthlyReward: 300.00,
+    yearlyReward: 3650.00,
     features: [
-      "Daily $0.60 reward (20 ads)",
+      "Daily $10.00 reward (10 ads)",
       "Priority support",
       "Exclusive ads",
       "No withdrawal limits"
@@ -63,7 +63,7 @@ const vipTiers: VIPTier[] = [
     monthlyReward: 64.80,
     yearlyReward: 788.40,
     features: [
-      "Daily $2.16 reward (20 ads)",
+      "Daily $2.16 reward (10 ads)",
       "Priority support",
       "Exclusive ads",
       "No withdrawal limits",
@@ -79,7 +79,7 @@ const vipTiers: VIPTier[] = [
     monthlyReward: 154.80,
     yearlyReward: 1883.40,
     features: [
-      "Daily $5.16 reward (20 ads)",
+      "Daily $5.16 reward (10 ads)",
       "Priority support",
       "Exclusive ads",
       "No withdrawal limits",
@@ -96,7 +96,7 @@ const vipTiers: VIPTier[] = [
     monthlyReward: 214.80,
     yearlyReward: 2613.40,
     features: [
-      "Daily $7.16 reward (20 ads)",
+      "Daily $7.16 reward (10 ads)",
       "Priority support",
       "Exclusive ads",
       "No withdrawal limits",
@@ -114,7 +114,7 @@ const vipTiers: VIPTier[] = [
     monthlyReward: 335.70,
     yearlyReward: 4084.35,
     features: [
-      "Daily $11.19 reward (20 ads)",
+      "Daily $11.19 reward (10 ads)",
       "Priority support",
       "Exclusive ads",
       "No withdrawal limits",
@@ -133,7 +133,7 @@ const vipTiers: VIPTier[] = [
     monthlyReward: 636.60,
     yearlyReward: 7745.30,
     features: [
-      "Daily $21.22 reward (20 ads)",
+      "Daily $21.22 reward (10 ads)",
       "Priority support",
       "Exclusive ads",
       "No withdrawal limits",
@@ -153,7 +153,7 @@ const vipTiers: VIPTier[] = [
     monthlyReward: 1425.60,
     yearlyReward: 17344.80,
     features: [
-      "Daily $47.52 reward (20 ads)",
+      "Daily $47.52 reward (10 ads)",
       "Priority support",
       "Exclusive ads",
       "No withdrawal limits",
@@ -183,6 +183,11 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
   const userVIPTier = vipTiers.find(tier => tier.id === user.vipTier);
   // Find the latest active VIP subscription record for the current user:
   const latestVIPSub = user.subscriptionHistory?.filter(sub => sub.type === 'vip' && sub.status === 'active').slice(-1)[0];
+
+  // Clean up subscription data on component mount
+  useEffect(() => {
+    userStorage.cleanupSubscriptionData();
+  }, []);
 
   const handleSubscribe = (tier: VIPTier) => {
     // Check if user has an active subscription
@@ -543,7 +548,7 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
             {vipTiers.map((tier, index) => (
               <div
                 key={tier.id}
-                className={`relative p-6 rounded-2xl border transition-all duration-300 cursor-pointer hover:scale-105 ${
+                className={`relative p-6 rounded-2xl border transition-all duration-300 cursor-pointer hover:scale-105 flex flex-col h-full ${
                   userVIPTier?.id === tier.id
                     ? 'glass-card border-purple-400/50 shadow-2xl'
                     : 'bg-white/10 border-white/20 hover:bg-white/15'
@@ -555,7 +560,7 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
         </div>
       )}
 
-                <div className="text-center">
+                <div className="text-center flex-1">
                   <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                     <Crown className="w-8 h-8 text-white" />
                   </div>
@@ -579,65 +584,49 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
                     <p className="text-white/60 text-sm">per month</p>
                   </div>
                 </div>
-                {userVIPTier && tier.id > userVIPTier.id && (
-                  <button
-                    className="glass-card border border-blue-400/30 text-blue-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-blue-400/10 transition"
-                    onClick={() => handleUpgradeSubscription(tier)}
-                    disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
-                  >
-                    Upgrade to {tier.name}
-                  </button>
-                )}
-                {userVIPTier && tier.id < userVIPTier.id && (
-                  <button
-                    className="glass-card border border-red-400/30 text-red-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-400/10 transition"
-                    onClick={() => handleUpgradeSubscription(tier)}
-                    disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
-                  >
-                    Downgrade to {tier.name}
-                  </button>
-                )}
-                {userVIPTier?.id === tier.id && (
-                  <button
-                    className="glass-card border border-green-400/30 text-green-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-green-400/10 transition"
-                    disabled
-                  >
-                    Current Plan
-                  </button>
-                )}
+                <div className="mt-auto pt-4">
+                  {!userVIPTier && (
+                    <button
+                      className="glass-card border border-purple-400/30 text-purple-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-purple-400/10 transition w-full"
+                      onClick={() => handleSubscribe(tier)}
+                      disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
+                    >
+                      Subscribe Now
+                    </button>
+                  )}
+                  {userVIPTier && tier.id > userVIPTier.id && (
+                    <button
+                      className="glass-card border border-blue-400/30 text-blue-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-blue-400/10 transition w-full"
+                      onClick={() => handleUpgradeSubscription(tier)}
+                      disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
+                    >
+                      Upgrade to {tier.name}
+                    </button>
+                  )}
+                  {userVIPTier && tier.id < userVIPTier.id && (
+                    <button
+                      className="glass-card border border-red-400/30 text-red-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-400/10 transition w-full"
+                      onClick={() => handleUpgradeSubscription(tier)}
+                      disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
+                    >
+                      Downgrade to {tier.name}
+                    </button>
+                  )}
+                  {userVIPTier?.id === tier.id && (
+                    <button
+                      className="glass-card border border-green-400/30 text-green-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-green-400/10 transition w-full"
+                      disabled
+                    >
+                      Current Plan
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* VIP Benefits */}
-        <div
-          className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg"
-        >
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent mb-6">
-            VIP Benefits
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: DollarSign, title: 'Higher Rewards', desc: 'Earn more USDT per ad watched' },
-              { icon: Zap, title: 'Priority Support', desc: 'Get help faster with VIP support' },
-              { icon: Gift, title: 'Exclusive Bonuses', desc: 'Special rewards and promotions' },
-              { icon: Shield, title: 'Enhanced Security', desc: 'Advanced account protection' },
-              { icon: TrendingUp, title: 'Better Analytics', desc: 'Detailed earning insights' },
-              { icon: Users, title: 'VIP Community', desc: 'Access to exclusive VIP groups' }
-            ].map((benefit, index) => (
-              <div
-                key={benefit.title}
-                className="bg-white/10 border border-white/10 rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-200"
-              >
-                <benefit.icon className="w-8 h-8 text-yellow-400 mx-auto mb-3 drop-shadow-glow" />
-                <h3 className="text-white font-semibold mb-2">{benefit.title}</h3>
-                <p className="text-white/70 text-sm">{benefit.desc}</p>
-              </div>
-            ))}
-            </div>
-        </div>
+
       </div>
 
       {/* Confirmation Modal */}
@@ -650,18 +639,18 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
               This will deduct <span className="font-semibold">${selectedTier.price}</span> from your wallet balance.
               Are you sure you want to proceed?
             </p>
-            <div className="flex gap-3">
+            <div className="flex justify-center gap-3">
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
                 onClick={handleUpgradeCancel}
               >
                 Cancel
               </button>
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition"
-                onClick={handleUpgradeConfirm}
+                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
+                onClick={handleConfirmSubscription}
               >
-                Confirm Upgrade
+                Confirm Subscription
               </button>
             </div>
           </div>
@@ -677,12 +666,14 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
               You have successfully upgraded to the <span className="font-semibold">{purchasedTier.name}</span> VIP plan.
               Your daily reward is now <span className="font-semibold">${purchasedTier.dailyReward}</span>.
             </p>
-            <button
-              className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition"
-              onClick={handleCloseCongratulations}
-            >
-              OK
-            </button>
+            <div className="flex justify-center">
+              <button
+                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[100px]"
+                onClick={handleCloseCongratulations}
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -697,15 +688,15 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
               This will deduct <span className="font-semibold">${upgradeToTier.price}</span> from your wallet balance.
               Are you sure you want to proceed?
             </p>
-            <div className="flex gap-3">
+            <div className="flex justify-center gap-3">
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
                 onClick={() => setShowUpgradeModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
                 onClick={handleConfirmUpgrade}
               >
                 Confirm Upgrade

@@ -343,3 +343,11 @@ select, select option {
   10%,30%,50%,70%,90% { -webkit-transform: translateX(-10px); transform: translateX(-10px); }
   20%,40%,60%,80% { -webkit-transform: translateX(10px); transform: translateX(10px); }
 } 
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadein {
+  animation: fadein 0.5s;
+} 

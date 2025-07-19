@@ -6,24 +6,17 @@ import {
   User, 
   LogOut,
   Coins,
-  Shield,
   Settings,
   Bell,
-  Lock,
-  ChevronDown,
-  Users,
   Crown,
-  X,
   CheckCircle,
   AlertCircle,
   Info,
   Gift,
-  TrendingUp,
-  Link as RouterLink
+  Menu
 } from 'lucide-react';
 import { Page } from '../App';
 import { User as UserType, userStorage, Notification } from '../utils/userStorage';
-import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   currentPage: Page;
@@ -35,9 +28,12 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogout, user }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const settingsRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -76,6 +72,9 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
       }
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
       }
     };
 
@@ -151,17 +150,17 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full max-w-full px-3 sm:px-4 bg-transparent" style={{background: 'transparent'}}>
+    <header className="fixed top-0 left-0 right-0 z-50 w-full max-w-full px-3 sm:px-4 bg-transparent mt-6" style={{background: 'transparent'}}>
       <div className="max-w-full sm:max-w-7xl mx-auto px-0 sm:px-4 bg-transparent" style={{background: 'transparent'}}>
         <div
           className="flex items-center justify-between h-16 min-w-0 w-full px-4"
           style={{
-            background: 'rgba(255, 255, 255, 0.10)',
+            background: 'rgba(255, 255, 255, 0.15)',
             borderRadius: '16px',
-            boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-            backdropFilter: 'blur(6.2px)',
-            WebkitBackdropFilter: 'blur(6.2px)',
-            border: '1px solid rgba(255, 255, 255, 0.10)'
+            boxShadow: '0 4px 30px rgba(0, 0, 0, 0.2)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.20)'
           }}
         >
           {/* Left: Logo and App Name */}
@@ -172,8 +171,8 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
             <span className="text-white font-bold text-lg text-responsive">Ad money</span>
           </div>
 
-          {/* Center: Navigation Tabs */}
-          <nav className="flex-1 flex justify-center items-center">
+          {/* Center: Navigation Tabs - Hidden on mobile, tablet, and iPad Pro */}
+          <nav className="hidden xl:flex flex-1 justify-center items-center">
             <div className="flex space-x-2">
               {navigationItems.map(({ id, label, icon: Icon }) => (
                 <button
@@ -192,12 +191,12 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
             </div>
           </nav>
 
-          {/* Right: About, Balance, Notifications, User, Logout */}
+          {/* Right: Balance, Notifications, Mobile Menu, Logout */}
           <div className="flex items-center space-x-3">
-            {!user && (
-              <Link to="/about" className="text-white/90 hover:text-yellow-300 font-bold px-2">About</Link>
-            )}
+            {/* Balance - Hidden on mobile */}
             <div className="hidden sm:block text-yellow-400 font-semibold text-base px-2">${user.balance.toFixed(2)} <span className="text-white/70 font-normal">USDT</span></div>
+            
+            {/* Notifications */}
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
@@ -277,15 +276,151 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                 </div>
               )}
             </div>
+            
+            {/* Mobile Menu Button */}
+            <div className="xl:hidden relative" ref={mobileMenuRef}>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 hover:bg-white/20"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                <Menu className="w-4 h-4 text-white" />
+              </button>
+              
+              {/* Mobile Menu Dropdown with Beautiful Glassmorphism */}
+              {isMobileMenuOpen && (
+                <div 
+                  className="absolute right-0 mt-2 w-64 lg:w-56 sm:w-48 rounded-xl z-50 overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(88, 28, 135, 0.95) 0%, rgba(147, 51, 234, 0.9) 100%)',
+                    backdropFilter: 'blur(50px)',
+                    WebkitBackdropFilter: 'blur(50px)',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+
+                  
+                  {/* Navigation Items */}
+                  <div className="p-2 space-y-1">
+                    {navigationItems.map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          onNavigate(id as Page);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center space-x-3 lg:space-x-2 px-4 py-4 lg:px-3 lg:py-3 sm:px-2 sm:py-2 rounded-lg transition-all duration-300 font-medium text-base lg:text-sm sm:text-xs ${
+                          currentPage === id
+                            ? 'text-yellow-400'
+                            : 'text-white/90 hover:text-white'
+                        }`}
+                        style={{
+                          background: currentPage === id 
+                            ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.4) 0%, rgba(255, 152, 0, 0.3) 100%)'
+                            : 'rgba(88, 28, 135, 0.8)',
+                          border: currentPage === id 
+                            ? '1px solid rgba(255, 193, 7, 0.6)'
+                            : '1px solid rgba(255, 255, 255, 0.2)',
+                          backdropFilter: 'blur(20px)'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== id) {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%)';
+                            e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== id) {
+                            e.currentTarget.style.background = 'rgba(88, 28, 135, 0.8)';
+                            e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                          }
+                        }}
+                      >
+                        <div 
+                          className={`w-10 h-10 lg:w-8 lg:h-8 sm:w-6 sm:h-6 rounded-md flex items-center justify-center transition-all duration-300 ${
+                            currentPage === id ? 'bg-yellow-400/15' : 'bg-white/08'
+                          }`}
+                          style={{ backdropFilter: 'blur(10px)' }}
+                        >
+                          <Icon className={`w-5 h-5 lg:w-4 lg:h-4 sm:w-3 sm:h-3 ${currentPage === id ? 'text-yellow-400' : 'text-white/80'}`} />
+                        </div>
+                        <span className="font-medium">{label}</span>
+                      </button>
+                    ))}
+                    
+                    {/* Logout Button */}
+                    <div className="pt-2 border-t border-white/15">
+                      <button
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setShowLogoutModal(true);
+                        }}
+                        className="w-full flex items-center space-x-3 lg:space-x-2 px-4 py-4 lg:px-3 lg:py-3 sm:px-2 sm:py-2 rounded-lg transition-all duration-300 font-medium text-base lg:text-sm sm:text-xs text-red-200"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(220, 38, 38, 0.3) 100%)',
+                          border: '1px solid rgba(239, 68, 68, 0.5)',
+                          backdropFilter: 'blur(20px)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.15) 100%)';
+                          e.currentTarget.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(220, 38, 38, 0.3) 100%)';
+                          e.currentTarget.style.border = '1px solid rgba(239, 68, 68, 0.5)';
+                        }}
+                      >
+                        <div className="w-10 h-10 lg:w-8 lg:h-8 sm:w-6 sm:h-6 rounded-md flex items-center justify-center bg-red-500/15" style={{ backdropFilter: 'blur(10px)' }}>
+                          <LogOut className="w-5 h-5 lg:w-4 lg:h-4 sm:w-3 sm:h-3 text-red-300" />
+                        </div>
+                        <span className="font-medium">Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Desktop Logout Button */}
             <button
-              onClick={onLogout}
-              className="px-2 py-1 rounded-lg bg-red-500/20 text-red-300 font-bold hover:bg-red-500/40 hover:text-white transition-colors border border-red-500/30 text-sm"
+              onClick={() => setShowLogoutModal(true)}
+              className="hidden xl:flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-red-500/80 text-white font-bold text-lg shadow hover:bg-red-600 transition-colors border border-red-500/30"
+              style={{ minWidth: '120px' }}
             >
-              <LogOut className="w-3 h-3 inline-block mr-1 align-text-bottom" /> Logout
+              <LogOut className="w-5 h-5" />
+              <span>Logout</span>
             </button>
           </div>
         </div>
       </div>
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="glass-card border border-white/20 rounded-2xl p-8 max-w-sm w-full shadow-2xl backdrop-blur-xl">
+            <h2 className="text-xl font-bold text-white mb-4">Confirm Logout</h2>
+            <p className="text-white/80 mb-6">Are you sure you want to log out?</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition"
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="glass-card border border-red-500/30 bg-red-500/20 text-red-300 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-500/40 hover:text-white transition"
+                onClick={() => { setShowLogoutModal(false); onLogout(); }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

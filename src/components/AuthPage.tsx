@@ -1,23 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  User, 
-  ArrowLeft,
-  CheckCircle,
-  Shield,
-  DollarSign,
-  Loader2,
-  AlertCircle,
-  Info,
-  Gift,
-  MailCheck,
-  XCircle,
-  Globe
-} from 'lucide-react';
+import { Eye, EyeOff, User, ArrowLeft, Loader2, Mail, Globe, Gift, CheckCircle, Info } from 'lucide-react';
 import { userStorage } from '../utils/userStorage';
+import Aurora from './Aurora';
 
 // Country list for dropdown
 const countries = [
@@ -44,7 +28,7 @@ const countries = [
 ].sort();
 
 interface AuthPageProps {
-  onAuth: (userData: { email?: string; password: string; username?: string; firstName?: string; lastName?: string; country?: string; referralCode?: string; referrerId?: string }) => void;
+  onAuth: (userData: { email?: string; password: string; username?: string; firstName?: string; lastName?: string; birthday?: string; country?: string; referralCode?: string; referrerId?: string }) => void;
   onBack: () => void;
   onResetPassword: () => void;
   isLoading: boolean;
@@ -56,48 +40,35 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
+  // Ensure ballen user exists with correct credentials when component mounts
+  useEffect(() => {
+    userStorage.createTestBallenUser();
+  }, []);
+  
   // Get referral ID from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const urlReferrerId = urlParams.get('ref');
   
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
     confirmPassword: '',
-    username: '',
+    email: '',
     firstName: '',
     lastName: '',
+    birthday: '',
     country: '',
     referralCode: '',
     referrerId: urlReferrerId || ''
   });
 
-  // Check if this is the first user (after admin) - make it reactive
-  const [isFirstUserState, setIsFirstUserState] = useState(() => userStorage.isFirstUser());
-  
-  // Update first user state when form data changes
-  useEffect(() => {
-    setIsFirstUserState(userStorage.isFirstUser());
-  }, [formData.username, formData.email]); // Re-check when user starts typing
-
-  // Force refresh first user state when switching between login/signup
-  const handleToggleAuthMode = () => {
-    setIsLogin(!isLogin);
-    setFormData({ email: '', password: '', confirmPassword: '', username: '', firstName: '', lastName: '', country: '', referralCode: '', referrerId: '' });
-    setUsernameValidation({ length: false, characters: false, available: true });
-    setEmailValidation({ format: false, exists: false });
-    // Force refresh first user state
-    setIsFirstUserState(userStorage.isFirstUser());
-  };
-
-  // Username validation
+  // Validation states
   const [usernameValidation, setUsernameValidation] = useState({
     length: false,
     characters: false,
     available: true
   });
 
-  // Email validation
   const [emailValidation, setEmailValidation] = useState({
     format: false,
     exists: false
@@ -133,38 +104,40 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
       [name]: value
     });
 
-    // Validate username in real-time
+    // Validate in real-time
     if (name === 'username' && !isLogin) {
       validateUsername(value);
     }
-
-    // Validate email in real-time
-    if (name === 'email') {
+    if (name === 'email' && !isLogin) {
       validateEmail(value);
     }
+    
+      // Debug referral code validation
+  if (name === 'referralCode' && !isLogin && value) {
+    console.log('Checking referral code:', value);
+    
+    // Ensure all users have referral codes
+    userStorage.getAllUsers();
+    
+    const allUsers = userStorage.getAllUsers();
+    console.log('All users:', allUsers.map(u => ({ username: u.username, referralCode: u.referralCode })));
+    console.log('Available referral codes:', allUsers.map(u => u.referralCode));
+    console.log('Is valid:', userStorage.checkReferralCodeExists(value));
+    
+    // Check if the entered code matches any user's referral code
+    const matchingUser = allUsers.find(u => u.referralCode && u.referralCode.toLowerCase() === value.toLowerCase());
+    if (matchingUser) {
+      console.log('Found matching user:', matchingUser.username, 'with referral code:', matchingUser.referralCode);
+    } else {
+      console.log('No matching user found for referral code:', value);
+    }
+  }
   };
 
-  // Handle form submission
-  const handleSubmit = (userData: { email?: string; password: string; username?: string; firstName?: string; lastName?: string; country?: string; referralCode?: string; referrerId?: string }) => {
-      onAuth(userData);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAuth(formData);
   };
-
-  // Remove admin login logic
-  // const isAdminLogin = formData.username.toLowerCase() === 'mhamad';
-
-  const benefits = [
-    'Earn USDT instantly',
-    'Watch ads from anywhere',
-    'Secure & anonymous',
-    'No personal data required'
-  ];
-
-  const usernameRequirements = [
-    { label: '3-20 characters', met: usernameValidation.length },
-    { label: 'Letters, numbers, and underscores only', met: usernameValidation.characters },
-    { label: 'No spaces or special characters', met: usernameValidation.characters },
-    { label: 'Username is available', met: usernameValidation.available }
-  ];
 
   // Password validation for signup
   const passwordValidation = {
@@ -172,118 +145,158 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
     match: formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-3 sm:px-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" />
-      
-      <div className="relative w-full max-w-sm sm:max-w-md">
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="absolute -top-12 sm:-top-16 left-0 flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-sm sm:text-base">Back to Home</span>
-        </button>
+  const usernameRequirements = [
+    { label: '3-20 characters', met: usernameValidation.length },
+    { label: 'Letters, numbers, underscores only', met: usernameValidation.characters },
+    { label: 'Username available', met: usernameValidation.available }
+  ];
 
-        {/* Auth Card */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 relative">
+      {/* Background */}
+      <Aurora colorStops={["#5227FF", "#7cff67", "#5227FF"]} amplitude={1.2} blend={0.6} />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 opacity-50" />
+      
+      {/* Back Button */}
+      <button
+        onClick={onBack}
+        className="fixed top-6 left-6 z-50 flex items-center space-x-2 px-4 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-md text-white font-semibold shadow hover:bg-white/20 transition-all"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span>Back</span>
+      </button>
+
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto">
+          
+          {/* Tab Switcher */}
+          <div className="flex bg-white/10 rounded-full p-1 mb-6">
+            <button
+              className={`flex-1 py-2 px-4 rounded-full font-bold transition-all ${
+                isLogin 
+                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg' 
+                  : 'text-white/70 hover:text-white'
+              }`}
+              onClick={() => setIsLogin(true)}
+            >
+              Login
+            </button>
+            <button
+              className={`flex-1 py-2 px-4 rounded-full font-bold transition-all ${
+                !isLogin 
+                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg' 
+                  : 'text-white/70 hover:text-white'
+              }`}
+              onClick={() => setIsLogin(false)}
+            >
+              Signup
+            </button>
+          </div>
+
           {/* Header */}
-          <div className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center space-x-2 bg-yellow-400/20 text-yellow-400 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold mb-3 sm:mb-4">
-              <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Start Earning USDT</span>
-            </div>
-            
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-white mb-2">
               {isLogin ? 'Welcome Back' : 'Join CryptoRewards'}
             </h1>
-            <p className="text-white/80 text-sm sm:text-base">
+            <p className="text-white/80 text-sm">
               {isLogin ? 'Sign in to continue earning' : 'Create your account and start earning'}
             </p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
-                <span className="text-red-400 text-xs sm:text-sm">{error}</span>
-              </div>
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+              <p className="text-red-400 text-sm">{error}</p>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={e => { e.preventDefault(); handleSubmit(formData); }} className="space-y-4 sm:space-y-6" autoComplete="off">
-            {/* Hidden fields to trick password managers */}
-            {!isLogin && (
-              <>
-                <input type="text" style={{ display: 'none' }} autoComplete="username" />
-                <input type="password" style={{ display: 'none' }} autoComplete="current-password" />
-              </>
-            )}
-            
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username Field */}
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
+                  placeholder="Enter your username"
+                  required
+                  disabled={isLoading}
+                  minLength={3}
+                  maxLength={20}
+                />
+                <User className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+              </div>
+              
+              {/* Username Requirements - only show for signup */}
+              {!isLogin && formData.username && (
+                <div className="mt-2 p-2 bg-white/5 rounded border border-white/10">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Info className="w-3 h-3 text-blue-400" />
+                    <span className="text-xs font-medium text-white/90">Requirements</span>
+                  </div>
+                  <div className="space-y-1">
+                    {usernameRequirements.map((req, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        {req.met ? (
+                          <CheckCircle className="w-2.5 h-2.5 text-green-400" />
+                        ) : (
+                          <div className="w-2.5 h-2.5 rounded-full border border-white/40" />
+                        )}
+                        <span className={`text-xs ${req.met ? 'text-green-400' : 'text-white/60'}`}>
+                          {req.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Email Field - only for signup */}
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-white/90 mb-2">
-                  Username
+                  Email
                 </label>
                 <div className="relative">
                   <input
-                    type="text"
-                    name="username"
-                    value={formData.username}
+                    type="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full bg-white/10 border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm sm:text-base ${
-                      formData.username ? 
-                        (usernameValidation.length && usernameValidation.characters && usernameValidation.available ? 
+                    className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm ${
+                      formData.email ? 
+                        (emailValidation.format && !emailValidation.exists ? 
                           'border-green-400/50 focus:border-green-400' : 
                           'border-red-400/50 focus:border-red-400'
                         ) : 
                         'border-white/20 focus:border-yellow-400'
                     }`}
-                    placeholder="Choose a username"
+                    placeholder="Enter your email"
                     required={!isLogin}
                     disabled={isLoading}
-                    minLength={3}
-                    maxLength={20}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    data-form-type="other"
                   />
-                  <User className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/50" />
+                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
                 </div>
-                
-                {/* Username Requirements */}
-                {formData.username && (
-                  <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-white/5 rounded-lg border border-white/10">
-                    <div className="flex items-center space-x-2 mb-1 sm:mb-2">
-                      <Info className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
-                      <span className="text-xs sm:text-sm font-medium text-white/90">Username Requirements</span>
-                    </div>
-                    <div className="space-y-1">
-                      {usernameRequirements.map((requirement, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          {requirement.met ? (
-                            <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-400" />
-                          ) : (
-                            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border border-white/40" />
-                          )}
-                          <span className={`text-xs ${requirement.met ? 'text-green-400' : 'text-white/60'}`}>
-                            {requirement.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                {formData.email && !emailValidation.format && (
+                  <p className="text-xs text-red-400 mt-1">Please enter a valid email</p>
+                )}
+                {formData.email && emailValidation.format && emailValidation.exists && (
+                  <p className="text-xs text-red-400 mt-1">Email already exists</p>
                 )}
               </div>
             )}
 
+            {/* Name Fields - only for signup */}
             {!isLogin && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-white/90 mb-2">
                     First Name
@@ -293,14 +306,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
                     placeholder="First name"
                     required={!isLogin}
                     disabled={isLoading}
-                    autoComplete="given-name"
-                    autoCorrect="off"
-                    autoCapitalize="words"
-                    spellCheck="false"
                   />
                 </div>
                 <div>
@@ -312,19 +321,35 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
                     placeholder="Last name"
                     required={!isLogin}
                     disabled={isLoading}
-                    autoComplete="family-name"
-                    autoCorrect="off"
-                    autoCapitalize="words"
-                    spellCheck="false"
                   />
                 </div>
               </div>
             )}
 
+            {/* Birthday Field - only for signup */}
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-white/90 mb-2">
+                  Birthday
+                </label>
+                <input
+                  type="date"
+                  name="birthday"
+                  value={formData.birthday}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm"
+                  required={!isLogin}
+                  disabled={isLoading}
+                  max={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+            )}
+
+            {/* Country Field - only for signup */}
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-white/90 mb-2">
@@ -335,10 +360,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     name="country"
                     value={formData.country}
                     onChange={handleInputChange}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base appearance-none [&>option:first-child]:text-white/50"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm appearance-none"
                     required={!isLogin}
                     disabled={isLoading}
-                    autoComplete="country"
                   >
                     <option value="" disabled>Select your country</option>
                     {countries.map((country) => (
@@ -347,83 +371,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                       </option>
                     ))}
                   </select>
-                  <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/50 pointer-events-none" />
+                  <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
                 </div>
               </div>
             )}
 
-            {isLogin ? (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Username
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base"
-                    placeholder="Enter your username"
-                    required
-                    disabled={isLoading}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    data-form-type="other"
-                  />
-                  <User className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/50" />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={`w-full bg-white/10 border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm sm:text-base ${
-                      formData.email ? 
-                        (emailValidation.format && !emailValidation.exists ? 
-                          'border-green-400/50 focus:border-green-400' : 
-                          'border-red-400/50 focus:border-red-400'
-                        ) : 
-                        'border-white/20 focus:border-yellow-400'
-                    }`}
-                    placeholder="Enter your email"
-                    required
-                    disabled={isLoading}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    data-form-type="other"
-                  />
-                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/50" />
-                </div>
-                
-                {/* Email Validation Messages */}
-                {formData.email && (
-                  <div className="mt-1 sm:mt-2">
-                    {!emailValidation.format && (
-                      <p className="text-xs text-red-400">Please enter a valid email address</p>
-                    )}
-                    {emailValidation.format && emailValidation.exists && !isLogin && (
-                      <p className="text-xs text-red-400">An account with this email already exists</p>
-                    )}
-                    {emailValidation.format && !emailValidation.exists && !isLogin && (
-                      <p className="text-xs text-green-400">Email is available</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
+            {/* Invite Code - only for signup */}
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-white/90 mb-2">
@@ -435,7 +388,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     name="referralCode"
                     value={formData.referralCode}
                     onChange={handleInputChange}
-                    className={`w-full bg-white/10 border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm sm:text-base ${
+                    className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all text-sm ${
                       formData.referralCode ? 
                         (userStorage.checkReferralCodeExists(formData.referralCode) ? 
                           'border-green-400/50 focus:border-green-400' : 
@@ -445,38 +398,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     }`}
                     placeholder="Enter invite code (optional)"
                     disabled={isLoading}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    data-form-type="other"
                   />
-                  <Gift className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/50" />
+                  <Gift className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
                 </div>
                 {formData.referralCode && (
-                  <div className="mt-1 sm:mt-2">
-                    {userStorage.checkReferralCodeExists(formData.referralCode) ? (
-                      <p className="text-xs text-green-400">✓ Valid invite code! You'll get a $2 signup bonus</p>
-                    ) : (
-                      <p className="text-xs text-red-400">Invalid invite code</p>
-                    )}
-                  </div>
-                )}
-                {formData.referrerId && (
-                  <div className="mt-1 sm:mt-2">
-                    {userStorage.checkUserIdExists(formData.referrerId) ? (
-                      <p className="text-xs text-green-400">✓ Valid invite link! You'll get a $2 signup bonus</p>
-                    ) : (
-                      <p className="text-xs text-red-400">Invalid invite link</p>
-                    )}
-                  </div>
-                )}
-                {!formData.referralCode && !formData.referrerId && (
-                  <p className="text-xs text-white/60 mt-1 sm:mt-2">No invite code? You can still create an account!</p>
+                  <p className={`text-xs mt-1 ${userStorage.checkReferralCodeExists(formData.referralCode) ? 'text-green-400' : 'text-red-400'}`}>
+                    {userStorage.checkReferralCodeExists(formData.referralCode) ? '✓ Valid invite code!' : 'Invalid invite code'}
+                  </p>
                 )}
               </div>
             )}
 
+            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-white/90 mb-2">
                 Password
@@ -487,7 +420,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`w-full bg-white/10 border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all pr-10 sm:pr-12 text-sm sm:text-base ${
+                  className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all pr-12 text-sm ${
                     formData.password ? 
                       (passwordValidation.length ? 
                         'border-green-400/50 focus:border-green-400' : 
@@ -499,13 +432,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                   required
                   disabled={isLoading}
                   minLength={6}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  data-form-type="other"
-                  data-lpignore="true"
-                  data-1p-ignore="true"
                 />
                 <button
                   type="button"
@@ -513,7 +439,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
                   disabled={isLoading}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {!isLogin && (
@@ -521,6 +447,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               )}
             </div>
 
+            {/* Confirm Password - only for signup */}
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-white/90 mb-2">
@@ -532,7 +459,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className={`w-full bg-white/10 border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all pr-10 sm:pr-12 text-sm sm:text-base ${
+                    className={`w-full bg-white/10 border rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all pr-12 text-sm ${
                       formData.confirmPassword ? 
                         (passwordValidation.match ? 
                           'border-green-400/50 focus:border-green-400' : 
@@ -543,13 +470,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     placeholder="Confirm your password"
                     required={!isLogin}
                     disabled={isLoading}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    data-form-type="other"
-                    data-lpignore="true"
-                    data-1p-ignore="true"
                   />
                   <button
                     type="button"
@@ -557,7 +477,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
                     disabled={isLoading}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {formData.confirmPassword && !passwordValidation.match && (
@@ -566,16 +486,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               </div>
             )}
 
+            {/* Remember me and Forgot password - only for login */}
             {isLogin && (
               <div className="flex items-center justify-between">
                 <label className="flex items-center space-x-2 text-white/80">
-                  <input type="checkbox" className="rounded border-white/20 bg-white/10 text-yellow-400 focus:ring-yellow-400/50" disabled={isLoading} />
-                  <span className="text-xs sm:text-sm">Remember me</span>
+                  <input type="checkbox" className="rounded border-white/20 bg-white/10 text-yellow-400 focus:ring-yellow-400/50 w-4 h-4" disabled={isLoading} />
+                  <span className="text-sm">Remember me</span>
                 </label>
                 <button 
                   type="button" 
                   onClick={onResetPassword} 
-                  className="text-xs sm:text-sm text-yellow-400 hover:text-yellow-300 transition-colors" 
+                  className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors" 
                   disabled={isLoading}
                 >
                   Forgot password?
@@ -583,57 +504,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               </div>
             )}
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading || (!isLogin && (!usernameValidation.length || !usernameValidation.characters || !usernameValidation.available || !emailValidation.format || emailValidation.exists || !passwordValidation.length || !passwordValidation.match))}
-              className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2 text-sm sm:text-base"
+              className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
             >
-              {isLoading && <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />}
+              {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
               <span>{isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}</span>
             </button>
           </form>
-
-          {/* Toggle Auth Mode */}
-          <div className="mt-4 sm:mt-6 text-center">
-            <p className="text-white/80 text-sm sm:text-base">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  onClick={handleToggleAuthMode}
-                  className="text-yellow-400 hover:text-yellow-300 transition-colors font-semibold"
-                  disabled={isLoading}
-                >
-                  {isLogin ? 'Sign up' : 'Sign in'}
-                </button>
-              </p>
-            </div>
-
-          {/* Benefits */}
-          {!isLogin && (
-            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/20">
-              <h3 className="text-sm font-semibold text-white/90 mb-2 sm:mb-3">Why join CryptoRewards?</h3>
-              <div className="space-y-1.5 sm:space-y-2">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center space-x-2 text-xs sm:text-sm text-white/80">
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
-                    <span>{benefit}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Security Note */}
-          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-white/5 rounded-lg border border-white/10">
-            <div className="flex items-start space-x-2 sm:space-x-3">
-              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs sm:text-sm text-white/80">
-                  Your data is protected with bank-level security. We never share your personal information.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

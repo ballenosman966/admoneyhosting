@@ -584,52 +584,70 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
           </div>
         )}
         {displayedTransactions.map((tx, index) => (
-          <motion.div
-            key={tx.id}
-            className="flex items-center justify-between p-4 bg-white/10 border border-white/10 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform duration-200"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.07 }}
-          >
-            <div className={`p-3 rounded-full shadow-lg ${
-              tx.type === 'ad_earnings' ? 'bg-yellow-400/20' :
-              tx.type === 'referral' ? 'bg-green-500/20' :
-              tx.type === 'withdrawal' ? 'bg-red-500/20' :
-              tx.type === 'deposit' ? 'bg-blue-500/20' :
-              tx.type === 'vip_reward' ? 'bg-purple-500/20' :
-              'bg-gray-500/20'
-            }`}>
-              {tx.type === 'ad_earnings' && <Play className="w-6 h-6 text-yellow-400" />}
-              {tx.type === 'referral' && <Gift className="w-6 h-6 text-green-400" />}
-              {tx.type === 'withdrawal' && <DollarSign className="w-6 h-6 text-red-400" />}
-              {tx.type === 'deposit' && <TrendingUp className="w-6 h-6 text-blue-400" />}
-              {tx.type === 'vip_reward' && <Crown className="w-6 h-6 text-purple-400" />}
-              {!['ad_earnings','referral','withdrawal','deposit','vip_reward'].includes(tx.type) && <Zap className="w-6 h-6 text-gray-400" />}
-            </div>
-            <div className="flex-1 min-w-0 ml-4">
-              <p className="text-white text-base truncate">{tx.description}</p>
-              <p className="text-white/60 text-xs mt-1">{tx.type.replace('_', ' ').toUpperCase()}</p>
-              <p className="text-white/40 text-xs mt-1">{formatDate(tx.timestamp)}</p>
-              {tx.transactionHash && (
-                <p className="text-blue-400 text-xs mt-1 break-all">Hash: {tx.transactionHash}</p>
-              )}
-            </div>
-            <div className="text-right ml-4">
-              <span className={`font-bold text-base ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} USDT
-              </span>
-              <div>
-                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${getStatusColor(tx.status)}`}>
-                  {tx.status.toUpperCase()}
-                </span>
+          <div key={tx.id} className="relative">
+            <motion.div
+              className={`flex items-center justify-between p-4 bg-white/10 border border-white/10 rounded-2xl shadow-lg hover:scale-[1.02] transition-all duration-200 ${
+                !isExpanded && index === 2 ? 'blur-sm opacity-60' : ''
+              }`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.07 }}
+            >
+              <div className={`p-3 rounded-full shadow-lg ${
+                tx.type === 'ad_earnings' ? 'bg-yellow-400/20' :
+                tx.type === 'referral' ? 'bg-green-500/20' :
+                tx.type === 'withdrawal' ? 'bg-red-500/20' :
+                tx.type === 'deposit' ? 'bg-blue-500/20' :
+                tx.type === 'vip_reward' ? 'bg-purple-500/20' :
+                'bg-gray-500/20'
+              }`}>
+                {tx.type === 'ad_earnings' && <Play className="w-6 h-6 text-yellow-400" />}
+                {tx.type === 'referral' && <Gift className="w-6 h-6 text-green-400" />}
+                {tx.type === 'withdrawal' && <DollarSign className="w-6 h-6 text-red-400" />}
+                {tx.type === 'deposit' && <TrendingUp className="w-6 h-6 text-blue-400" />}
+                {tx.type === 'vip_reward' && <Crown className="w-6 h-6 text-purple-400" />}
+                {!['ad_earnings','referral','withdrawal','deposit','vip_reward'].includes(tx.type) && <Zap className="w-6 h-6 text-gray-400" />}
               </div>
-            </div>
-          </motion.div>
+              <div className="flex-1 min-w-0 ml-4">
+                <p className="text-white text-base truncate">{tx.description}</p>
+                <p className="text-white/60 text-xs mt-1">{tx.type.replace('_', ' ').toUpperCase()}</p>
+                <p className="text-white/40 text-xs mt-1">{formatDate(tx.timestamp)}</p>
+                {tx.transactionHash && (
+                  <p className="text-blue-400 text-xs mt-1 break-all">Hash: {tx.transactionHash}</p>
+                )}
+              </div>
+              <div className="text-right ml-4">
+                <span className={`font-bold text-base ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} USDT
+                </span>
+                <div>
+                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-1 ${getStatusColor(tx.status)}`}>
+                    {tx.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Show All Button Overlay for Third Transaction */}
+            {!isExpanded && index === 2 && hasMoreTransactions && (
+              <div className="absolute inset-0 flex items-center justify-center z-50">
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 hover:border-white/50 transition-all duration-300 shadow-xl shadow-black/20"
+                >
+                  <span>Show All ({filteredTransactions.length})</span>
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
-      {/* Expand/Collapse Button */}
-      {hasMoreTransactions && (
+
+
+      {/* Show Less Button */}
+      {isExpanded && (
         <motion.div
           className="flex justify-center mt-6"
           initial={{ opacity: 0, y: 20 }}
@@ -637,11 +655,11 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-black font-semibold rounded-lg hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 shadow-lg"
+            onClick={() => setIsExpanded(false)}
+            className="flex items-center space-x-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold rounded-lg hover:bg-white/20 transition-all duration-300"
           >
-            <span>{isExpanded ? 'Show Less' : `Show All (${filteredTransactions.length})`}</span>
-            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <span>Show Less</span>
+            <ChevronUp className="w-5 h-5" />
           </button>
         </motion.div>
       )}

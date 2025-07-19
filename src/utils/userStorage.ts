@@ -21,6 +21,7 @@ export interface User {
   country?: string;
   timezone?: string;
   language?: string;
+  birthday?: string; // Date of birth
   profileImage?: string; // Base64 encoded image data
   // Settings fields
   theme?: 'dark' | 'light' | 'auto';
@@ -63,6 +64,28 @@ export interface User {
   // Email verification
   isEmailVerified?: boolean;
   withdrawPasscode?: string; // 4-digit code for withdrawals
+  // Phone verification
+  isPhoneVerified?: boolean;
+  // Privacy settings
+  profileVisibility?: 'public' | 'private' | 'friends';
+  showEmail?: boolean;
+  showPhone?: boolean;
+  showReferralStats?: boolean;
+  // Social media links
+  socialLinks?: {
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+    linkedin?: string;
+    youtube?: string;
+  };
+  // Referral statistics
+  referralStats?: {
+    totalReferrals: number;
+    activeReferrals: number;
+    totalEarnings: number;
+    pendingEarnings: number;
+  };
   // Activity log
   activityLog?: ActivityRecord[];
   // KYC verification
@@ -150,8 +173,12 @@ class UserStorage {
   private readonly CACHE_DURATION = 10000; // 10 seconds cache (increased from 5)
 
   constructor() {
-    // Migrate data from old port-specific storage to new persistent storage
-    this.migrateDataFromOldStorage();
+    try {
+      // Migrate data from old port-specific storage to new persistent storage
+      this.migrateDataFromOldStorage();
+    } catch (error) {
+      console.error('UserStorage constructor error:', error);
+    }
   }
 
   // Migrate data from old port-specific storage to persistent storage
@@ -216,6 +243,10 @@ class UserStorage {
     }
     
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        console.warn('localStorage not available');
+        return [];
+      }
       const users = localStorage.getItem(this.USERS_KEY);
       const parsedUsers = users ? JSON.parse(users) : [];
       
@@ -232,6 +263,10 @@ class UserStorage {
   // Save all users with error handling
   private saveUsers(users: User[]): void {
     try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        console.warn('localStorage not available');
+        return;
+      }
       localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
       // Update cache
       this.usersCache = users;
@@ -336,14 +371,20 @@ class UserStorage {
 
   // Check if referral code exists with caching
   checkReferralCodeExists(referralCode: string): boolean {
+    if (!referralCode || referralCode.trim() === '') {
+      return false;
+    }
     const users = this.getUsers();
-    return users.some(user => user.referralCode === referralCode);
+    return users.some(user => user.referralCode && user.referralCode.toLowerCase() === referralCode.toLowerCase());
   }
 
   // Get user by referral code with caching
   getUserByReferralCode(referralCode: string): User | null {
+    if (!referralCode || referralCode.trim() === '') {
+      return null;
+    }
     const users = this.getUsers();
-    return users.find(user => user.referralCode === referralCode) || null;
+    return users.find(user => user.referralCode && user.referralCode.toLowerCase() === referralCode.toLowerCase()) || null;
   }
 
   // Check if user ID exists with caching
@@ -385,7 +426,7 @@ class UserStorage {
   }
 
   // Create a new user
-  createUser(userData: { username: string; email: string; firstName: string; lastName: string; password: string; referralCode?: string; referrerId?: string }): User {
+  createUser(userData: { username: string; email: string; firstName: string; lastName: string; password: string; birthday?: string; referralCode?: string; referrerId?: string }): User {
     const users = this.getUsers();
     
     // Check if email already exists
@@ -446,6 +487,7 @@ class UserStorage {
       country: '',
       timezone: 'UTC',
       language: 'en',
+      birthday: userData.birthday || '',
       // Initialize settings fields
       theme: 'dark',
       emailNotifications: true,
@@ -665,6 +707,51 @@ class UserStorage {
     localStorage.removeItem(this.USERS_KEY);
     localStorage.removeItem(this.CURRENT_USER_KEY);
     this.clearCache();
+  }
+
+  // Method to clean up inconsistent subscription data
+  cleanupSubscriptionData(): void {
+    const users = this.getUsers();
+    let updated = false;
+
+    users.forEach((user, index) => {
+      // If user has cancelled/expired status but subscription history shows active
+      if ((user.subscriptionStatus === 'cancelled' || user.subscriptionStatus === 'expired') && 
+          user.subscriptionHistory && user.subscriptionHistory.length > 0) {
+        
+        user.subscriptionHistory.forEach(subscription => {
+          if (subscription.status === 'active' && user.subscriptionStatus) {
+            subscription.status = user.subscriptionStatus;
+            updated = true;
+          }
+        });
+      }
+      
+      // If user has isSubscribed = false but active subscriptions in history
+      if (!user.isSubscribed && user.subscriptionHistory && user.subscriptionHistory.length > 0) {
+        const now = new Date();
+        const hasActiveSub = user.subscriptionHistory.some(sub => {
+          const endDate = new Date(sub.endDate);
+          return sub.status === 'active' && endDate > now;
+        });
+        
+        if (!hasActiveSub) {
+          // Mark all active subscriptions as cancelled if user is not subscribed
+          user.subscriptionHistory.forEach(subscription => {
+            if (subscription.status === 'active') {
+              subscription.status = 'cancelled';
+              updated = true;
+            }
+          });
+        }
+      }
+    });
+
+    if (updated) {
+      this.saveUsers(users);
+      this.clearCache();
+      console.log('Subscription data cleaned up');
+    }
   }
 
   // Restore data from backup
@@ -926,7 +1013,7 @@ class UserStorage {
           if (vipTier) {
             user.vipAdProgress = {
               adsWatched: 0,
-              totalAdsRequired: 20,
+              totalAdsRequired: 10, // changed from 20 to 10
               dailyReward: vipTier.dailyReward,
               lastResetDate: today
             };
@@ -983,7 +1070,7 @@ class UserStorage {
       if (vipTier) {
         user.vipAdProgress = {
           adsWatched: 0,
-          totalAdsRequired: 20,
+          totalAdsRequired: 10, // changed from 20 to 10
           dailyReward: vipTier.dailyReward,
           lastResetDate: today
         };
@@ -998,15 +1085,15 @@ class UserStorage {
       if (vipTier) {
         user.vipAdProgress = {
           adsWatched: 0,
-          totalAdsRequired: 20,
+          totalAdsRequired: 10, // changed from 20 to 10
           dailyReward: vipTier.dailyReward,
           lastResetDate: today
         };
       }
     }
 
-    // Calculate reward for this ad (1/20 of daily reward)
-    const rewardPerAd = user.vipAdProgress.dailyReward / 20;
+    // Calculate reward for this ad (1/10 of daily reward)
+    const rewardPerAd = user.vipAdProgress.dailyReward / 10; // changed from 20 to 10
     
     // Increment ads watched
     user.vipAdProgress.adsWatched += 1;
@@ -1041,7 +1128,22 @@ class UserStorage {
 
   // Get all users (for admin panel)
   getAllUsers(): User[] {
-    return this.getUsers();
+    const users = this.getUsers();
+    
+    // Ensure all users have referral codes
+    let hasChanges = false;
+    users.forEach(user => {
+      if (!user.referralCode || user.referralCode.trim() === '') {
+        user.referralCode = this.generateReferralCode();
+        hasChanges = true;
+      }
+    });
+    
+    if (hasChanges) {
+      this.saveUsers(users);
+    }
+    
+    return users;
   }
 
   // Reset user account completely
@@ -1240,25 +1342,55 @@ class UserStorage {
 
     const user = users[userIndex];
     
-    if (!user.isSubscribed) {
-      throw new Error('User is not subscribed');
+    // Check if user has any active subscription (including VIP)
+    const hasActiveSub = this.hasActiveSubscription(userId);
+    if (!hasActiveSub) {
+      throw new Error('User has no active subscription to cancel');
     }
 
     // Update subscription status
     user.subscriptionStatus = 'cancelled';
     user.isSubscribed = false;
     
-    // Update the latest subscription record
+    // Clear VIP tier if it's a VIP subscription
+    if (user.subscriptionType === 'vip') {
+      user.vipTier = undefined;
+      user.vipStartDate = undefined;
+      user.lastVipReward = undefined;
+      user.vipAdProgress = undefined;
+    }
+    
+    // Update ALL active subscription records to cancelled
     if (user.subscriptionHistory && user.subscriptionHistory.length > 0) {
-      const latestSubscription = user.subscriptionHistory[user.subscriptionHistory.length - 1];
-      latestSubscription.status = 'cancelled';
-      if (reason) {
-        latestSubscription.notes = (latestSubscription.notes || '') + ` | Cancelled: ${reason}`;
+      const now = new Date();
+      let updatedCount = 0;
+      
+      user.subscriptionHistory.forEach(subscription => {
+        const endDate = new Date(subscription.endDate);
+        if (subscription.status === 'active' && endDate > now) {
+          subscription.status = 'cancelled';
+          if (reason) {
+            subscription.notes = (subscription.notes || '') + ` | Cancelled: ${reason}`;
+          }
+          updatedCount++;
+        }
+      });
+      
+      // If no active subscriptions were found, mark the most recent one as cancelled
+      if (updatedCount === 0 && user.subscriptionHistory.length > 0) {
+        const latestSubscription = user.subscriptionHistory[user.subscriptionHistory.length - 1];
+        latestSubscription.status = 'cancelled';
+        if (reason) {
+          latestSubscription.notes = (latestSubscription.notes || '') + ` | Cancelled: ${reason}`;
+        }
       }
     }
 
     users[userIndex] = user;
     this.saveUsers(users);
+    
+    // Clear cache to ensure fresh data
+    this.clearCache();
     
     // Update current user if it's the same user
     const currentUser = this.getCurrentUser();
@@ -1287,14 +1419,34 @@ class UserStorage {
 
   hasActiveSubscription(userId: string): boolean {
     const user = this.getUserById(userId);
-    if (!user || !user.isSubscribed || !user.subscriptionEndDate) {
+    if (!user) {
       return false;
     }
     
-    const now = new Date();
-    const endDate = new Date(user.subscriptionEndDate);
+    // Check if user has isSubscribed flag and valid end date
+    if (user.isSubscribed && user.subscriptionEndDate) {
+      const now = new Date();
+      const endDate = new Date(user.subscriptionEndDate);
+      
+      if (endDate > now && user.subscriptionStatus === 'active') {
+        return true;
+      }
+    }
     
-    return endDate > now && user.subscriptionStatus === 'active';
+    // Also check subscription history for active subscriptions (for VIP users)
+    if (user.subscriptionHistory && user.subscriptionHistory.length > 0) {
+      const now = new Date();
+      const activeSubscription = user.subscriptionHistory.find(sub => {
+        const endDate = new Date(sub.endDate);
+        return sub.status === 'active' && endDate > now;
+      });
+      
+      if (activeSubscription) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   getActiveSubscriptionInfo(userId: string): { 
@@ -1428,6 +1580,17 @@ class UserStorage {
           
           updated = true;
         }
+      }
+      
+      // Also clean up subscription history for expired subscriptions
+      if (users[index].subscriptionHistory && users[index].subscriptionHistory.length > 0) {
+        users[index].subscriptionHistory.forEach(subscription => {
+          const endDate = new Date(subscription.endDate);
+          if (endDate < now && subscription.status === 'active') {
+            subscription.status = 'expired';
+            updated = true;
+          }
+        });
       }
     });
 
@@ -1643,6 +1806,70 @@ class UserStorage {
   }
 
   // Ensure ballen user exists with proper balance (only create if doesn't exist)
+  // Create a test ballen user with a known referral code for easy testing
+  createTestBallenUser(): void {
+    try {
+      const users = this.getUsers();
+      const ballenExists = users.find(u => u.username === 'ballen');
+      
+      if (ballenExists) {
+        // Update existing ballen user with correct password and referral code
+        const ballenIndex = users.findIndex(u => u.username === 'ballen');
+        users[ballenIndex].password = 'ballen'; // Set correct password
+        users[ballenIndex].referralCode = 'Hppr8Yke'; // Use the actual referral code
+        this.saveUsers(users);
+        console.log('Updated ballen user with password: ballen and referral code: Hppr8Yke');
+      } else {
+        // Create new ballen user with correct credentials
+        const ballenUser: User = {
+          id: 'ballen-001',
+          username: 'ballen',
+          email: 'ballen@example.com',
+          firstName: 'Ballen',
+          lastName: 'User',
+          password: 'ballen', // Correct password for ballen:ballen login
+          balance: 500,
+          totalEarned: 0,
+          joinDate: new Date().toISOString(),
+          referralCode: 'Hppr8Yke', // Use the actual referral code from your profile
+          referralEarnings: 0,
+          referralCount: 0,
+          referralHistory: [],
+          displayName: 'Ballen',
+          bio: 'Test User',
+          phone: '',
+          country: '',
+          timezone: 'UTC',
+          language: 'en',
+          theme: 'dark',
+          emailNotifications: true,
+          pushNotifications: true,
+          soundEnabled: true,
+          autoPlayAds: true,
+          showEarnings: true,
+          twoFactorAuth: false,
+          sessionTimeout: 30,
+          newAds: true,
+          earnings: true,
+          streak: true,
+          withdrawals: true,
+          referrals: true,
+          promotions: true,
+          currentStreak: 0,
+          totalAdsWatched: 0,
+          isEmailVerified: true,
+          activityLog: []
+        };
+        
+        users.push(ballenUser);
+        this.saveUsers(users);
+        console.log('Created ballen user with password: ballen and referral code: Hppr8Yke');
+      }
+    } catch (error) {
+      console.error('Error creating test ballen user:', error);
+    }
+  }
+
   ensureBallenUser(): void {
     try {
       const users = this.getUsers();
@@ -1651,12 +1878,12 @@ class UserStorage {
       if (!ballenExists) {
         console.log('Creating ballen user...');
         const ballenUser = this.createUser({
-    username: 'ballen',
-    email: 'ballen@example.com',
+          username: 'ballen',
+          email: 'ballen@example.com',
           firstName: 'Ballen',
           lastName: 'User',
-    password: 'password123'
-  });
+          password: 'password123'
+        });
         
         // Add balance and mark as email verified
         this.addBalanceToUser('ballen', 500);
@@ -1665,8 +1892,16 @@ class UserStorage {
         console.log('Created ballen user with $500 balance and email verified');
       } else {
         console.log('Ballen user already exists');
+        
+        // Ensure the existing ballen user has a referral code
+        const ballenUser = users.find(u => u.username === 'ballen');
+        if (ballenUser && (!ballenUser.referralCode || ballenUser.referralCode.trim() === '')) {
+          ballenUser.referralCode = this.generateReferralCode();
+          this.saveUsers(users);
+          console.log('Generated referral code for existing ballen user:', ballenUser.referralCode);
+        }
       }
-} catch (error) {
+    } catch (error) {
       console.error('Error ensuring ballen user exists:', error);
     }
   }

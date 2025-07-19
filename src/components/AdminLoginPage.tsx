@@ -54,30 +54,21 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin, on
     }
   };
 
-  const adminFeatures = [
-    'User management & analytics',
-    'Deposit & withdrawal oversight',
-    'System configuration',
-    'Security monitoring',
-    'Real-time statistics'
-  ];
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
+      {/* Back Button at the top left of the viewport */}
+      <button
+        onClick={onBack}
+        className="fixed top-6 left-6 z-50 glass-card flex items-center space-x-2 px-4 py-2 rounded-xl border border-white/20 bg-white/10 backdrop-blur-md text-white font-semibold shadow hover:bg-white/20 transition-all"
+      >
+        <ArrowLeft className="w-5 h-5 mr-1" />
+        <span>Back to Main Page</span>
+      </button>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" />
       
       <div className="relative w-full max-w-md">
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="absolute -top-16 left-0 flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back to Home</span>
-        </button>
-
         {/* Admin Login Card */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl relative">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center space-x-2 bg-purple-400/20 text-purple-400 px-4 py-2 rounded-full text-sm font-semibold mb-4">
@@ -171,31 +162,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin, on
               <span>{isLoading ? 'Authenticating...' : 'Access Admin Panel'}</span>
             </button>
           </form>
-
-          {/* Admin Features */}
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <h3 className="text-sm font-semibold text-white/90 mb-3">Admin Panel Features</h3>
-            <div className="space-y-2">
-              {adminFeatures.map((feature, index) => (
-                <div key={index} className="flex items-center space-x-2 text-sm text-white/80">
-                  <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                  <span>{feature}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Security Note */}
-          <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
-            <div className="flex items-start space-x-3">
-              <Shield className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm text-white/80">
-                  This is a secure admin area. All actions are logged and monitored for security purposes.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, 
   DollarSign, 
@@ -95,7 +95,7 @@ interface AdminAd {
   totalEarnings: number; // total USDT paid out
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
+export const AdminDashboard: React.FC<Partial<AdminDashboardProps>> = ({ onLogout = () => {}, onBack }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'deposits' | 'withdrawals' | 'subscriptions' | 'referrals' | 'ads' | 'kyc'>('overview');
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -155,31 +155,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   };
 
   const loadKycData = () => {
-    console.log('=== loadKycData called ===');
     const savedKyc = localStorage.getItem('kycVerifications');
-    console.log('Raw KYC data from localStorage:', savedKyc);
-    
     if (savedKyc) {
       try {
         const parsed = JSON.parse(savedKyc);
-        console.log('Parsed KYC data:', parsed);
-        console.log('Number of KYC entries:', parsed.length);
-        
         const kyc = parsed.map((verification: any) => ({
           ...verification,
           submittedAt: verification.submittedAt ? new Date(verification.submittedAt) : new Date(),
           processedAt: verification.processedAt ? new Date(verification.processedAt) : undefined
         }));
-        
         setKycVerifications(kyc);
-        console.log('Processed KYC data:', kyc);
-        console.log('State updated with KYC verifications:', kyc.length);
       } catch (error) {
-        console.error('Error loading KYC data:', error);
         setKycVerifications([]);
       }
     } else {
-      console.log('No KYC data found in localStorage');
       setKycVerifications([]);
     }
   };
@@ -496,7 +485,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   // Handle KYC approval
   const handleKycApprove = (kycId: string) => {
-    setKycVerifications(prev => prev.map(kyc => 
+    const updatedKyc = kycVerifications.map(kyc => 
       kyc.id === kycId 
         ? { 
             ...kyc, 
@@ -505,10 +494,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             adminNotes: adminNotes || 'KYC approved by admin'
           }
         : kyc
-    ));
+    );
+    setKycVerifications(updatedKyc);
     setSelectedKyc(null);
     setAdminNotes('');
-    localStorage.setItem('kycVerifications', JSON.stringify(kycVerifications));
+    // Save updated KYC to localStorage with date serialization
+    localStorage.setItem('kycVerifications', JSON.stringify(updatedKyc.map(k => ({
+      ...k,
+      submittedAt: k.submittedAt instanceof Date ? k.submittedAt.toISOString() : k.submittedAt,
+      processedAt: k.processedAt instanceof Date ? k.processedAt.toISOString() : k.processedAt
+    }))));
   };
 
   // Handle KYC rejection
@@ -517,8 +512,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       alert('Please provide a reason for rejection');
       return;
     }
-    
-    setKycVerifications(prev => prev.map(kyc => 
+    const updatedKyc = kycVerifications.map(kyc => 
       kyc.id === kycId 
         ? { 
             ...kyc, 
@@ -528,10 +522,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             rejectionReason: adminNotes
           }
         : kyc
-    ));
+    );
+    setKycVerifications(updatedKyc);
     setSelectedKyc(null);
     setAdminNotes('');
-    localStorage.setItem('kycVerifications', JSON.stringify(kycVerifications));
+    // Save updated KYC to localStorage with date serialization
+    localStorage.setItem('kycVerifications', JSON.stringify(updatedKyc.map(k => ({
+      ...k,
+      submittedAt: k.submittedAt instanceof Date ? k.submittedAt.toISOString() : k.submittedAt,
+      processedAt: k.processedAt instanceof Date ? k.processedAt.toISOString() : k.processedAt
+    }))));
   };
 
   const tabs = [
@@ -544,6 +544,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     { id: 'ads', label: 'Ads', icon: Video },
     { id: 'kyc', label: 'KYC Reviews', icon: CreditCard }
   ];
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -576,15 +578,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           style={{ minWidth: sidebarFolded ? '5rem' : '16rem' }}
         >
           {/* Logo and Fold Button */}
-          <div className="mb-10 w-full flex items-center justify-between">
+          <div className="mb-10 w-full flex items-center justify-center">
             <span className={`text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent select-none transition-opacity duration-200 ${sidebarFolded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>Admin</span>
-            <button
-              className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 border border-white/20 hover:bg-white/20 transition ml-2"
-              onClick={() => setSidebarFolded(f => !f)}
-              aria-label={sidebarFolded ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {sidebarFolded ? <ChevronRight className="w-5 h-5 text-white" /> : <ChevronLeft className="w-5 h-5 text-white" />}
-            </button>
           </div>
           {/* Navigation */}
           <nav className="flex flex-col gap-2 w-full">
@@ -592,17 +587,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               <button
                 key={id}
                 onClick={() => { setActiveTab(id as any); setSidebarOpen(false); }}
-                className={`flex items-center gap-x-4 justify-start px-2 py-3 rounded-xl w-full text-left font-semibold transition-all duration-200
+                className={`
+                  flex items-center gap-x-4 justify-start px-2 py-3 rounded-xl w-full text-left font-semibold transition-all duration-200
                   ${activeTab === id
                     ? 'bg-gradient-to-r from-purple-400 to-pink-400 text-white shadow-lg'
                     : 'text-white/80 hover:text-white hover:bg-white/10'}
+                  ${sidebarFolded ? 'justify-center px-0 py-0 w-14 h-14 min-w-[3.5rem] min-h-[3.5rem]' : ''}
                 `}
+                style={sidebarFolded ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}}
               >
-                <Icon className="w-5 h-5" />
+                <span className={sidebarFolded ? 'flex items-center justify-center w-10 h-10' : ''}>
+                  <Icon className="w-6 h-6" />
+                </span>
                 <span className={`transition-all duration-200 ${sidebarFolded ? 'opacity-0 w-0 pointer-events-none' : 'opacity-100 w-auto ml-2'}`}>{label}</span>
               </button>
             ))}
           </nav>
+          {/* Logout Button at the bottom */}
+          <div className="mt-auto w-full flex justify-center pb-4">
+            <button
+              className="w-11/12 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-xl shadow transition-all border border-red-500/30"
+              onClick={() => setShowLogoutModal(true)}
+            >
+              Logout
+            </button>
+          </div>
         </aside>
       </div>
       {/* Main content shifted right on desktop */}
@@ -613,722 +622,730 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         </div>
         {/* Tab Content Panel */}
         <section className="relative z-10 w-full max-w-6xl mx-auto">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/60 text-sm">Total Users</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
-                  </div>
-                  <Users className="w-8 h-8 text-blue-400" />
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/60 text-sm">Total Balance</p>
-                    <p className="text-2xl font-bold text-green-400">${stats.totalBalance.toFixed(2)}</p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-green-400" />
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/60 text-sm">Total Earned</p>
-                    <p className="text-2xl font-bold text-yellow-400">${stats.totalEarned.toFixed(2)}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-yellow-400" />
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/60 text-sm">Active Users</p>
-                    <p className="text-2xl font-bold text-purple-400">{stats.activeUsers}</p>
-                  </div>
-                  <Activity className="w-8 h-8 text-purple-400" />
-                </div>
-              </div>
-            </div>
-            {/* Reset All Balances Button */}
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={handleResetAllBalances}
-                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-semibold shadow-lg transition"
-              >
-                Reset All Balances
-              </button>
-            </div>
-            {/* Quick Actions */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button
-                  onClick={() => setActiveTab('deposits')}
-                  className="flex items-center space-x-3 p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-colors"
-                >
-                  <Upload className="w-6 h-6 text-blue-400" />
-                  <div className="text-left">
-                    <p className="text-white font-semibold">Review Deposits</p>
-                    <p className="text-white/60 text-sm">{stats.pendingDeposits} pending</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setActiveTab('withdrawals')}
-                  className="flex items-center space-x-3 p-4 bg-green-500/20 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-colors"
-                >
-                  <Download className="w-6 h-6 text-green-400" />
-                  <div className="text-left">
-                    <p className="text-white font-semibold">Review Withdrawals</p>
-                    <p className="text-white/60 text-sm">{stats.pendingWithdrawals} pending</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setShowDepositOverview(true)}
-                  className="flex items-center space-x-3 p-4 bg-purple-500/20 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-colors"
-                >
-                  <BarChart3 className="w-6 h-6 text-purple-400" />
-                  <div className="text-left">
-                    <p className="text-white font-semibold">Deposit Overview</p>
-                    <p className="text-white/60 text-sm">View all users</p>
-                  </div>
-                </button>
-              </div>
-            </div>
-            {/* Recent Activity */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
-              <div className="space-y-3">
-                {getDepositProofs().slice(-5).reverse().map((proof: any) => (
-                  <div key={proof.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${proof.status === 'approved' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                      <div>
-                        <p className="text-white font-medium">{proof.username}</p>
-                        <p className="text-white/60 text-sm">Deposit: ${proof.amount}</p>
+          <div className="relative min-h-[300px]">
+            <div
+              key={activeTab}
+              className="absolute inset-0 w-full transition-all duration-500 ease-in-out opacity-100 translate-y-0 animate-fadein"
+              style={{ animation: 'fadein 0.5s' }}
+            >
+              {activeTab === 'overview' && (
+                <div className="space-y-6 mt-8">
+                  {/* Statistics Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white/60 text-sm">Total Users</p>
+                          <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
+                        </div>
+                        <Users className="w-8 h-8 text-blue-400" />
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-white/60 text-sm">{new Date(proof.submittedAt).toLocaleDateString()}</p>
-                      <p className={`text-xs ${proof.status === 'approved' ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {proof.status}
-                      </p>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white/60 text-sm">Total Balance</p>
+                          <p className="text-2xl font-bold text-green-400">${stats.totalBalance.toFixed(2)}</p>
+                        </div>
+                        <DollarSign className="w-8 h-8 text-green-400" />
+                      </div>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white/60 text-sm">Total Earned</p>
+                          <p className="text-2xl font-bold text-yellow-400">${stats.totalEarned.toFixed(2)}</p>
+                        </div>
+                        <TrendingUp className="w-8 h-8 text-yellow-400" />
+                      </div>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white/60 text-sm">Active Users</p>
+                          <p className="text-2xl font-bold text-purple-400">{stats.activeUsers}</p>
+                        </div>
+                        <Activity className="w-8 h-8 text-purple-400" />
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'users' && (
-          <div className="space-y-6">
-            {/* Search and Filter */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
-                    <input
-                      type="text"
-                      placeholder="Search users..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-                    />
+                  {/* Reset All Balances Button */}
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={handleResetAllBalances}
+                      className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-semibold shadow-lg transition"
+                    >
+                      Reset All Balances
+                    </button>
+                  </div>
+                  {/* Quick Actions */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <button
+                        onClick={() => setActiveTab('deposits')}
+                        className="flex items-center space-x-3 p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-colors"
+                      >
+                        <Upload className="w-6 h-6 text-blue-400" />
+                        <div className="text-left">
+                          <p className="text-white font-semibold">Review Deposits</p>
+                          <p className="text-white/60 text-sm">{stats.pendingDeposits} pending</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('withdrawals')}
+                        className="flex items-center space-x-3 p-4 bg-green-500/20 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-colors"
+                      >
+                        <Download className="w-6 h-6 text-green-400" />
+                        <div className="text-left">
+                          <p className="text-white font-semibold">Review Withdrawals</p>
+                          <p className="text-white/60 text-sm">{stats.pendingWithdrawals} pending</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setShowDepositOverview(true)}
+                        className="flex items-center space-x-3 p-4 bg-purple-500/20 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-colors"
+                      >
+                        <BarChart3 className="w-6 h-6 text-purple-400" />
+                        <div className="text-left">
+                          <p className="text-white font-semibold">Deposit Overview</p>
+                          <p className="text-white/60 text-sm">View all users</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                  {/* Recent Activity */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
+                    <div className="space-y-3">
+                      {getDepositProofs().slice(-5).reverse().map((proof: any) => (
+                        <div key={proof.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-2 h-2 rounded-full ${proof.status === 'approved' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                            <div>
+                              <p className="text-white font-medium">{proof.username}</p>
+                              <p className="text-white/60 text-sm">Deposit: ${proof.amount}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-white/60 text-sm">{new Date(proof.submittedAt).toLocaleDateString()}</p>
+                            <p className={`text-xs ${proof.status === 'approved' ? 'text-green-400' : 'text-yellow-400'}`}>
+                              {proof.status}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as any)}
-                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-                >
-                  <option value="all">All Users</option>
-                  <option value="active">Active Users</option>
-                  <option value="inactive">Inactive Users</option>
-                </select>
-                <button
-                  onClick={loadUsers}
-                  className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors flex items-center space-x-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Refresh</span>
-                </button>
-              </div>
-            </div>
-            {/* Users Table */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 overflow-x-auto">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-white/5">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Balance</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Total Earned</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Join Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-white/5">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center">
-                                <span className="text-white font-semibold">{user.username.charAt(0).toUpperCase()}</span>
+              )}
+              {activeTab === 'users' && (
+                <div className="space-y-6 mt-8">
+                  {/* Search and Filter */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+                          <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+                          />
+                        </div>
+                      </div>
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value as any)}
+                        className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+                      >
+                        <option value="all">All Users</option>
+                        <option value="active">Active Users</option>
+                        <option value="inactive">Inactive Users</option>
+                      </select>
+                      <button
+                        onClick={loadUsers}
+                        className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors flex items-center space-x-2"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        <span>Refresh</span>
+                      </button>
+                    </div>
+                  </div>
+                  {/* Users Table */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 overflow-x-auto">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-white/5">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Balance</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Total Earned</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Join Date</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10">
+                          {filteredUsers.map((user) => (
+                            <tr key={user.id} className="hover:bg-white/5">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0 h-10 w-10">
+                                    <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center">
+                                      <span className="text-white font-semibold">{user.username.charAt(0).toUpperCase()}</span>
+                                    </div>
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-white">{user.username}</div>
+                                    <div className="text-sm text-white/60">{user.email}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-white">${user.balance.toFixed(2)}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-white">${user.totalEarned.toFixed(2)}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-white/60">{new Date(user.joinDate).toLocaleDateString()}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => setShowUserDetails(user.id)}
+                                    className="text-blue-400 hover:text-blue-300"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingUser(user)}
+                                    className="text-yellow-400 hover:text-yellow-300"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleUserReset(user.username)}
+                                    className="text-red-400 hover:text-red-300"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleUserBalanceReset(user.id)}
+                                    className="text-red-500 hover:text-red-600"
+                                    title="Reset Balance"
+                                  >
+                                    <RefreshCw className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleAddBalance(user.id)}
+                                    className="text-green-400 hover:text-green-300"
+                                    title="Add Balance"
+                                  >
+                                    <PlusCircle className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'deposits' && (
+                <div className="space-y-6 mt-8">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-white mb-4">Deposit Proofs</h2>
+                    <div className="space-y-4">
+                      {getDepositProofs().map((proof: any) => (
+                        <div key={proof.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="text-white font-semibold">{proof.username}</h3>
+                              <p className="text-white/60 text-sm">Amount: ${proof.amount}</p>
+                            </div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              proof.status === 'approved' ? 'bg-green-500/20 text-green-400' : 
+                              proof.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {proof.status}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <p className="text-white/60 text-sm">Transaction Hash:</p>
+                              <p className="text-white text-sm font-mono">{proof.transactionHash || 'Not provided'}</p>
+                            </div>
+                            <div>
+                              <p className="text-white/60 text-sm">Submitted:</p>
+                              <p className="text-white text-sm">{new Date(proof.submittedAt).toLocaleString()}</p>
+                            </div>
+                          </div>
+                          {proof.status === 'pending' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleDepositApproval(proof.id, true)}
+                                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center space-x-2"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleDepositApproval(proof.id, false)}
+                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center space-x-2"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'withdrawals' && (
+                <div className="space-y-6 mt-8">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-white mb-4">Withdrawal Requests</h2>
+                    <div className="space-y-4">
+                      {getWithdrawalRequests().map((request: any) => (
+                        <div key={request.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="text-white font-semibold">{request.username}</h3>
+                              <p className="text-white/60 text-sm">Amount: ${request.amount}</p>
+                            </div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              request.status === 'approved' ? 'bg-green-500/20 text-green-400' : 
+                              request.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {request.status}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <p className="text-white/60 text-sm">Wallet Address:</p>
+                              <p className="text-white text-sm font-mono">{request.walletAddress}</p>
+                            </div>
+                            <div>
+                              <p className="text-white/60 text-sm">Requested:</p>
+                              <p className="text-white text-sm">{new Date(request.requestedAt).toLocaleString()}</p>
+                            </div>
+                          </div>
+                          {request.status === 'pending' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleWithdrawalApproval(request.id, true)}
+                                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center space-x-2"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleWithdrawalApproval(request.id, false)}
+                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center space-x-2"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'subscriptions' && (
+                <div className="space-y-6 mt-8">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-white mb-4">Subscription Management</h2>
+                    <div className="space-y-4">
+                      {users.filter(user => user.subscriptionHistory && user.subscriptionHistory.length > 0).map(user => (
+                        <div key={user.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="text-white font-semibold">{user.username}</h3>
+                              <p className="text-white/60 text-sm">{user.email}</p>
+                            </div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              user.subscriptionStatus === 'active' ? 'bg-green-500/20 text-green-400' : 
+                              user.subscriptionStatus === 'expired' ? 'bg-red-500/20 text-red-400' : 
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {user.subscriptionStatus || 'No subscription'}
+                            </div>
+                          </div>
+                          {user.subscriptionHistory && user.subscriptionHistory.length > 0 && (
+                            <div className="space-y-2">
+                              {user.subscriptionHistory.map((sub: SubscriptionRecord) => (
+                                <div key={sub.id} className="bg-white/5 rounded p-3">
+                                  <div className="flex justify-between items-center">
+                                    <div>
+                                      <p className="text-white font-medium">{sub.type} - ${sub.amount}</p>
+                                      <p className="text-white/60 text-sm">
+                                        {new Date(sub.startDate).toLocaleDateString()} - {new Date(sub.endDate).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                    <span className={`px-2 py-1 rounded text-xs ${
+                                      sub.status === 'active' ? 'bg-green-500/20 text-green-400' : 
+                                      sub.status === 'expired' ? 'bg-red-500/20 text-red-400' : 
+                                      'bg-yellow-500/20 text-yellow-400'
+                                    }`}>
+                                      {sub.status}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'referrals' && (
+                <div className="space-y-6 mt-8">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-white mb-4">Referral System</h2>
+                    <div className="space-y-4">
+                      {users.map(user => (
+                        <div key={user.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="text-white font-semibold">{user.username}</h3>
+                              <p className="text-white/60 text-sm">Referral Code: {user.referralCode}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white font-medium">{user.referralCount} referrals</p>
+                              <p className="text-white/60 text-sm">${user.referralEarnings.toFixed(2)} earned</p>
+                            </div>
+                          </div>
+                          {user.referralHistory && user.referralHistory.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-white/60 text-sm font-medium">Recent Referrals:</p>
+                              {user.referralHistory.slice(-3).map((ref: ReferralRecord) => (
+                                <div key={ref.id} className="bg-white/5 rounded p-2 flex justify-between items-center">
+                                  <div>
+                                    <p className="text-white text-sm">{ref.referredUsername}</p>
+                                    <p className="text-white/60 text-xs">{new Date(ref.joinDate).toLocaleDateString()}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-white text-sm">${ref.earnings.toFixed(2)}</p>
+                                    <span className={`px-2 py-1 rounded text-xs ${
+                                      ref.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                    }`}>
+                                      {ref.status}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'ads' && (
+                <div className="space-y-6 mt-8">
+                  {/* Move the add buttons to the top and center them */}
+                  <div className="flex justify-center space-x-4 mb-6">
+                    <button
+                      onClick={() => {
+                        setNewAd({
+                          title: '',
+                          description: '',
+                          youtubeUrl: '',
+                          youtubeId: '',
+                          videoFile: undefined,
+                          duration: 30,
+                          reward: 0.05,
+                          category: 'gaming',
+                          requiredWatchTime: 25,
+                          isActive: true,
+                          thumbnail: ''
+                        });
+                        setEditingAd(null);
+                        setShowAddAdModal(true);
+                      }}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition"
+                    >
+                      Add YouTube Ad
+                    </button>
+                    <button
+                      onClick={() => {
+                        setNewAd({
+                          title: '',
+                          description: '',
+                          youtubeUrl: '',
+                          youtubeId: '',
+                          videoFile: 'dummy', // Will be replaced by upload
+                          duration: 30,
+                          reward: 0.05,
+                          category: 'gaming',
+                          requiredWatchTime: 25,
+                          isActive: true,
+                          thumbnail: ''
+                        });
+                        setEditingAd(null);
+                        setShowAddAdModal(true);
+                      }}
+                      className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition"
+                    >
+                      Add Video Upload Ad
+                    </button>
+                  </div>
+                  {/* Filter ads into active and history */}
+                  {(() => {
+                    const now = Date.now();
+                    const activeAds = ads.filter(ad => now - new Date(ad.createdAt).getTime() < 24 * 60 * 60 * 1000);
+                    const historyAds = ads.filter(ad => now - new Date(ad.createdAt).getTime() >= 24 * 60 * 60 * 1000);
+                    return <>
+                      <div className="flex justify-center">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 w-full">
+                          <h2 className="text-xl font-bold text-white mb-4 text-center">Ad Management</h2>
+                          <div className="space-y-4">
+                            {activeAds.length === 0 && (
+                              <div className="text-center text-white/60 py-8">No active ads. Add a new ad above.</div>
+                            )}
+                            {activeAds.map(ad => (
+                              <div key={ad.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div>
+                                    <h3 className="text-white font-semibold">{ad.title}</h3>
+                                    <p className="text-white/60 text-sm">{ad.description}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-white font-medium">{ad.views} views</p>
+                                    <p className="text-white/60 text-sm">${ad.totalEarnings.toFixed(2)} earned</p>
+                                  </div>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => handleEditAd(ad)}
+                                    className="text-yellow-400 hover:text-yellow-300"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteAd(ad.id)}
+                                    className="text-red-400 hover:text-red-300"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleToggleAdStatus(ad.id)}
+                                    className={`text-${ad.isActive ? 'green' : 'red'}-400 hover:text-${ad.isActive ? 'green' : 'red'}-300`}
+                                  >
+                                    {ad.isActive ? 'Active' : 'Inactive'}
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-white">{user.username}</div>
-                              <div className="text-sm text-white/60">{user.email}</div>
-                            </div>
+                            ))}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-white">${user.balance.toFixed(2)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-white">${user.totalEarned.toFixed(2)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-white/60">{new Date(user.joinDate).toLocaleDateString()}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => setShowUserDetails(user.id)}
-                              className="text-blue-400 hover:text-blue-300"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setEditingUser(user)}
-                              className="text-yellow-400 hover:text-yellow-300"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleUserReset(user.username)}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleUserBalanceReset(user.id)}
-                              className="text-red-500 hover:text-red-600"
-                              title="Reset Balance"
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleAddBalance(user.id)}
-                              className="text-green-400 hover:text-green-300"
-                              title="Add Balance"
-                            >
-                              <PlusCircle className="w-4 h-4" />
-                            </button>
+                        </div>
+                      </div>
+                      {/* Ads History Section */}
+                      <div className="flex justify-center mt-10">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/20 w-full">
+                          <h2 className="text-lg font-bold text-white mb-4 text-center">Ads History (Expired after 24h)</h2>
+                          <div className="space-y-4">
+                            {historyAds.length === 0 && (
+                              <div className="text-center text-white/40 py-8">No expired ads yet.</div>
+                            )}
+                            {historyAds.map(ad => (
+                              <div key={ad.id} className="bg-white/10 rounded-lg p-4 border border-white/10 opacity-70">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div>
+                                    <h3 className="text-white font-semibold">{ad.title}</h3>
+                                    <p className="text-white/60 text-sm">{ad.description}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-white font-medium">{ad.views} views</p>
+                                    <p className="text-white/60 text-sm">${ad.totalEarnings.toFixed(2)} earned</p>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-white/40">Published: {new Date(ad.createdAt).toLocaleString()}</div>
+                              </div>
+                            ))}
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'deposits' && (
-          <div className="space-y-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Deposit Proofs</h2>
-              <div className="space-y-4">
-                {getDepositProofs().map((proof: any) => (
-                  <div key={proof.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="text-white font-semibold">{proof.username}</h3>
-                        <p className="text-white/60 text-sm">Amount: ${proof.amount}</p>
+                        </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        proof.status === 'approved' ? 'bg-green-500/20 text-green-400' : 
-                        proof.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {proof.status}
-                      </div>
+                    </>;
+                  })()}
+                </div>
+              )}
+              {activeTab === 'kyc' && (
+                <div className="space-y-6 mt-8">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-bold text-white">KYC Verification Reviews</h2>
+                      <button
+                        onClick={loadKycData}
+                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                      >
+                        Refresh
+                      </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                      <div>
-                        <p className="text-white/60 text-sm">Transaction Hash:</p>
-                        <p className="text-white text-sm font-mono">{proof.transactionHash || 'Not provided'}</p>
-                      </div>
-                      <div>
-                        <p className="text-white/60 text-sm">Submitted:</p>
-                        <p className="text-white text-sm">{new Date(proof.submittedAt).toLocaleString()}</p>
-                      </div>
-                    </div>
-                    {proof.status === 'pending' && (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleDepositApproval(proof.id, true)}
-                          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center space-x-2"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          <span>Approve</span>
-                        </button>
-                        <button
-                          onClick={() => handleDepositApproval(proof.id, false)}
-                          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center space-x-2"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          <span>Reject</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'withdrawals' && (
-          <div className="space-y-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Withdrawal Requests</h2>
-              <div className="space-y-4">
-                {getWithdrawalRequests().map((request: any) => (
-                  <div key={request.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="text-white font-semibold">{request.username}</h3>
-                        <p className="text-white/60 text-sm">Amount: ${request.amount}</p>
-                      </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        request.status === 'approved' ? 'bg-green-500/20 text-green-400' : 
-                        request.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {request.status}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                      <div>
-                        <p className="text-white/60 text-sm">Wallet Address:</p>
-                        <p className="text-white text-sm font-mono">{request.walletAddress}</p>
-                      </div>
-                      <div>
-                        <p className="text-white/60 text-sm">Requested:</p>
-                        <p className="text-white text-sm">{new Date(request.requestedAt).toLocaleString()}</p>
-                      </div>
-                    </div>
-                    {request.status === 'pending' && (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleWithdrawalApproval(request.id, true)}
-                          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center space-x-2"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          <span>Approve</span>
-                        </button>
-                        <button
-                          onClick={() => handleWithdrawalApproval(request.id, false)}
-                          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center space-x-2"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          <span>Reject</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'subscriptions' && (
-          <div className="space-y-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Subscription Management</h2>
-              <div className="space-y-4">
-                {users.filter(user => user.subscriptionHistory && user.subscriptionHistory.length > 0).map(user => (
-                  <div key={user.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="text-white font-semibold">{user.username}</h3>
-                        <p className="text-white/60 text-sm">{user.email}</p>
-                      </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.subscriptionStatus === 'active' ? 'bg-green-500/20 text-green-400' : 
-                        user.subscriptionStatus === 'expired' ? 'bg-red-500/20 text-red-400' : 
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {user.subscriptionStatus || 'No subscription'}
-                      </div>
-                    </div>
-                    {user.subscriptionHistory && user.subscriptionHistory.length > 0 && (
-                      <div className="space-y-2">
-                        {user.subscriptionHistory.map((sub: SubscriptionRecord) => (
-                          <div key={sub.id} className="bg-white/5 rounded p-3">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="text-white font-medium">{sub.type} - ${sub.amount}</p>
-                                <p className="text-white/60 text-sm">
-                                  {new Date(sub.startDate).toLocaleDateString()} - {new Date(sub.endDate).toLocaleDateString()}
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-white/10">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-white font-medium">User</th>
+                            <th className="px-4 py-3 text-left text-white font-medium">Full Name</th>
+                            <th className="px-4 py-3 text-left text-white font-medium">Document Type</th>
+                            <th className="px-4 py-3 text-left text-white font-medium">Document Number</th>
+                            <th className="px-4 py-3 text-left text-white font-medium">Status</th>
+                            <th className="px-4 py-3 text-left text-white font-medium">Date</th>
+                            <th className="px-4 py-3 text-left text-white font-medium">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10">
+                          {kycVerifications.map((kyc) => (
+                            <tr key={kyc.id} className="hover:bg-white/5">
+                              <td className="px-4 py-3">
+                                <div>
+                                  <p className="text-white font-medium">#{kyc.userId}</p>
+                                  <p className="text-white/60 text-sm">{kyc.username}</p>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <p className="text-white">{kyc.fullName}</p>
+                                <p className="text-white/60 text-sm">{kyc.dateOfBirth} • {kyc.nationality}</p>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-white/80 text-sm capitalize">
+                                  {kyc.documentType.replace('_', ' ')}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <p className="text-white/80 text-sm font-mono">
+                                  {kyc.documentNumber}
                                 </p>
-                              </div>
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                sub.status === 'active' ? 'bg-green-500/20 text-green-400' : 
-                                sub.status === 'expired' ? 'bg-red-500/20 text-red-400' : 
-                                'bg-yellow-500/20 text-yellow-400'
-                              }`}>
-                                {sub.status}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                  kyc.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                  kyc.status === 'approved' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                                  'bg-red-500/20 text-red-400 border-red-500/30'
+                                }`}>
+                                  {kyc.status === 'pending' ? <Clock className="w-3 h-3" /> :
+                                   kyc.status === 'approved' ? <Check className="w-3 h-3" /> :
+                                   <X className="w-3 h-3" />}
+                                  <span className="capitalize">{kyc.status}</span>
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <p className="text-white/60 text-sm">
+                                  {kyc.submittedAt.toLocaleDateString()}
+                                </p>
+                                <p className="text-white/40 text-xs">
+                                  {kyc.submittedAt.toLocaleTimeString()}
+                                </p>
+                              </td>
+                              <td className="px-4 py-3">
+                                <button
+                                  onClick={() => setSelectedKyc(kyc)}
+                                  className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                                >
+                                  View Details
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    {/* Empty State */}
+                    {kycVerifications.length === 0 && (
+                      <div className="text-center py-12">
+                        <CreditCard className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                        <p className="text-white/60">No KYC verifications found</p>
+                        <button
+                          onClick={() => {
+                            console.log('Current localStorage kycVerifications:', localStorage.getItem('kycVerifications'));
+                            console.log('Current kycVerifications state:', kycVerifications);
+                            loadKycData();
+                          }}
+                          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                          Debug: Check KYC Data
+                        </button>
+                        <button
+                          onClick={() => {
+                            console.log('=== Port Persistence Debug ===');
+                            console.log('Current port:', window.location.port || '3000');
+                            console.log('Has port backup:', userStorage.hasPortBackup());
+                            const backupInfo = userStorage.getBackupInfo();
+                            console.log('Backup info:', backupInfo);
+                            if (backupInfo.hasBackup) {
+                              console.log('Restoring from backup...');
+                              const restored = userStorage.restoreFromPortBackup();
+                              console.log('Restore successful:', restored);
+                              if (restored) {
+                                loadUsers();
+                                alert('Data restored from backup!');
+                              }
+                            } else {
+                              console.log('No backup available');
+                              alert('No backup data available');
+                            }
+                          }}
+                          className="mt-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                        >
+                          Debug: Port Persistence
+                        </button>
+                        <button
+                          onClick={() => {
+                            const testKyc = {
+                              id: `kyc_${Date.now()}_test123`,
+                              userId: 'test_user_123',
+                              username: 'testuser',
+                              fullName: 'Test User',
+                              dateOfBirth: '1990-01-01',
+                              nationality: 'United States',
+                              documentType: 'passport',
+                              documentNumber: '123456789',
+                              documentFront: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A',
+                              documentBack: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A',
+                              selfieWithDocument: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A',
+                              status: 'pending',
+                              submittedAt: new Date().toISOString(),
+                              adminNotes: undefined,
+                              rejectionReason: undefined
+                            };
+                            
+                            const existingKyc = localStorage.getItem('kycVerifications');
+                            const kycList = existingKyc ? JSON.parse(existingKyc) : [];
+                            kycList.push(testKyc);
+                            localStorage.setItem('kycVerifications', JSON.stringify(kycList));
+                            
+                            console.log('Test KYC data added:', testKyc);
+                            loadKycData();
+                          }}
+                          className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Debug: Add Test KYC Data
+                        </button>
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'referrals' && (
-          <div className="space-y-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Referral System</h2>
-              <div className="space-y-4">
-                {users.map(user => (
-                  <div key={user.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="text-white font-semibold">{user.username}</h3>
-                        <p className="text-white/60 text-sm">Referral Code: {user.referralCode}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-white font-medium">{user.referralCount} referrals</p>
-                        <p className="text-white/60 text-sm">${user.referralEarnings.toFixed(2)} earned</p>
-                      </div>
-                    </div>
-                    {user.referralHistory && user.referralHistory.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-white/60 text-sm font-medium">Recent Referrals:</p>
-                        {user.referralHistory.slice(-3).map((ref: ReferralRecord) => (
-                          <div key={ref.id} className="bg-white/5 rounded p-2 flex justify-between items-center">
-                            <div>
-                              <p className="text-white text-sm">{ref.referredUsername}</p>
-                              <p className="text-white/60 text-xs">{new Date(ref.joinDate).toLocaleDateString()}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-white text-sm">${ref.earnings.toFixed(2)}</p>
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                ref.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                              }`}>
-                                {ref.status}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'ads' && (
-          <div className="space-y-6">
-            {/* Move the add buttons to the top and center them */}
-            <div className="flex justify-center space-x-4 mb-6">
-              <button
-                onClick={() => {
-                  setNewAd({
-                    title: '',
-                    description: '',
-                    youtubeUrl: '',
-                    youtubeId: '',
-                    videoFile: undefined,
-                    duration: 30,
-                    reward: 0.05,
-                    category: 'gaming',
-                    requiredWatchTime: 25,
-                    isActive: true,
-                    thumbnail: ''
-                  });
-                  setEditingAd(null);
-                  setShowAddAdModal(true);
-                }}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition"
-              >
-                Add YouTube Ad
-              </button>
-              <button
-                onClick={() => {
-                  setNewAd({
-                    title: '',
-                    description: '',
-                    youtubeUrl: '',
-                    youtubeId: '',
-                    videoFile: 'dummy', // Will be replaced by upload
-                    duration: 30,
-                    reward: 0.05,
-                    category: 'gaming',
-                    requiredWatchTime: 25,
-                    isActive: true,
-                    thumbnail: ''
-                  });
-                  setEditingAd(null);
-                  setShowAddAdModal(true);
-                }}
-                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition"
-              >
-                Add Video Upload Ad
-              </button>
-            </div>
-            {/* Filter ads into active and history */}
-            {(() => {
-              const now = Date.now();
-              const activeAds = ads.filter(ad => now - new Date(ad.createdAt).getTime() < 24 * 60 * 60 * 1000);
-              const historyAds = ads.filter(ad => now - new Date(ad.createdAt).getTime() >= 24 * 60 * 60 * 1000);
-              return <>
-                <div className="flex justify-center">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 w-full">
-                    <h2 className="text-xl font-bold text-white mb-4 text-center">Ad Management</h2>
-                    <div className="space-y-4">
-                      {activeAds.length === 0 && (
-                        <div className="text-center text-white/60 py-8">No active ads. Add a new ad above.</div>
-                      )}
-                      {activeAds.map(ad => (
-                        <div key={ad.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <h3 className="text-white font-semibold">{ad.title}</h3>
-                              <p className="text-white/60 text-sm">{ad.description}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-white font-medium">{ad.views} views</p>
-                              <p className="text-white/60 text-sm">${ad.totalEarnings.toFixed(2)} earned</p>
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleEditAd(ad)}
-                              className="text-yellow-400 hover:text-yellow-300"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAd(ad.id)}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleToggleAdStatus(ad.id)}
-                              className={`text-${ad.isActive ? 'green' : 'red'}-400 hover:text-${ad.isActive ? 'green' : 'red'}-300`}
-                            >
-                              {ad.isActive ? 'Active' : 'Inactive'}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                {/* Ads History Section */}
-                <div className="flex justify-center mt-10">
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/20 w-full">
-                    <h2 className="text-lg font-bold text-white mb-4 text-center">Ads History (Expired after 24h)</h2>
-                    <div className="space-y-4">
-                      {historyAds.length === 0 && (
-                        <div className="text-center text-white/40 py-8">No expired ads yet.</div>
-                      )}
-                      {historyAds.map(ad => (
-                        <div key={ad.id} className="bg-white/10 rounded-lg p-4 border border-white/10 opacity-70">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <h3 className="text-white font-semibold">{ad.title}</h3>
-                              <p className="text-white/60 text-sm">{ad.description}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-white font-medium">{ad.views} views</p>
-                              <p className="text-white/60 text-sm">${ad.totalEarnings.toFixed(2)} earned</p>
-                            </div>
-                          </div>
-                          <div className="text-xs text-white/40">Published: {new Date(ad.createdAt).toLocaleString()}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>;
-            })()}
-          </div>
-        )}
-        {activeTab === 'kyc' && (
-          <div className="space-y-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">KYC Verification Reviews</h2>
-                <button
-                  onClick={loadKycData}
-                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                >
-                  Refresh
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-white/10">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-white font-medium">User</th>
-                      <th className="px-4 py-3 text-left text-white font-medium">Full Name</th>
-                      <th className="px-4 py-3 text-left text-white font-medium">Document Type</th>
-                      <th className="px-4 py-3 text-left text-white font-medium">Document Number</th>
-                      <th className="px-4 py-3 text-left text-white font-medium">Status</th>
-                      <th className="px-4 py-3 text-left text-white font-medium">Date</th>
-                      <th className="px-4 py-3 text-left text-white font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {kycVerifications.map((kyc) => (
-                      <tr key={kyc.id} className="hover:bg-white/5">
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="text-white font-medium">#{kyc.userId}</p>
-                            <p className="text-white/60 text-sm">{kyc.username}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="text-white">{kyc.fullName}</p>
-                          <p className="text-white/60 text-sm">{kyc.dateOfBirth} • {kyc.nationality}</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-white/80 text-sm capitalize">
-                            {kyc.documentType.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="text-white/80 text-sm font-mono">
-                            {kyc.documentNumber}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            kyc.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                            kyc.status === 'approved' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                            'bg-red-500/20 text-red-400 border-red-500/30'
-                          }`}>
-                            {kyc.status === 'pending' ? <Clock className="w-3 h-3" /> :
-                             kyc.status === 'approved' ? <Check className="w-3 h-3" /> :
-                             <X className="w-3 h-3" />}
-                            <span className="capitalize">{kyc.status}</span>
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="text-white/60 text-sm">
-                            {kyc.submittedAt.toLocaleDateString()}
-                          </p>
-                          <p className="text-white/40 text-xs">
-                            {kyc.submittedAt.toLocaleTimeString()}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => setSelectedKyc(kyc)}
-                            className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                          >
-                            View Details
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Empty State */}
-              {kycVerifications.length === 0 && (
-                <div className="text-center py-12">
-                  <CreditCard className="w-12 h-12 text-white/40 mx-auto mb-4" />
-                  <p className="text-white/60">No KYC verifications found</p>
-                  <button
-                    onClick={() => {
-                      console.log('Current localStorage kycVerifications:', localStorage.getItem('kycVerifications'));
-                      console.log('Current kycVerifications state:', kycVerifications);
-                      loadKycData();
-                    }}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Debug: Check KYC Data
-                  </button>
-                  <button
-                    onClick={() => {
-                      console.log('=== Port Persistence Debug ===');
-                      console.log('Current port:', window.location.port || '3000');
-                      console.log('Has port backup:', userStorage.hasPortBackup());
-                      const backupInfo = userStorage.getBackupInfo();
-                      console.log('Backup info:', backupInfo);
-                      if (backupInfo.hasBackup) {
-                        console.log('Restoring from backup...');
-                        const restored = userStorage.restoreFromPortBackup();
-                        console.log('Restore successful:', restored);
-                        if (restored) {
-                          loadUsers();
-                          alert('Data restored from backup!');
-                        }
-                      } else {
-                        console.log('No backup available');
-                        alert('No backup data available');
-                      }
-                    }}
-                    className="mt-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                  >
-                    Debug: Port Persistence
-                  </button>
-                  <button
-                    onClick={() => {
-                      const testKyc = {
-                        id: `kyc_${Date.now()}_test123`,
-                        userId: 'test_user_123',
-                        username: 'testuser',
-                        fullName: 'Test User',
-                        dateOfBirth: '1990-01-01',
-                        nationality: 'United States',
-                        documentType: 'passport',
-                        documentNumber: '123456789',
-                        documentFront: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A',
-                        documentBack: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A',
-                        selfieWithDocument: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A',
-                        status: 'pending',
-                        submittedAt: new Date().toISOString(),
-                        adminNotes: undefined,
-                        rejectionReason: undefined
-                      };
-                      
-                      const existingKyc = localStorage.getItem('kycVerifications');
-                      const kycList = existingKyc ? JSON.parse(existingKyc) : [];
-                      kycList.push(testKyc);
-                      localStorage.setItem('kycVerifications', JSON.stringify(kycList));
-                      
-                      console.log('Test KYC data added:', testKyc);
-                      loadKycData();
-                    }}
-                    className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                  >
-                    Debug: Add Test KYC Data
-                  </button>
                 </div>
               )}
             </div>
           </div>
-        )}
         </section>
       </main>
         {/* Deposit Overview Modal */}
@@ -1481,21 +1498,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <input
                   type="number"
                   placeholder="Duration (seconds)"
-                  value={newAd.duration}
+                  value={typeof newAd.duration === 'number' && !isNaN(newAd.duration) ? newAd.duration : ''}
                   onChange={(e) => setNewAd(prev => ({ ...prev, duration: parseFloat(e.target.value) }))}
                   className="w-full pl-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400/50"
                 />
                 <input
                   type="number"
                   placeholder="Reward (USDT)"
-                  value={newAd.reward}
+                  value={typeof newAd.reward === 'number' && !isNaN(newAd.reward) ? newAd.reward : ''}
                   onChange={(e) => setNewAd(prev => ({ ...prev, reward: parseFloat(e.target.value) }))}
                   className="w-full pl-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400/50"
                 />
                 <input
                   type="number"
                   placeholder="Required Watch Time (seconds)"
-                  value={newAd.requiredWatchTime}
+                  value={typeof newAd.requiredWatchTime === 'number' && !isNaN(newAd.requiredWatchTime) ? newAd.requiredWatchTime : ''}
                   onChange={(e) => setNewAd(prev => ({ ...prev, requiredWatchTime: parseFloat(e.target.value) }))}
                   className="w-full pl-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400/50"
                 />
@@ -1666,6 +1683,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Logout Confirmation Modal (move here, outside sidebar) */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="glass-card border border-white/20 rounded-2xl p-8 max-w-sm w-full shadow-2xl backdrop-blur-xl">
+              <h2 className="text-xl font-bold text-white mb-4">Confirm Logout</h2>
+              <p className="text-white/80 mb-6">Are you sure you want to log out?</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition"
+                  onClick={() => setShowLogoutModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="glass-card border border-red-500/30 bg-red-500/20 text-red-300 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-500/40 hover:text-white transition"
+                  onClick={() => { setShowLogoutModal(false); onLogout(); }}
+                >
+                  Logout
+                </button>
               </div>
             </div>
           </div>
