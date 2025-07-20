@@ -166,7 +166,9 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
                 try {
                   setError(null);
                   setLoading(true);
-                  await sessionService.createSessionWithDeviceDetection(userId);
+                  console.log('🔧 Force creating session for user:', userId);
+                  const session = await sessionService.createSessionWithDeviceDetection(userId);
+                  console.log('🔧 Session created successfully:', session);
                   await loadSessions();
                 } catch (error) {
                   console.error('Error retrying session creation:', error);
@@ -177,6 +179,34 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
               className="px-4 py-2 bg-green-500/20 hover:bg-green-500/40 text-green-400 rounded text-sm"
             >
               Create Session
+            </button>
+            <button 
+              onClick={async () => {
+                try {
+                  console.log('🔧 Testing session service directly...');
+                  const envInfo = sessionService.getEnvironmentInfo();
+                  console.log('🔧 Environment info:', envInfo);
+                  
+                  // Test creating a session directly
+                  const testSession = await sessionService.createSessionWithDeviceDetection(userId);
+                  console.log('🔧 Test session created:', testSession);
+                  
+                  // Test getting sessions
+                  const sessions = await sessionService.getUserSessions(userId);
+                  console.log('🔧 Sessions retrieved:', sessions);
+                  
+                  alert(`Session Test Complete!\n\nEnvironment: ${envInfo.service}\nHostname: ${envInfo.hostname}\nSessions found: ${sessions.length}\n\nCheck console for details.`);
+                  
+                  // Reload sessions
+                  await loadSessions();
+                } catch (error) {
+                  console.error('Error testing session service:', error);
+                  alert('Error testing session service. Check console for details.');
+                }
+              }}
+              className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded text-sm"
+            >
+              Debug Test
             </button>
           </div>
         </div>
