@@ -416,25 +416,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
   };
 
   // Get current time in user's timezone
-  const getCurrentTimeInTimezone = () => {
-    if (!formData.timezone) return null;
-    
-    try {
-      const now = new Date();
-      const timeInTimezone = now.toLocaleString('en-US', {
-        timeZone: formData.timezone,
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      return timeInTimezone;
-    } catch (error) {
-      return null;
-    }
-  };
 
 
   return (

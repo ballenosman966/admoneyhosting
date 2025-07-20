@@ -16,7 +16,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { User } from '../utils/userStorage';
+import { User, userStorage } from '../utils/userStorage';
 import { SessionManager } from './SessionManager';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -216,6 +216,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <p className="text-white/70 mb-2">View and log out of your active sessions and devices.</p>
               <SessionManager 
                 userId={user.id} 
+                currentUser={user}
                 onSessionTerminated={() => {
                   // Optionally refresh user data or show notification
                   console.log('Session terminated');
@@ -425,16 +426,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               {/* Feedback Message */}
               {feedback && <div className="mt-4 text-center text-red-400 text-base font-semibold">{feedback}</div>}
             </div>
-            {/* Referral/Invite */}
-            <div className="bg-white/10 dark:text-white rounded-xl p-6 border border-white/20 transition-colors duration-300">
-              <div className="flex items-center space-x-3 mb-4">
-                <Users className="w-6 h-6 text-yellow-400" />
-                <h3 className="text-xl font-bold text-white">Referral & Invite</h3>
-              </div>
-              <p className="text-white/70 mb-2">Share your referral code and invite friends.</p>
-              <div className="bg-white/5 rounded p-3 text-white/80 text-sm">(Referral code and invite link placeholder)</div>
-              <button className="mt-3 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 px-4 py-2 rounded">Copy Invite Link</button>
-            </div>
+
           </div>
         </div>
 

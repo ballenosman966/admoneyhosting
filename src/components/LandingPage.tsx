@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from 'react';
 // Framer Motion removed
 import { 
-  Play, 
   DollarSign, 
   Clock, 
   Shield, 
   Users, 
-  TrendingUp,
   CheckCircle,
   Star,
-  Gift,
   Info,
   PlayCircle,
-  ShieldCheck,
   Globe,
-  ArrowRight,
-  Sparkles
-} from 'lucide-react';
-import { userStorage } from '../utils/userStorage';
-import SplitText from './SplitText';
-import AnimatedList from './AnimatedList';
+  ArrowRight} from 'lucide-react';
 import { HowItWorksPage } from './HowItWorksPage';
 import Aurora from './Aurora';
 import { useNavigate } from 'react-router-dom';
@@ -46,7 +37,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
   const referrerId = urlParams.get('ref');
 
   // Get current user
-  const currentUser = userStorage.getCurrentUser();
 
   const handleAuth = () => {
     onAuth(referrerId || undefined);
@@ -61,38 +51,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuth }) => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const features = [
-    {
-      icon: Play,
-      title: 'Watch Short Ads',
-      description: 'Enjoy 25-30 second video ads covering gaming, tech, apps, and more'
-    },
-    {
-      icon: DollarSign,
-      title: 'Earn USDT Instantly',
-      description: 'Get paid immediately after watching each ad - no delays or hidden fees'
-    },
-    {
-      icon: Clock,
-      title: 'Daily Streak Bonuses',
-      description: 'Unlock extra rewards for consistent daily engagement'
-    },
-    {
-      icon: Shield,
-      title: 'Secure & Trusted',
-      description: 'Top-tier security with instant withdrawals to any USDT wallet'
-    },
-    {
-      icon: Users,
-      title: 'Referral Rewards',
-      description: 'Earn passive income by referring friends to the platform'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Real-Time Dashboard',
-      description: 'Track your earnings with live statistics and progress monitoring'
-    }
-  ];
 
   const benefits = [
     'Beginner-Friendly Interface',

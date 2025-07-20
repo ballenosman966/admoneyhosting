@@ -111,9 +111,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
     return null;
   };
   
-  // Get referral ID from URL parameters
+  // Get referral code from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
-  const urlReferrerId = urlParams.get('ref');
+  const urlReferralCode = urlParams.get('ref');
   
   const [formData, setFormData] = useState({
     username: '',
@@ -124,8 +124,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
     lastName: '',
     birthday: '',
     country: '',
-    referralCode: '',
-    referrerId: urlReferrerId || ''
+    referralCode: urlReferralCode || '',
+    referrerId: ''
   });
 
   // Validation states

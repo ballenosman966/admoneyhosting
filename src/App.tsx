@@ -12,6 +12,7 @@ import { ReferralPage } from './components/ReferralPage';
 import { SettingsPage } from './components/SettingsPage';
 import { VIPPage } from './components/VIPPage';
 import { userStorage, User } from './utils/userStorage';
+import { serverSessionService } from './utils/serverSessionService';
 import { AdminLoginPage } from './components/AdminLoginPage';
 import { AdminDashboard } from './components/AdminDashboard';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -127,12 +128,17 @@ const AppContent = () => {
   }, [navigate]);
 
   // Memoize logout handler
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     if (currentUser) {
-      // Terminate current session
-      const currentSession = userStorage.getCurrentSession(currentUser.id);
-      if (currentSession) {
-        userStorage.terminateSession(currentSession.id);
+      try {
+        // Terminate current session on server
+        const userSessions = await serverSessionService.getUserSessions(currentUser.id);
+        const currentSession = userSessions.find(s => s.isCurrentSession);
+        if (currentSession) {
+          await serverSessionService.terminateSession(currentSession.id);
+        }
+      } catch (error) {
+        console.error('Error terminating session on logout:', error);
       }
     }
     userStorage.setCurrentUser(null);
@@ -154,6 +160,7 @@ const AppContent = () => {
 
   // Memoize navigation handler
   const navigateToPage = useCallback((page: Page) => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
     switch (page) {
       case 'landing':
         navigate('/');
@@ -227,12 +234,17 @@ const AppContent = () => {
   }, [navigate]);
 
   // Memoize admin logout handler
-  const handleAdminLogout = useCallback(() => {
+  const handleAdminLogout = useCallback(async () => {
     if (currentUser) {
-      // Terminate current session
-      const currentSession = userStorage.getCurrentSession(currentUser.id);
-      if (currentSession) {
-        userStorage.terminateSession(currentSession.id);
+      try {
+        // Terminate current session on server
+        const userSessions = await serverSessionService.getUserSessions(currentUser.id);
+        const currentSession = userSessions.find(s => s.isCurrentSession);
+        if (currentSession) {
+          await serverSessionService.terminateSession(currentSession.id);
+        }
+      } catch (error) {
+        console.error('Error terminating session on admin logout:', error);
       }
     }
     userStorage.setCurrentUser(null);
@@ -492,10 +504,19 @@ const AppContent = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const updateSessionActivity = () => {
-      const currentSession = userStorage.getCurrentSession(currentUser.id);
-      if (currentSession) {
-        userStorage.updateSessionActivity(currentSession.id);
+    const updateSessionActivity = async () => {
+      try {
+        const userSessions = await serverSessionService.getUserSessions(currentUser.id);
+        const currentSession = userSessions.find(s => s.isCurrentSession);
+        if (currentSession) {
+          await serverSessionService.updateSessionActivity(currentSession.id);
+        } else {
+          // If no current session exists, create one
+          console.log('📱 No current session found, creating one for user:', currentUser.id);
+          await serverSessionService.createSessionWithDeviceDetection(currentUser.id);
+        }
+      } catch (error) {
+        console.error('Error updating session activity:', error);
       }
     };
 
@@ -503,6 +524,9 @@ const AppContent = () => {
     const handleUserActivity = () => {
       updateSessionActivity();
     };
+
+    // Initial session check and creation
+    updateSessionActivity();
 
     // Update activity every 5 minutes
     const activityInterval = setInterval(updateSessionActivity, 5 * 60 * 1000);

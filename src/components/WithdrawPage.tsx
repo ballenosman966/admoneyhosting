@@ -1,14 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Wallet, 
   Download, 
   Upload, 
   Copy, 
   Check, 
   AlertCircle,
   ExternalLink,
-  QrCode,
-  Image,
   X,
   Lock,
   DollarSign
@@ -47,6 +44,7 @@ interface DepositHistoryProps {
 
 const DepositHistory: React.FC<DepositHistoryProps> = ({ userId }) => {
   const [proofs, setProofs] = useState<DepositProof[]>([]);
+  const [modalImage, setModalImage] = useState<string | null>(null);
 
   useEffect(() => {
     const existingProofs = localStorage.getItem('depositProofs');
@@ -59,42 +57,70 @@ const DepositHistory: React.FC<DepositHistoryProps> = ({ userId }) => {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm text-white">
-        <thead>
-          <tr className="border-b border-white/20">
-            <th className="px-2 py-2 text-left">Amount</th>
-            <th className="px-2 py-2 text-left">Status</th>
-            <th className="px-2 py-2 text-left">Date</th>
-            <th className="px-2 py-2 text-left">Screenshot</th>
-          </tr>
-        </thead>
-        <tbody>
-          {proofs.slice().reverse().map(proof => (
-            <tr key={proof.id} className="border-b border-white/10">
-              <td className="px-2 py-2">{proof.amount} USDT</td>
-              <td className="px-2 py-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                  proof.status === 'approved' ? 'bg-green-500/20 text-green-400' :
-                  proof.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                  'bg-red-500/20 text-red-400'
-                }`}>
-                  {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
-                </span>
-              </td>
-              <td className="px-2 py-2">{new Date(proof.submittedAt).toLocaleString()}</td>
-              <td className="px-2 py-2">
-                {proof.screenshot ? (
-                  <a href={proof.screenshot} target="_blank" rel="noopener noreferrer" className="underline text-blue-400">View</a>
-                ) : (
-                  <span className="text-white/40">-</span>
-                )}
-              </td>
+    <>
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm text-white">
+          <thead>
+            <tr className="border-b border-white/20">
+              <th className="px-2 py-2 text-left">Amount</th>
+              <th className="px-2 py-2 text-left">Status</th>
+              <th className="px-2 py-2 text-left">Date</th>
+              <th className="px-2 py-2 text-left">Screenshot</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {proofs.slice().reverse().map(proof => (
+              <tr key={proof.id} className="border-b border-white/10">
+                <td className="px-2 py-2">{proof.amount} USDT</td>
+                <td className="px-2 py-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    proof.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                    proof.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-red-500/20 text-red-400'
+                  }`}>
+                    {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
+                  </span>
+                </td>
+                <td className="px-2 py-2">{new Date(proof.submittedAt).toLocaleString()}</td>
+                <td className="px-2 py-2">
+                  {proof.screenshot ? (
+                    <button
+                      type="button"
+                      onClick={() => setModalImage(proof.screenshot)}
+                      className="underline text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      View
+                    </button>
+                  ) : (
+                    <span className="text-white/40">-</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* Modal Popup for Screenshot */}
+      {modalImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center super-blur">
+          <div className="relative bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-6 max-w-lg w-full flex flex-col items-center">
+            <button
+              className="absolute top-3 right-3 text-white/70 hover:text-white bg-black/30 rounded-full p-1"
+              onClick={() => setModalImage(null)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-4">Deposit Screenshot</h2>
+            <img
+              src={modalImage}
+              alt="Deposit Screenshot"
+              className="rounded-xl max-h-[60vh] w-auto border border-white/10 shadow-lg"
+              style={{ objectFit: 'contain' }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -203,6 +229,7 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
   const handleTabChange = (tab: 'deposit' | 'withdraw') => {
     setActiveTab(tab);
     localStorage.setItem('activeWithdrawTab', tab);
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
   useEffect(() => {
     const saved = localStorage.getItem(`withdrawWhitelist_${user.id}`);
@@ -311,13 +338,6 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
   };
 
   // Helper: Simulate proof validation
-  const isProofValid = (proof: DepositProof) => {
-    // Simulate: require transaction hash of at least 10 chars, screenshot present, and address matches
-    return (
-      proof.transactionHash && proof.transactionHash.length >= 10 &&
-      proof.screenshot && proof.screenshot.length > 0
-    );
-  };
 
   const handleSubmitDeposit = async () => {
     const amount = parseFloat(depositAmount);
@@ -432,47 +452,6 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
     }
   };
 
-  const handleWithdraw = () => {
-    const amount = parseFloat(withdrawAmount);
-    if (!withdrawAmount || isNaN(amount) || amount < MIN_WITHDRAW || amount > MAX_WITHDRAW) {
-      setWithdrawAmountError(`Withdrawal must be between ${MIN_WITHDRAW} and ${MAX_WITHDRAW} USDT`);
-      return;
-    }
-    setWithdrawAmountError('');
-    if (amount > user.balance) {
-      alert('Insufficient balance');
-      return;
-    }
-    if (!withdrawAddress.trim()) {
-      alert('Please enter a withdrawal address');
-      return;
-    }
-    
-    // Create withdraw request
-    const withdrawRequest = {
-      id: `withdraw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: user.id,
-      username: user.username,
-      amount: amount,
-      walletAddress: withdrawAddress.trim(),
-      status: 'pending' as const,
-      requestedAt: new Date()
-    };
-
-    // Get existing withdraw requests from localStorage
-    const existingRequests = localStorage.getItem('withdrawRequests');
-    const requests = existingRequests ? JSON.parse(existingRequests) : [];
-    
-    // Add new request
-    requests.push(withdrawRequest);
-    localStorage.setItem('withdrawRequests', JSON.stringify(requests));
-    
-    alert(`Withdrawal request submitted for ${amount} USDT to ${withdrawAddress}. We will process it within 10-30 minutes.`);
-    
-    // Reset form
-    setWithdrawAmount('');
-    setWithdrawAddress('');
-  };
 
   // Helper: Open passcode modal before withdrawal
   const requirePasscode = () => {
@@ -491,41 +470,8 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
   };
 
   // Passcode creation handler
-  const handleSetPasscode = () => {
-    if (!/^[0-9]{4}$/.test(newPasscode)) {
-      setNewPasscodeError('Passcode must be exactly 4 digits');
-      return;
-    }
-    if (newPasscode !== confirmPasscode) {
-      setNewPasscodeError('Passcodes do not match');
-      return;
-    }
-    userStorage.setWithdrawPasscode(user.id, newPasscode);
-    const updatedUser = userStorage.getCurrentUser();
-    if (updatedUser) {
-      onUserUpdate(updatedUser);
-    }
-    setShowPasscodeModal(false);
-    setNewPasscode('');
-    setConfirmPasscode('');
-    setNewPasscodeError('');
-    setTimeout(() => {
-      setIsSettingPasscode(false);
-      setShowPasscodeModal(true);
-    }, 100); // Immediately prompt for passcode after setting
-  };
 
   // Passcode verification handler
-  const handleVerifyPasscode = () => {
-    if (userStorage.checkWithdrawPasscode(user.id, passcodeInput)) {
-      setShowPasscodeModal(false);
-      setPasscodeInput('');
-      setPasscodeError('');
-      handleWithdraw(); // Proceed with withdrawal
-    } else {
-      setPasscodeError('Incorrect passcode. Please try again.');
-    }
-  };
 
   const tabs = [
     { id: 'deposit', label: 'Deposit', icon: Upload },

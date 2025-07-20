@@ -886,25 +886,53 @@ class UserStorage {
       throw new Error('User not found');
     }
     const user = users[userIndex];
+    
+    // Referral reward amount
+    const referralReward = 2.00; // $2.00 per referral
+    
     const referralRecord: ReferralRecord = {
       id: Date.now().toString(),
       referredUsername: referredUser.username,
       referredEmail: referredUser.email,
       joinDate: new Date().toISOString(),
-      earnings: 0, // Initial earnings for the referred user
+      earnings: referralReward, // Set the earnings amount
       status: 'active'
     };
+    
+    // Update user's referral statistics
     user.referralHistory.push(referralRecord);
+    user.referralCount = user.referralHistory.length;
+    user.referralEarnings += referralReward;
+    user.balance += referralReward; // Add reward to balance
+    user.totalEarned += referralReward; // Add to total earnings
+    
     // Add activity log entry
     if (!user.activityLog) user.activityLog = [];
     user.activityLog.unshift({
       type: 'referral',
-      message: `Referred ${referredUser.username}`,
+      message: `Referred ${referredUser.username} and earned $${referralReward.toFixed(2)}`,
+      amount: referralReward,
       date: new Date().toISOString(),
       extra: { referredUser: referredUser.username }
     });
+    
+    // Add notification for referral reward
+    this.addNotification(userId, {
+      type: 'reward',
+      title: 'Referral Reward!',
+      message: `You earned $${referralReward.toFixed(2)} for referring ${referredUser.username}!`
+    });
+    
     users[userIndex] = user;
     this.saveUsers(users);
+    
+    // Update current user if it's the same user
+    const currentUser = this.getCurrentUser();
+    if (currentUser && currentUser.id === userId) {
+      this.setCurrentUser(user);
+    }
+    
+    console.log(`✅ Referral processed: ${user.username} referred ${referredUser.username} and earned $${referralReward.toFixed(2)}`);
   }
 
   // Get referral history for a user
@@ -2216,42 +2244,99 @@ class UserStorage {
 
   // Update session with real IP information (call this after getting IP)
   async updateSessionWithIP(sessionId: string): Promise<void> {
+    console.log('🔧 Updating session with IP info:', sessionId);
+    
     try {
-      // Try to get real IP from a public API
-      const response = await fetch('https://api.ipify.org?format=json');
+      // Try to get real IP and location from a public API
+      console.log('🔧 Fetching location data from ipapi.co...');
+      const response = await fetch('https://ipapi.co/json/');
       const data = await response.json();
+      console.log('🔧 Location API response:', data);
       
       const sessions = this.getSessions();
       const sessionIndex = sessions.findIndex(s => s.id === sessionId);
       
       if (sessionIndex !== -1) {
-        sessions[sessionIndex].ipAddress = data.ip;
-        sessions[sessionIndex].location = 'Detected via API';
+        sessions[sessionIndex].ipAddress = data.ip || 'Unknown IP';
+        
+        // Build location string from available data
+        const locationParts = [];
+        if (data.city) locationParts.push(data.city);
+        if (data.region) locationParts.push(data.region);
+        if (data.country_name) locationParts.push(data.country_name);
+        
+        if (locationParts.length > 0) {
+          sessions[sessionIndex].location = locationParts.join(', ');
+        } else {
+          sessions[sessionIndex].location = 'Location unavailable';
+        }
+        
+        console.log('🔧 Updated session with location:', sessions[sessionIndex].location);
         this.saveSessions(sessions);
       }
     } catch (error) {
-      // If API fails, try to get local network IP
+      console.log('🔧 ipapi.co failed, trying ipify.org...', error);
+      // Fallback to simple IP detection
       try {
-        const localIP = await this.getLocalNetworkIP();
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        
         const sessions = this.getSessions();
         const sessionIndex = sessions.findIndex(s => s.id === sessionId);
         
         if (sessionIndex !== -1) {
-          sessions[sessionIndex].ipAddress = localIP || 'Local Network';
-          sessions[sessionIndex].location = 'Local Network';
+          sessions[sessionIndex].ipAddress = data.ip;
+          sessions[sessionIndex].location = 'IP detected, location unavailable';
+          console.log('🔧 Updated session with IP only:', data.ip);
           this.saveSessions(sessions);
         }
-      } catch (localError) {
-        // Final fallback
-        const sessions = this.getSessions();
-        const sessionIndex = sessions.findIndex(s => s.id === sessionId);
-        
-        if (sessionIndex !== -1) {
-          sessions[sessionIndex].ipAddress = 'Unknown IP';
-          sessions[sessionIndex].location = 'Location unavailable';
-          this.saveSessions(sessions);
+      } catch (ipError) {
+        console.log('🔧 ipify.org failed, trying local network...', ipError);
+        // If API fails, try to get local network IP
+        try {
+          const localIP = await this.getLocalNetworkIP();
+          const sessions = this.getSessions();
+          const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+          
+          if (sessionIndex !== -1) {
+            sessions[sessionIndex].ipAddress = localIP || 'Local Network';
+            sessions[sessionIndex].location = 'Local Network';
+            console.log('🔧 Updated session with local network:', localIP);
+            this.saveSessions(sessions);
+          }
+        } catch (localError) {
+          console.log('🔧 All location methods failed, using fallback...', localError);
+          // Final fallback
+          const sessions = this.getSessions();
+          const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+          
+          if (sessionIndex !== -1) {
+            sessions[sessionIndex].ipAddress = 'Unknown IP';
+            sessions[sessionIndex].location = 'Location unavailable';
+            console.log('🔧 Updated session with fallback values');
+            this.saveSessions(sessions);
+          }
         }
       }
+    }
+  }
+
+  // Update all existing sessions with proper location data
+  async updateAllSessionsWithLocation(): Promise<void> {
+    console.log('🔧 Updating all existing sessions with location data...');
+    const sessions = this.getSessions();
+    const sessionsToUpdate = sessions.filter(s => 
+      s.location === 'Detected via API' || 
+      s.location === 'Unknown' || 
+      !s.location
+    );
+    
+    console.log('🔧 Found sessions to update:', sessionsToUpdate.length);
+    
+    for (const session of sessionsToUpdate) {
+      await this.updateSessionWithIP(session.id);
+      // Add a small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 
@@ -2299,6 +2384,116 @@ class UserStorage {
     if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
     
     return date.toLocaleDateString();
+  }
+
+  // Test session functionality
+  testSessionFunctionality(): void {
+    console.log('🧪 Testing session functionality...');
+    
+    // Clear existing sessions for testing
+    const testUserId = 'test-user-123';
+    this.terminateAllSessions(testUserId);
+    
+    // Create test sessions with different user agents
+    const testUserAgents = [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+      'Mozilla/5.0 (iPad; CPU OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+      'Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
+    ];
+    
+    testUserAgents.forEach((userAgent, index) => {
+      const session = this.createTestSession(testUserId, userAgent, `Test Device ${index + 1}`);
+      console.log(`🧪 Created test session ${index + 1}:`, session);
+    });
+    
+    // Get all sessions for the test user
+    const userSessions = this.getUserSessions(testUserId);
+    console.log('🧪 All sessions for test user:', userSessions);
+    
+    // Verify that only one session is marked as current
+    const currentSessions = userSessions.filter(s => s.isCurrentSession);
+    console.log('🧪 Current sessions count:', currentSessions.length);
+    
+    if (currentSessions.length !== 1) {
+      console.error('❌ ERROR: Multiple current sessions found!');
+    } else {
+      console.log('✅ SUCCESS: Only one current session as expected');
+    }
+    
+    // Clean up test sessions
+    this.terminateAllSessions(testUserId);
+    console.log('🧪 Test sessions cleaned up');
+  }
+
+  // Create a test session with a specific user agent
+  private createTestSession(userId: string, userAgent: string, deviceName: string): DeviceSession {
+    const sessions = this.getSessions();
+    
+    // Mark all existing sessions for this user as not current
+    sessions.forEach(session => {
+      if (session.userId === userId) {
+        session.isCurrentSession = false;
+      }
+    });
+
+    // Detect device information
+    const deviceInfo = this.detectDeviceInfo(userAgent);
+    
+    const newSession: DeviceSession = {
+      id: `test_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      userId,
+      deviceName: deviceName,
+      deviceType: deviceInfo.deviceType,
+      browser: deviceInfo.browser,
+      os: deviceInfo.os,
+      ipAddress: 'Test IP',
+      location: 'Test Location',
+      lastActive: new Date().toISOString(),
+      isCurrentSession: true,
+      userAgent,
+      loginTime: new Date().toISOString()
+    };
+
+    sessions.push(newSession);
+    this.saveSessions(sessions);
+    
+    return newSession;
+  }
+
+  // Get session statistics
+  getSessionStats(): {
+    totalSessions: number;
+    activeSessions: number;
+    sessionsByDeviceType: { [key: string]: number };
+    sessionsByBrowser: { [key: string]: number };
+    sessionsByOS: { [key: string]: number };
+  } {
+    const sessions = this.getSessions();
+    const now = new Date();
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+    
+    const activeSessions = sessions.filter(s => 
+      new Date(s.lastActive) > fiveMinutesAgo
+    );
+    
+    const deviceTypeCount: { [key: string]: number } = {};
+    const browserCount: { [key: string]: number } = {};
+    const osCount: { [key: string]: number } = {};
+    
+    sessions.forEach(session => {
+      deviceTypeCount[session.deviceType] = (deviceTypeCount[session.deviceType] || 0) + 1;
+      browserCount[session.browser] = (browserCount[session.browser] || 0) + 1;
+      osCount[session.os] = (osCount[session.os] || 0) + 1;
+    });
+    
+    return {
+      totalSessions: sessions.length,
+      activeSessions: activeSessions.length,
+      sessionsByDeviceType: deviceTypeCount,
+      sessionsByBrowser: browserCount,
+      sessionsByOS: osCount
+    };
   }
 }
 

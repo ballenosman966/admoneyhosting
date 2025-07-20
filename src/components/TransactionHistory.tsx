@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Filter, Download, Search, TrendingUp, TrendingDown, Wallet, Users, Eye, Play, Gift, DollarSign, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon, Crown, Zap, ChevronDown, ChevronUp, X, Calendar, DollarSign as DollarIcon, Clock, Filter as FilterIcon } from 'lucide-react';
+import { Download, Search, TrendingUp, TrendingDown, Wallet, Users, Eye, Play, Gift, DollarSign, Crown, Zap, ChevronDown, ChevronUp, X, DollarSign as DollarIcon, Filter as FilterIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Transaction {
@@ -151,22 +151,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
   const displayedTransactions = isExpanded ? filteredTransactions : filteredTransactions.slice(0, 3);
   const hasMoreTransactions = filteredTransactions.length > 3;
 
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'deposit':
-        return <TrendingUp size={20} className="text-green-400" />;
-      case 'withdrawal':
-        return <TrendingDown size={20} className="text-red-400" />;
-      case 'ad_earnings':
-        return <Eye size={20} className="text-blue-400" />;
-      case 'referral':
-        return <Users size={20} className="text-purple-400" />;
-      case 'vip_reward':
-        return <Wallet size={20} className="text-yellow-400" />;
-      default:
-        return <Wallet size={20} className="text-slate-400" />;
-    }
-  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {

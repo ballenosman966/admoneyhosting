@@ -40,7 +40,8 @@ export const ReferralPage: React.FC<ReferralPageProps> = ({ onBack }) => {
   const copyReferralCode = async () => {
     if (currentUser?.referralCode) {
       try {
-        await navigator.clipboard.writeText(currentUser.referralCode);
+        const referralLink = getReferralLink();
+        await navigator.clipboard.writeText(referralLink);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (err) {
@@ -50,7 +51,7 @@ export const ReferralPage: React.FC<ReferralPageProps> = ({ onBack }) => {
   };
 
   const shareReferralCode = () => {
-    const referralLink = `${window.location.origin}?ref=${currentUser?.id}`;
+    const referralLink = `${window.location.origin}?ref=${currentUser?.referralCode}`;
     const shareText = `Join AdMoney and start earning USDT! Use my referral link: ${referralLink}`;
     
     if (navigator.share) {
@@ -68,7 +69,7 @@ export const ReferralPage: React.FC<ReferralPageProps> = ({ onBack }) => {
   };
 
   const getReferralLink = () => {
-    return `${window.location.origin}?ref=${currentUser?.id}`;
+    return `${window.location.origin}?ref=${currentUser?.referralCode}`;
   };
 
   const getStatusIcon = (status: 'active' | 'inactive') => {

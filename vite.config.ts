@@ -57,7 +57,7 @@ export default defineConfig({
     open: false, // Don't automatically open browser
     hmr: {
       overlay: false,
-      port: 3001 // Use separate port for HMR to avoid conflicts
+      port: 3002 // Use separate port for HMR to avoid conflicts with backend
     },
     // Optimize for development
     watch: {
