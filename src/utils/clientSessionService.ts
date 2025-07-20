@@ -29,6 +29,89 @@ class ClientSessionService {
     }
   }
 
+  // Get IP address and location from external APIs
+  private async getIPAndLocation(): Promise<{ ipAddress: string; location: string }> {
+    try {
+      console.log('🌐 ClientSessionService: Fetching IP and location...');
+      
+      // Try multiple IP/location services for better reliability
+      const services = [
+        'https://api.ipify.org?format=json',
+        'https://api.ip.sb/ip',
+        'https://api.myip.com',
+        'https://ipapi.co/json/'
+      ];
+
+      for (const service of services) {
+        try {
+          console.log('🌐 ClientSessionService: Trying service:', service);
+          const response = await fetch(service, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+            // Add timeout
+            signal: AbortSignal.timeout(5000)
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log('🌐 ClientSessionService: Service response:', data);
+
+          let ipAddress = '';
+          let location = '';
+
+          // Parse different response formats
+          if (service.includes('ipify')) {
+            ipAddress = data.ip || '';
+          } else if (service.includes('ip.sb')) {
+            ipAddress = data.trim() || '';
+          } else if (service.includes('myip.com')) {
+            ipAddress = data.ip || '';
+            location = data.country || '';
+          } else if (service.includes('ipapi.co')) {
+            ipAddress = data.ip || '';
+            location = data.city && data.country ? `${data.city}, ${data.country}` : data.country || '';
+          }
+
+          if (ipAddress) {
+            console.log('🌐 ClientSessionService: IP and location found:', { ipAddress, location });
+            return { ipAddress, location: location || 'Unknown Location' };
+          }
+        } catch (error) {
+          console.warn('🌐 ClientSessionService: Service failed:', service, error);
+          continue;
+        }
+      }
+
+      // Fallback to a simple IP service
+      try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        console.log('🌐 ClientSessionService: Fallback IP service response:', data);
+        return { 
+          ipAddress: data.ip || 'Unknown IP', 
+          location: 'Location unavailable' 
+        };
+      } catch (error) {
+        console.error('🌐 ClientSessionService: All IP services failed:', error);
+        return { 
+          ipAddress: 'IP unavailable', 
+          location: 'Location unavailable' 
+        };
+      }
+    } catch (error) {
+      console.error('🌐 ClientSessionService: Error getting IP and location:', error);
+      return { 
+        ipAddress: 'IP unavailable', 
+        location: 'Location unavailable' 
+      };
+    }
+  }
+
   // Detect device information from user agent
   private detectDeviceInfo(userAgent: string): {
     deviceName: string;
@@ -148,6 +231,9 @@ class ClientSessionService {
       return existingSession;
     }
     
+    // Get IP and location
+    const { ipAddress, location } = await this.getIPAndLocation();
+    
     // Create new session
     const newSession: DeviceSession = {
       id: `client_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -156,8 +242,8 @@ class ClientSessionService {
       deviceType: deviceInfo.deviceType,
       browser: deviceInfo.browser,
       os: deviceInfo.os,
-      ipAddress: 'Client-side',
-      location: 'Client-side',
+      ipAddress,
+      location,
       lastActive: new Date().toISOString(),
       isCurrentSession: true,
       userAgent,

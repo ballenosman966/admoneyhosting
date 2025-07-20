@@ -446,9 +446,38 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
                 alert('Error testing session service. Check console for details.');
               }
             }}
-            className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded text-sm font-medium border border-yellow-500/30 hover:border-yellow-500/50"
+            className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded text-sm font-medium border border-yellow-500/30 hover:border-yellow-500/50 mr-2"
           >
             🔧 Debug Session Service
+          </button>
+          <button 
+            onClick={async () => {
+              try {
+                console.log('🌐 Refreshing IP and location for current session...');
+                
+                // Get current session
+                const currentSession = sessions.find(s => s.isCurrentSession);
+                if (!currentSession) {
+                  alert('No current session found. Please create a session first.');
+                  return;
+                }
+                
+                // Create a new session to get fresh IP and location
+                const newSession = await sessionService.createSessionWithDeviceDetection(userId);
+                console.log('🌐 New session with updated IP/location:', newSession);
+                
+                alert(`IP and Location Updated!\n\nNew IP: ${newSession.ipAddress}\nNew Location: ${newSession.location}\n\nSession refreshed successfully.`);
+                
+                // Reload sessions
+                await loadSessions();
+              } catch (error) {
+                console.error('Error refreshing IP and location:', error);
+                alert('Error refreshing IP and location. Check console for details.');
+              }
+            }}
+            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded text-sm font-medium border border-blue-500/30 hover:border-blue-500/50"
+          >
+            🌐 Refresh IP & Location
           </button>
         </div>
         
