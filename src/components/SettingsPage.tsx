@@ -4,14 +4,11 @@ import {
   Globe, 
   Clock, 
   Save,
-  ArrowLeft,
   Monitor,
   Smartphone,
   Shield,
   Bell,
   Users,
-  Crown,
-  Info,
   AlertCircle,
   Eye,
   EyeOff
@@ -47,9 +44,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     showEarnings: user.showEarnings !== false,
     soundEnabled: user.soundEnabled !== false
   });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [showProfilePublicly, setShowProfilePublicly] = useState(user.showProfilePublicly || false);
   const navigate = useNavigate();
   const [showAccountDeleteModal, setShowAccountDeleteModal] = useState(false);
   const [accountDeleted, setAccountDeleted] = useState(false);
@@ -62,8 +57,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   // Add state for password change
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // On mount, check if user has pending deletion
   useEffect(() => {
@@ -74,12 +71,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
-    if (key === 'showProfilePublicly') {
-      setShowProfilePublicly(value);
-      onUserUpdate({ ...user, showProfilePublicly: value });
-      setFeedback(value ? 'Your profile is now public.' : 'Your profile is now private.');
-      setTimeout(() => setFeedback(null), 3000);
-    }
   };
 
   const handleSaveSettings = () => {
@@ -95,35 +86,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     alert('Settings saved successfully!');
   };
 
-  const handleDownloadData = () => {
-    try {
-      const dataStr = JSON.stringify(user, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `my-crypto-rewards-data.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setFeedback('Your data has been downloaded.');
-      setTimeout(() => setFeedback(null), 3000);
-    } catch (err) {
-      setFeedback('Failed to download data.');
-      setTimeout(() => setFeedback(null), 3000);
-    }
-  };
 
-  const handleRequestDataDeletion = () => {
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = () => {
-    setShowDeleteModal(false);
-    setFeedback('Your data deletion request has been submitted.');
-    setTimeout(() => setFeedback(null), 3000);
-    // Here you would trigger actual deletion logic or API call
-  };
 
   const handleAccountDelete = () => {
     setShowAccountDeleteModal(true);
@@ -174,37 +137,40 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   const handleChangePassword = () => {
-    if (!currentPassword || !newPassword) {
-      alert('Please enter both current and new passwords');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      alert('Please enter current password, new password, and confirm password');
       return;
     }
+    
+    if (newPassword !== confirmPassword) {
+      alert('New password and confirm password do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      alert('New password must be at least 6 characters long');
+      return;
+    }
+    
     // In a real app, you'd validate the current password and update it
     // For now, we'll just show a success message
     alert('Password changed successfully!');
     setCurrentPassword('');
     setNewPassword('');
+    setConfirmPassword('');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:text-white transition-colors duration-300">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:text-white transition-colors duration-300 flex items-center justify-center">
+      <div className="w-full max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
-          <div className="self-start mb-2">
-            <button
-              onClick={onBack}
-              className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Dashboard</span>
-            </button>
-          </div>
           <h1 className="text-3xl font-bold text-white text-center w-full">Settings</h1>
         </div>
 
         {/* --- MAIN SETTINGS SECTIONS --- */}
         {/* Account & Security */}
-        <div className="bg-white/5 dark:text-white rounded-2xl p-6 mb-12 w-full max-w-2xl mx-auto shadow-lg transition-colors duration-300">
+        <div className="bg-white/5 dark:text-white rounded-2xl p-6 mb-12 w-full shadow-lg transition-colors duration-300">
           <h2 className="text-2xl font-bold text-white mb-6">Account & Security</h2>
           <div className="space-y-6">
             {/* Manage Sessions/Devices */}
@@ -222,6 +188,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   console.log('Session terminated');
                 }}
               />
+
             </div>
             {/* Security Settings */}
             <motion.div
@@ -270,10 +237,40 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     </button>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-white/90 font-medium mb-2">Confirm New Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={`w-full bg-white/10 border rounded-lg px-4 py-3 pr-12 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
+                        confirmPassword && newPassword !== confirmPassword 
+                          ? 'border-red-400' 
+                          : confirmPassword && newPassword === confirmPassword 
+                          ? 'border-green-400' 
+                          : 'border-white/20'
+                      }`}
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-red-400 text-sm mt-1">Passwords do not match</p>
+                  )}
+                  {confirmPassword && newPassword === confirmPassword && (
+                    <p className="text-green-400 text-sm mt-1">Passwords match</p>
+                  )}
+                </div>
                 <div className="flex justify-end">
                   <button
                     onClick={handleChangePassword}
-                    disabled={!currentPassword || !newPassword}
+                    disabled={!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
                     className="px-6 py-3 rounded-lg bg-gradient-to-r from-green-400 to-blue-400 text-white font-semibold hover:from-green-500 hover:to-blue-500 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Change Password
@@ -281,89 +278,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 </div>
               </div>
             </motion.div>
-            {/* Privacy/Data Controls */}
+
+            {/* Account Deletion */}
             <div className="bg-white/10 dark:text-white rounded-xl p-6 border border-white/20 transition-colors duration-300">
               <div className="flex items-center space-x-3 mb-4">
-                <Shield className="w-6 h-6 text-blue-400" />
-                <h3 className="text-xl font-bold text-white">Privacy & Data Controls</h3>
+                <AlertCircle className="w-6 h-6 text-red-400" />
+                <h3 className="text-xl font-bold text-red-400">Account Deletion</h3>
               </div>
-              <p className="text-white/70 mb-2">Manage your privacy and data sharing preferences.</p>
-              {/* Public Profile Toggle */}
-              <div className="flex items-center space-x-2 mb-4">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showProfilePublicly}
-                    onChange={e => handleSettingChange('showProfilePublicly', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-14 h-8 bg-gray-300 dark:bg-gray-700 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 transition-all duration-300 peer-checked:bg-blue-500 flex items-center px-1">
-                    <span className={`transition-all duration-300 w-6 h-6 flex items-center justify-center rounded-full bg-white shadow-md ${showProfilePublicly ? 'translate-x-6' : 'translate-x-0'}`}>
-                      {showProfilePublicly ? (
-                        <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                      )}
-                    </span>
-                  </div>
-                  <span className="ml-4 text-white text-base font-medium select-none">Show my profile publicly</span>
-                </label>
-                <span className="ml-2 text-xs text-white/50" title="If enabled, your profile will be visible to other users."><Info className="w-4 h-4" /></span>
+              <p className="text-white/70 mb-4">Permanently delete your account and all associated data. <b>This action cannot be undone.</b></p>
+              <div className="flex justify-center">
+                <button
+                  className={`px-6 py-3 rounded-lg text-base font-semibold transition-all duration-200 border border-red-500/40 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400/50 ${accountDeleted ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-red-500/20 hover:bg-red-500/40 text-red-400 hover:text-white'}`}
+                  onClick={handleAccountDelete}
+                  disabled={accountDeleted}
+                >
+                  {pendingDeletion ? 'Deletion Scheduled' : accountDeleted ? 'Account Deleted' : 'Request Account Deletion'}
+                </button>
               </div>
-              {/* Download Data */}
-              <button
-                className="mr-2 px-4 py-2 rounded bg-blue-500/20 hover:bg-blue-500/40 text-blue-400"
-                onClick={handleDownloadData}
-              >
-                Download my data
-              </button>
-              {/* Request Data Deletion */}
-              <button
-                className="px-4 py-2 rounded bg-red-500/20 hover:bg-red-500/40 text-red-400"
-                onClick={handleRequestDataDeletion}
-              >
-                Request data deletion
-              </button>
-              {/* Feedback Message */}
-              {feedback && <div className="mt-3 text-green-400">{feedback}</div>}
-              {/* Delete Confirmation Modal */}
-              {showDeleteModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                  <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-sm w-full shadow-lg">
-                    <h4 className="text-lg font-bold mb-2 text-red-500">Confirm Data Deletion</h4>
-                    <p className="mb-4 text-white/80">This will <b>permanently delete</b> your account and all associated data. Are you sure?</p>
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={confirmDelete}
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
-                        Yes, delete my data
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteModal(false)}
-                        className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-600"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* Account Deletion */}
-            <div className="bg-white/10 dark:text-white rounded-xl p-6 border border-white/20 transition-colors duration-300 mt-8">
-              <div className="flex items-center space-x-3 mb-4">
-                <AlertCircle className="w-7 h-7 text-red-400" />
-                <h3 className="text-2xl font-bold text-red-400">Account Deletion</h3>
-              </div>
-              <p className="text-white/80 mb-4 text-base">Permanently delete your account and all associated data. <b>This action cannot be undone.</b></p>
-              <button
-                className={`px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-200 border border-red-500/40 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400/50 ${accountDeleted ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-red-500/20 hover:bg-red-500/40 text-red-400 hover:text-white'}`}
-                onClick={handleAccountDelete}
-                disabled={accountDeleted}
-              >
-                {pendingDeletion ? 'Deletion Scheduled' : accountDeleted ? 'Account Deleted' : 'Request Account Deletion'}
-              </button>
               {/* Modal for confirmation */}
               {showAccountDeleteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
@@ -431,7 +362,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Preferences & Appearance */}
-        <div className="bg-white/5 dark:text-white rounded-2xl p-6 mb-12 w-full max-w-2xl mx-auto shadow-lg transition-colors duration-300">
+        <div className="bg-white/5 dark:text-white rounded-2xl p-6 mb-12 w-full shadow-lg transition-colors duration-300">
           <h2 className="text-2xl font-bold text-white mb-6">Preferences & Appearance</h2>
           <div className="space-y-6">
             {/* Currency/Timezone */}
@@ -500,34 +431,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
 
-        {/* Billing & Support */}
-        <div className="bg-white/5 dark:text-white rounded-2xl p-6 mb-12 w-full max-w-2xl mx-auto shadow-lg transition-colors duration-300">
-          <h2 className="text-2xl font-bold text-white mb-6">Billing & Support</h2>
-          <div className="space-y-6">
-            {/* Subscription/Billing */}
-            <div className="bg-white/10 dark:text-white rounded-xl p-6 border border-white/20 transition-colors duration-300">
-              <div className="flex items-center space-x-3 mb-4">
-                <Crown className="w-6 h-6 text-purple-400" />
-                <h3 className="text-xl font-bold text-white">Subscription & Billing</h3>
-              </div>
-              <p className="text-white/70 mb-2">Manage your subscription plan and billing information.</p>
-              <div className="bg-white/5 rounded p-3 text-white/80 text-sm">(Subscription and billing info placeholder)</div>
-              <button className="mt-3 bg-purple-500/20 hover:bg-purple-500/40 text-purple-400 px-4 py-2 rounded">Manage Subscription</button>
-            </div>
-            {/* Support/Help */}
-            <div className="bg-white/10 dark:text-white rounded-xl p-6 border border-white/20 transition-colors duration-300">
-              <div className="flex items-center space-x-3 mb-4">
-                <Info className="w-6 h-6 text-blue-400" />
-                <h3 className="text-xl font-bold text-white">Support & Help</h3>
-              </div>
-              <p className="text-white/70 mb-2">Need help? Visit our FAQ or contact support.</p>
-              <div className="space-x-4">
-                <button className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 px-4 py-2 rounded">FAQ</button>
-                <button className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 px-4 py-2 rounded">Contact Support</button>
-              </div>
-            </div>
-          </div>
-        </div>
+
       </div>
       {/* Reactivate Modal */}
       {reactivateModal && (

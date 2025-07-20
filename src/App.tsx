@@ -142,10 +142,10 @@ const AppContent = () => {
     if (currentUser) {
       try {
         // Terminate current session on server
-        const userSessions = await serverSessionService.getUserSessions(currentUser.id);
-        const currentSession = userSessions.find(s => s.isCurrentSession);
+        const userSessions = await sessionService.getUserSessions(currentUser.id);
+        const currentSession = userSessions.find((s: any) => s.isCurrentSession);
         if (currentSession) {
-          await serverSessionService.terminateSession(currentSession.id);
+          await sessionService.terminateSession(currentSession.id);
         }
       } catch (error) {
         console.error('Error terminating session on logout:', error);
@@ -235,7 +235,7 @@ const AppContent = () => {
         // Create session in backend after successful admin authentication
         try {
           console.log('Creating session for admin user:', user.id);
-          await serverSessionService.createSessionWithDeviceDetection(user.id);
+          await sessionService.createSessionWithDeviceDetection(user.id);
           console.log('Session created successfully for admin user:', user.id);
         } catch (error) {
           console.error('Failed to create session in backend for admin:', error);
@@ -259,10 +259,10 @@ const AppContent = () => {
     if (currentUser) {
       try {
         // Terminate current session on server
-        const userSessions = await serverSessionService.getUserSessions(currentUser.id);
-        const currentSession = userSessions.find(s => s.isCurrentSession);
+        const userSessions = await sessionService.getUserSessions(currentUser.id);
+        const currentSession = userSessions.find((s: any) => s.isCurrentSession);
         if (currentSession) {
-          await serverSessionService.terminateSession(currentSession.id);
+          await sessionService.terminateSession(currentSession.id);
         }
       } catch (error) {
         console.error('Error terminating session on admin logout:', error);
@@ -405,6 +405,8 @@ const AppContent = () => {
         console.log('Created default admin account (first time setup)');
       }
       
+
+      
       // Remove automatic test user creation - new users should start with real accounts
       // userStorage.ensureBallenUser();
         
@@ -527,14 +529,14 @@ const AppContent = () => {
 
     const updateSessionActivity = async () => {
       try {
-        const userSessions = await serverSessionService.getUserSessions(currentUser.id);
-        const currentSession = userSessions.find(s => s.isCurrentSession);
+        const userSessions = await sessionService.getUserSessions(currentUser.id);
+        const currentSession = userSessions.find((s: any) => s.isCurrentSession);
         if (currentSession) {
-          await serverSessionService.updateSessionActivity(currentSession.id);
+          await sessionService.updateSessionActivity(currentSession.id);
         } else {
           // If no current session exists, create one
           console.log('📱 No current session found, creating one for user:', currentUser.id);
-          await serverSessionService.createSessionWithDeviceDetection(currentUser.id);
+          await sessionService.createSessionWithDeviceDetection(currentUser.id);
         }
       } catch (error) {
         console.error('Error updating session activity:', error);
@@ -569,7 +571,14 @@ const AppContent = () => {
 
   if (isInitializing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center px-3 sm:px-4">
+      <div 
+        className="min-h-screen flex items-center justify-center px-3 sm:px-4"
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%)',
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover'
+        }}
+      >
         <div className="text-center">
           <div className="text-white text-lg sm:text-xl mb-3 sm:mb-4">Loading Ad money...</div>
           <div className="text-white/60 text-sm sm:text-base">Please wait while we initialize the application</div>
@@ -579,7 +588,9 @@ const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 responsive-container">
+    <div 
+      className="min-h-screen responsive-container"
+    >
       {shouldShowHeader && (
         <Header 
           currentPage={currentPage} 

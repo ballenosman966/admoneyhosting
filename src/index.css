@@ -18,7 +18,7 @@
   }
   
   body {
-    background: #0f0f23;
+    background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
     color: #fff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -36,6 +36,18 @@
     min-height: 100vh;
     /* Fix for touchpad scrolling */
     overscroll-behavior: auto;
+    /* Ensure background covers entire viewport */
+    background-attachment: fixed;
+    background-size: cover;
+    /* Ensure background is always visible */
+    background-color: #0f172a !important;
+  }
+  
+  /* Ensure body background extends on mobile */
+  @media (max-width: 768px) {
+    body {
+      min-height: calc(100vh + 120px);
+    }
   }
   
   /* Root element fixes */
@@ -44,6 +56,13 @@
     /* Enable touch scrolling */
     -webkit-overflow-scrolling: touch;
     overflow-scrolling: touch;
+  }
+  
+  /* Ensure root background extends on mobile */
+  @media (max-width: 768px) {
+    #root {
+      min-height: calc(100vh + 120px);
+    }
   }
   
   /* Enable scrolling on all scrollable elements */
@@ -77,6 +96,78 @@
     overflow-scrolling: touch;
   }
   
+  /* Ensure background extends to cover mobile navigation */
+  @media (max-width: 768px) {
+    .min-h-screen {
+      /* Removed min-height to prevent background banding */
+    }
+    
+      /* Ensure main app background extends properly */
+  .bg-gradient-to-br.from-slate-900.via-purple-900.to-slate-900 {
+    min-height: calc(100vh + 120px) !important;
+    background-attachment: fixed;
+    background-size: cover;
+  }
+  
+  /* Force viewport coverage for main container */
+  .min-h-screen.bg-gradient-to-br {
+    min-height: calc(100vh + 120px) !important;
+  }
+  
+  /* Ensure content always fills the viewport */
+  .responsive-container {
+    /* Removed min-height to prevent background banding */
+  }
+  
+  /* Ensure consistent background on mobile */
+  @media (max-width: 768px) {
+    html, body, #root {
+      background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+      background-attachment: fixed;
+      background-size: cover;
+    }
+    
+    /* Ensure mobile top bar is always visible */
+    .mobile-top-bar {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      z-index: 50 !important;
+      height: auto !important;
+      min-height: auto !important;
+      max-height: 80px !important;
+      overflow: hidden !important;
+    }
+    
+    /* Constrain mobile top bar content */
+    .mobile-top-bar > div {
+      height: auto !important;
+      min-height: auto !important;
+      max-height: 60px !important;
+      overflow: hidden !important;
+    }
+    
+    /* Force mobile top bar to stay at top only */
+    .mobile-top-bar {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: auto !important;
+      height: 80px !important;
+      min-height: 80px !important;
+      max-height: 80px !important;
+    }
+    
+    /* Hide mobile top bar on desktop */
+    @media (min-width: 768px) {
+      .mobile-top-bar {
+        display: none !important;
+      }
+    }
+  }
+  }
+  
   /* Ensure proper scrolling on mobile */
   @media (max-width: 768px) {
     body {
@@ -84,12 +175,24 @@
       /* Fix for iOS Safari */
       -webkit-overflow-scrolling: touch;
       overflow-scrolling: touch;
+      /* Add padding bottom for mobile bottom navigation */
+      padding-bottom: 120px;
     }
     
     /* Fix for iOS Safari */
     .mobile-scroll {
       -webkit-overflow-scrolling: touch;
       overflow-scrolling: touch;
+    }
+    
+    /* Ensure content doesn't get hidden behind bottom navigation */
+    .min-h-screen {
+      padding-bottom: 120px;
+    }
+    
+    /* Mobile bottom navigation spacing */
+    .mobile-bottom-nav {
+      padding-bottom: 120px;
     }
   }
   

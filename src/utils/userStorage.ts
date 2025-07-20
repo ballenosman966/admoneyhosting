@@ -1973,23 +1973,56 @@ class UserStorage {
     const sessions = this.getSessions();
     console.log('🔧 Existing sessions:', sessions.length);
     
-    // Check if there's already a current session for this user and browser
-    const existingCurrentSession = sessions.find(session => 
+    // First, automatically clean up any duplicate sessions for this user
+    this.removeDuplicateSessions(userId);
+    
+    // Get sessions again after cleanup
+    const cleanedSessions = this.getSessions();
+    
+    // Enhanced duplicate detection - check for existing sessions with same device fingerprint
+    const deviceFingerprint = this.createDeviceFingerprint();
+    console.log('🔧 Device fingerprint:', deviceFingerprint);
+    
+    // Check if there's already a session for this user with the same device fingerprint
+    const existingSession = cleanedSessions.find(session => 
+      session.userId === userId && 
+      this.createDeviceFingerprintFromSession(session) === deviceFingerprint
+    );
+    
+    if (existingSession) {
+      console.log('🔧 Found existing session with same device fingerprint:', existingSession.id);
+      // Update the existing session instead of creating a new one
+      existingSession.lastActive = new Date().toISOString();
+      existingSession.isCurrentSession = true;
+      
+      // Mark all other sessions for this user as not current
+      cleanedSessions.forEach(session => {
+        if (session.userId === userId && session.id !== existingSession.id) {
+          session.isCurrentSession = false;
+        }
+      });
+      
+      this.saveSessions(cleanedSessions);
+      return existingSession;
+    }
+    
+    // Check if there's already a current session for this user and browser (fallback)
+    const existingCurrentSession = cleanedSessions.find(session => 
       session.userId === userId && 
       session.isCurrentSession &&
       session.userAgent === navigator.userAgent
     );
     
     if (existingCurrentSession) {
-      console.log('🔧 Updating existing session:', existingCurrentSession.id);
+      console.log('🔧 Updating existing current session:', existingCurrentSession.id);
       // Update the existing session instead of creating a new one
       existingCurrentSession.lastActive = new Date().toISOString();
-      this.saveSessions(sessions);
+      this.saveSessions(cleanedSessions);
       return existingCurrentSession;
     }
     
     // Mark all existing sessions for this user as not current
-    sessions.forEach(session => {
+    cleanedSessions.forEach(session => {
       if (session.userId === userId) {
         session.isCurrentSession = false;
       }
@@ -2020,14 +2053,39 @@ class UserStorage {
     };
 
     console.log('🔧 New session created:', newSession);
-    sessions.push(newSession);
-    this.saveSessions(sessions);
-    console.log('🔧 Total sessions after creation:', sessions.length);
+    cleanedSessions.push(newSession);
+    this.saveSessions(cleanedSessions);
+    console.log('🔧 Total sessions after creation:', cleanedSessions.length);
     
     // Try to update with real IP information
     this.updateSessionWithIP(newSession.id);
     
     return newSession;
+  }
+
+  // Create a unique device fingerprint for better duplicate detection
+  private createDeviceFingerprint(): string {
+    const userAgent = navigator.userAgent;
+    const screenRes = `${screen.width}x${screen.height}`;
+    const colorDepth = screen.colorDepth;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const language = navigator.language;
+    
+    // Create a fingerprint based on device characteristics
+    const fingerprint = `${userAgent}|${screenRes}|${colorDepth}|${timezone}|${language}`;
+    return btoa(fingerprint).slice(0, 32); // Base64 encode and truncate for consistency
+  }
+
+  // Create device fingerprint from existing session
+  private createDeviceFingerprintFromSession(session: DeviceSession): string {
+    const userAgent = session.userAgent;
+    const screenRes = `${screen.width}x${screen.height}`;
+    const colorDepth = screen.colorDepth;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const language = navigator.language;
+    
+    const fingerprint = `${userAgent}|${screenRes}|${colorDepth}|${timezone}|${language}`;
+    return btoa(fingerprint).slice(0, 32);
   }
 
   // Get all sessions for a user
@@ -2036,6 +2094,19 @@ class UserStorage {
     const userSessions = sessions.filter(session => session.userId === userId);
     console.log('🔧 Getting sessions for user:', userId);
     console.log('🔧 Found sessions:', userSessions.length);
+    
+    // Automatically clean up duplicates when sessions are retrieved
+    if (userSessions.length > 1) {
+      console.log('🔧 Auto-cleaning duplicates for user:', userId);
+      this.removeDuplicateSessions(userId);
+      
+      // Get the cleaned sessions
+      const cleanedSessions = this.getSessions();
+      const cleanedUserSessions = cleanedSessions.filter(session => session.userId === userId);
+      console.log('🔧 After auto-cleanup - user sessions:', cleanedUserSessions.length);
+      return cleanedUserSessions;
+    }
+    
     console.log('🔧 All sessions in storage:', sessions);
     return userSessions;
   }
@@ -2048,6 +2119,14 @@ class UserStorage {
     if (sessionIndex !== -1) {
       sessions[sessionIndex].lastActive = new Date().toISOString();
       this.saveSessions(sessions);
+      
+      // Automatically clean up duplicates for this user
+      const userId = sessions[sessionIndex].userId;
+      const userSessions = sessions.filter(s => s.userId === userId);
+      if (userSessions.length > 1) {
+        console.log('🔧 Auto-cleaning duplicates during activity update for user:', userId);
+        this.removeDuplicateSessions(userId);
+      }
     }
   }
 
@@ -2094,22 +2173,35 @@ class UserStorage {
     const sessions = this.getSessions();
     const userSessions = sessions.filter(s => s.userId === userId);
     
-    // Group by user agent to find duplicates
-    const userAgentGroups: { [key: string]: DeviceSession[] } = {};
+    if (userSessions.length <= 1) {
+      return; // No duplicates to remove
+    }
+    
+    console.log('🔧 Removing duplicate sessions for user:', userId);
+    console.log('🔧 Before cleanup - user sessions:', userSessions.length);
+    
+    // Enhanced duplicate detection using device fingerprints
+    const deviceFingerprints = new Map<string, DeviceSession[]>();
+    
     userSessions.forEach(session => {
-      if (!userAgentGroups[session.userAgent]) {
-        userAgentGroups[session.userAgent] = [];
+      const fingerprint = this.createDeviceFingerprintFromSession(session);
+      if (!deviceFingerprints.has(fingerprint)) {
+        deviceFingerprints.set(fingerprint, []);
       }
-      userAgentGroups[session.userAgent].push(session);
+      deviceFingerprints.get(fingerprint)!.push(session);
     });
     
-    // Keep only the most recent session for each user agent
+    // Keep only the most recent session for each device fingerprint
     const sessionsToKeep: DeviceSession[] = [];
-    Object.values(userAgentGroups).forEach(group => {
+    let totalRemoved = 0;
+    
+    deviceFingerprints.forEach((group, fingerprint) => {
       if (group.length > 1) {
         // Sort by last active time and keep the most recent
         group.sort((a, b) => new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime());
         sessionsToKeep.push(group[0]);
+        totalRemoved += group.length - 1;
+        console.log('🔧 Removed', group.length - 1, 'duplicate sessions for device fingerprint:', fingerprint.slice(0, 8) + '...');
       } else {
         sessionsToKeep.push(group[0]);
       }
@@ -2119,6 +2211,43 @@ class UserStorage {
     const otherUserSessions = sessions.filter(s => s.userId !== userId);
     const updatedSessions = [...otherUserSessions, ...sessionsToKeep];
     this.saveSessions(updatedSessions);
+    
+    console.log('🔧 After cleanup - user sessions:', sessionsToKeep.length);
+    console.log('🔧 Total duplicates removed:', totalRemoved);
+  }
+
+  // Clean up all duplicate sessions for all users
+  cleanupAllDuplicateSessions(): void {
+    console.log('🔧 Starting cleanup of all duplicate sessions...');
+    const sessions = this.getSessions();
+    
+    if (sessions.length === 0) {
+      console.log('🔧 No sessions to clean up');
+      return;
+    }
+    
+    // Get unique user IDs
+    const userIds = [...new Set(sessions.map(s => s.userId))];
+    console.log('🔧 Found', userIds.length, 'users with sessions');
+    
+    let totalRemoved = 0;
+    userIds.forEach(userId => {
+      const userSessions = sessions.filter(s => s.userId === userId);
+      const beforeCount = userSessions.length;
+      
+      this.removeDuplicateSessions(userId);
+      
+      const afterSessions = this.getSessions().filter(s => s.userId === userId);
+      const afterCount = afterSessions.length;
+      const removed = beforeCount - afterCount;
+      
+      if (removed > 0) {
+        totalRemoved += removed;
+        console.log('🔧 User', userId, ': removed', removed, 'duplicate sessions');
+      }
+    });
+    
+    console.log('🔧 Total duplicate sessions removed:', totalRemoved);
   }
 
   // Get current session for a user

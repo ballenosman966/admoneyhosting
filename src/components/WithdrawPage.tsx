@@ -58,32 +58,32 @@ const DepositHistory: React.FC<DepositHistoryProps> = ({ userId }) => {
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm text-white">
-          <thead>
-            <tr className="border-b border-white/20">
-              <th className="px-2 py-2 text-left">Amount</th>
-              <th className="px-2 py-2 text-left">Status</th>
-              <th className="px-2 py-2 text-left">Date</th>
-              <th className="px-2 py-2 text-left">Screenshot</th>
-            </tr>
-          </thead>
-          <tbody>
-            {proofs.slice().reverse().map(proof => (
-              <tr key={proof.id} className="border-b border-white/10">
-                <td className="px-2 py-2">{proof.amount} USDT</td>
-                <td className="px-2 py-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    proof.status === 'approved' ? 'bg-green-500/20 text-green-400' :
-                    proof.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-red-500/20 text-red-400'
-                  }`}>
-                    {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
-                  </span>
-                </td>
-                <td className="px-2 py-2">{new Date(proof.submittedAt).toLocaleString()}</td>
-                <td className="px-2 py-2">
-                  {proof.screenshot ? (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-sm text-white">
+        <thead>
+          <tr className="border-b border-white/20">
+            <th className="px-2 py-2 text-left">Amount</th>
+            <th className="px-2 py-2 text-left">Status</th>
+            <th className="px-2 py-2 text-left">Date</th>
+            <th className="px-2 py-2 text-left">Screenshot</th>
+          </tr>
+        </thead>
+        <tbody>
+          {proofs.slice().reverse().map(proof => (
+            <tr key={proof.id} className="border-b border-white/10">
+              <td className="px-2 py-2">{proof.amount} USDT</td>
+              <td className="px-2 py-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  proof.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                  proof.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                  'bg-red-500/20 text-red-400'
+                }`}>
+                  {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
+                </span>
+              </td>
+              <td className="px-2 py-2">{new Date(proof.submittedAt).toLocaleString()}</td>
+              <td className="px-2 py-2">
+                {proof.screenshot ? (
                     <button
                       type="button"
                       onClick={() => setModalImage(proof.screenshot)}
@@ -91,15 +91,15 @@ const DepositHistory: React.FC<DepositHistoryProps> = ({ userId }) => {
                     >
                       View
                     </button>
-                  ) : (
-                    <span className="text-white/40">-</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                ) : (
+                  <span className="text-white/40">-</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
       {/* Modal Popup for Screenshot */}
       {modalImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center super-blur">
@@ -345,25 +345,25 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
       setDepositAmountError(`Deposit must be between ${MIN_DEPOSIT} and ${MAX_DEPOSIT} USDT`);
       return;
     }
-
+    
     if (!screenshot) {
       alert('Please upload a screenshot of your payment transaction.');
       return;
     }
-
+    
     setDepositAmountError('');
 
     try {
       // Create deposit proof object
       const depositProof: DepositProof = {
         id: `deposit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId: user.id,
-        username: user.username,
-        amount: amount,
+      userId: user.id,
+      username: user.username,
+      amount: amount,
         transactionHash: transactionHash || '',
-        screenshot: screenshot,
+      screenshot: screenshot,
         depositToAddress: USDT_TRC20_ADDRESS,
-        status: 'pending',
+      status: 'pending',
         submittedAt: new Date(),
         adminNotes: ''
       };
@@ -383,7 +383,7 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
             depositProof.status = 'approved';
             depositProof.processedAt = new Date();
             depositProof.adminNotes = `Auto-approved: ${verificationResult.reason}`;
-            userStorage.handleDeposit(user.id, amount);
+      userStorage.handleDeposit(user.id, amount);
             onUserUpdate({ ...user, balance: user.balance + amount });
             alert(`✅ Deposit automatically approved! ${amount} USDT has been added to your balance.`);
             // Notify user
@@ -404,7 +404,7 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
               data: { type: 'deposit', status: 'pending', amount }
             });
           }
-        } else {
+    } else {
           depositProof.adminNotes = `Verification failed: ${verificationResult.reason}`;
           alert(`⚠️ Transaction verification failed. Your deposit has been submitted for manual review. Reason: ${verificationResult.reason}`);
           // Notify user
@@ -417,7 +417,7 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
         }
       } else {
         depositProof.adminNotes = 'No transaction hash provided - manual review required';
-        alert(`Deposit proof submitted for ${depositAmount} USDT. Awaiting manual review.`);
+      alert(`Deposit proof submitted for ${depositAmount} USDT. Awaiting manual review.`);
         // Notify user
         notificationService.showNotification({
           title: 'Deposit Pending Review',
@@ -432,13 +432,13 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
       allProofs.push(depositProof);
       localStorage.setItem('depositProofs', JSON.stringify(allProofs));
 
-      setDepositAmount('');
-      setTransactionHash('');
-      setScreenshot(null);
-      setScreenshotFile(null);
-      if (screenshotInputRef.current) {
-        screenshotInputRef.current.value = '';
-      }
+    setDepositAmount('');
+    setTransactionHash('');
+    setScreenshot(null);
+    setScreenshotFile(null);
+    if (screenshotInputRef.current) {
+      screenshotInputRef.current.value = '';
+    }
 
     } catch (error) {
       console.error('Error submitting deposit:', error);
@@ -534,40 +534,40 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
 
         {/* Tab Content */}
         <div className="relative">
-          {activeTab === 'withdraw' && (
+        {activeTab === 'withdraw' && (
             <div className="animate-fadeInSlideUp">
-              {/* Withdrawal Form */}
-              <div
-                className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg"
-              >
-                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
-                  Withdrawal Details
-                </h2>
-                
-                <div className="space-y-6">
-                  {/* Amount Input */}
-                  <div>
-                    <label className="block text-white/90 font-medium mb-2">Amount (USDT)</label>
-                    <input
-                      type="number"
-                      value={withdrawAmount}
-                      onChange={(e) => {
-                        setWithdrawAmount(e.target.value);
-                        const val = parseFloat(e.target.value);
-                        if (isNaN(val) || val < MIN_WITHDRAW) {
-                          setWithdrawAmountError(`Minimum withdrawal is ${MIN_WITHDRAW} USDT`);
-                        } else if (val > MAX_WITHDRAW) {
-                          setWithdrawAmountError(`Maximum withdrawal is ${MAX_WITHDRAW} USDT`);
-                        } else {
-                          setWithdrawAmountError('');
-                        }
-                      }}
+            {/* Withdrawal Form */}
+            <div
+              className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+                Withdrawal Details
+              </h2>
+              
+              <div className="space-y-6">
+                {/* Amount Input */}
+                <div>
+                  <label className="block text-white/90 font-medium mb-2">Amount (USDT)</label>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => {
+                      setWithdrawAmount(e.target.value);
+                      const val = parseFloat(e.target.value);
+                      if (isNaN(val) || val < MIN_WITHDRAW) {
+                        setWithdrawAmountError(`Minimum withdrawal is ${MIN_WITHDRAW} USDT`);
+                      } else if (val > MAX_WITHDRAW) {
+                        setWithdrawAmountError(`Maximum withdrawal is ${MAX_WITHDRAW} USDT`);
+                      } else {
+                        setWithdrawAmountError('');
+                      }
+                    }}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="Enter amount to withdraw"
-                      min={MIN_WITHDRAW}
-                      max={MAX_WITHDRAW}
-                      step="0.01"
-                    />
+                    placeholder="Enter amount to withdraw"
+                    min={MIN_WITHDRAW}
+                    max={MAX_WITHDRAW}
+                    step="0.01"
+                  />
                     
                     {/* Quick Amount Buttons */}
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -597,52 +597,52 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
                       </button>
                     </div>
                     
-                    <p className="text-white/60 text-sm mt-1">Minimum: {MIN_WITHDRAW} USDT &nbsp; | &nbsp; Maximum: {MAX_WITHDRAW} USDT</p>
-                    {withdrawAmountError && <p className="text-red-400 text-xs mt-1">{withdrawAmountError}</p>}
-                    {withdrawAmount && !withdrawAmountError && (
-                      <p className="text-yellow-400 text-xs mt-1">
-                        Estimated Network Fee: {WITHDRAW_NETWORK_FEE} USDT<br />
-                        Net Amount Received: {Math.max(0, parseFloat(withdrawAmount) - WITHDRAW_NETWORK_FEE).toFixed(2)} USDT
-                      </p>
-                    )}
-                    {withdrawAmount && !withdrawAmountError && (
-                      <p className="text-blue-400 text-xs mt-1">
-                        Estimated Arrival: 10-30 minutes
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Wallet Address */}
-                  <div>
-                    <label className="block text-white/90 font-medium mb-2">Withdrawal Address</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={withdrawAddress}
-                        onChange={e => setWithdrawAddress(e.target.value)}
-                        placeholder="Enter your USDT wallet address"
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 pr-12 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
-                      />
-                      <button
-                        onClick={addToWhitelist}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
-                        disabled={!withdrawAddress.trim() || whitelist.includes(withdrawAddress.trim())}
-                      >
-                        <Copy className="w-5 h-5" />
-                      </button>
-                  </div>
-                  {whitelist.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="text-white/60 text-xs">Saved Addresses:</span>
-                      {whitelist.map(addr => (
-                        <span key={addr} className="inline-flex items-center bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white font-mono">
-                          <span className="mr-1 cursor-pointer hover:underline" onClick={() => setWithdrawAddress(addr)}>{addr}</span>
-                          <button onClick={() => removeFromWhitelist(addr)} className="ml-1 text-red-400 hover:text-red-600">&times;</button>
-                        </span>
-                      ))}
-                    </div>
+                  <p className="text-white/60 text-sm mt-1">Minimum: {MIN_WITHDRAW} USDT &nbsp; | &nbsp; Maximum: {MAX_WITHDRAW} USDT</p>
+                  {withdrawAmountError && <p className="text-red-400 text-xs mt-1">{withdrawAmountError}</p>}
+                  {withdrawAmount && !withdrawAmountError && (
+                    <p className="text-yellow-400 text-xs mt-1">
+                      Estimated Network Fee: {WITHDRAW_NETWORK_FEE} USDT<br />
+                      Net Amount Received: {Math.max(0, parseFloat(withdrawAmount) - WITHDRAW_NETWORK_FEE).toFixed(2)} USDT
+                    </p>
                   )}
+                  {withdrawAmount && !withdrawAmountError && (
+                    <p className="text-blue-400 text-xs mt-1">
+                      Estimated Arrival: 10-30 minutes
+                    </p>
+                  )}
+                </div>
+
+                {/* Wallet Address */}
+                <div>
+                  <label className="block text-white/90 font-medium mb-2">Withdrawal Address</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={withdrawAddress}
+                      onChange={e => setWithdrawAddress(e.target.value)}
+                      placeholder="Enter your USDT wallet address"
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 pr-12 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
+                    />
+                    <button
+                      onClick={addToWhitelist}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                      disabled={!withdrawAddress.trim() || whitelist.includes(withdrawAddress.trim())}
+                    >
+                      <Copy className="w-5 h-5" />
+                    </button>
+                </div>
+                {whitelist.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="text-white/60 text-xs">Saved Addresses:</span>
+                    {whitelist.map(addr => (
+                      <span key={addr} className="inline-flex items-center bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white font-mono">
+                        <span className="mr-1 cursor-pointer hover:underline" onClick={() => setWithdrawAddress(addr)}>{addr}</span>
+                        <button onClick={() => removeFromWhitelist(addr)} className="ml-1 text-red-400 hover:text-red-600">&times;</button>
+                      </span>
+                    ))}
                   </div>
+                )}
+                </div>
 
                   {/* Withdrawal Fee Calculator */}
                   <div className="glass-card border border-blue-400/20 bg-white/10 backdrop-blur-md rounded-lg p-4 shadow-lg">
@@ -729,16 +729,16 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
                     </div>
                   </div>
 
-                  {/* QR Code */}
-                  {withdrawAddress && (
-                    <div
-                      className="flex justify-center"
-                    >
-                      <div className="bg-white p-4 rounded-lg">
-                        <QRCode value={withdrawAddress} size={128} />
-                      </div>
+                {/* QR Code */}
+                {withdrawAddress && (
+                  <div
+                    className="flex justify-center"
+                  >
+                    <div className="bg-white p-4 rounded-lg">
+                      <QRCode value={withdrawAddress} size={128} />
                     </div>
-                  )}
+                  </div>
+                )}
 
                   {/* Withdrawal Limits Information */}
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
@@ -789,39 +789,39 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
                     </ul>
                   </div>
 
-                  {/* Withdraw Button */}
-                  <button
-                    onClick={handleWithdrawWithPasscode}
-                    className="w-full py-4 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-400 text-black font-bold text-lg shadow-lg hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                  >
-                    Withdraw USDT
-                  </button>
-                </div>
-              </div>
-
-              {/* Withdrawal History */}
-              <div
-                className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg"
-              >
-                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
-                  Withdrawal History
-                </h2>
-                <WithdrawalHistory userId={user.id} />
+                {/* Withdraw Button */}
+                <button
+                  onClick={handleWithdrawWithPasscode}
+                  className="w-full py-4 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-400 text-black font-bold text-lg shadow-lg hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  Withdraw USDT
+                </button>
               </div>
             </div>
-          )}
 
-          {activeTab === 'deposit' && (
+            {/* Withdrawal History */}
+            <div
+              className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
+                Withdrawal History
+              </h2>
+              <WithdrawalHistory userId={user.id} />
+            </div>
+            </div>
+        )}
+
+        {activeTab === 'deposit' && (
             <div className="animate-fadeInSlideUp">
-              {/* Deposit Section */}
-              <div
-                className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg"
-              >
-                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent mb-6">
-                  Deposit USDT
-                </h2>
-                
-                <div className="space-y-6">
+            {/* Deposit Section */}
+            <div
+              className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent mb-6">
+                Deposit USDT
+              </h2>
+              
+              <div className="space-y-6">
                   {/* Deposit Amount Input */}
                   <div>
                     <label className="block text-white/90 font-medium mb-2">Deposit Amount (USDT)</label>
@@ -956,26 +956,26 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
                     <p className="text-white/60 text-sm mt-1">Provide transaction hash for faster verification</p>
                   </div>
 
-                  {/* Deposit Address */}
-                  <div>
-                    <label className="block text-white/90 font-medium mb-2">Our Deposit Address</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={USDT_TRC20_ADDRESS}
-                        readOnly
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 pr-12 text-white focus:outline-none"
-                      />
-                      <button
-                        onClick={handleCopyAddress}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
-                      >
-                        {copied ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
+                {/* Deposit Address */}
+                <div>
+                  <label className="block text-white/90 font-medium mb-2">Our Deposit Address</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={USDT_TRC20_ADDRESS}
+                      readOnly
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 pr-12 text-white focus:outline-none"
+                    />
+                    <button
+                      onClick={handleCopyAddress}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                    >
+                      {copied ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
+                </button>
+              </div>
+              </div>
 
-                  {/* Deposit QR Code */}
+                {/* Deposit QR Code */}
                   <div className="flex flex-col items-center space-y-4">
                     <label className="block text-white/90 font-medium text-center">Scan QR Code to Get Deposit Address</label>
                     <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-white/20">
@@ -986,30 +986,30 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
                         bgColor="#FFFFFF"
                         fgColor="#000000"
                       />
-                    </div>
+                  </div>
                     <p className="text-white/60 text-sm text-center max-w-xs">
                       Scan this QR code with your wallet app to get the deposit address
                     </p>
-                  </div>
+                </div>
 
-                  {/* Upload Proof */}
+                {/* Upload Proof */}
                   <div className="flex flex-col items-center">
                     <label className="block text-white/90 font-medium mb-2 text-center">Upload Payment Proof</label>
                     <div className="border-2 border-dashed border-white/20 rounded-lg p-6 text-center w-full max-w-md">
-                      <input
-                        type="file"
-                        ref={screenshotInputRef}
-                        onChange={handleScreenshotUpload}
-                        accept="image/*"
-                        className="hidden"
-                      />
+                    <input
+                      type="file"
+                      ref={screenshotInputRef}
+                      onChange={handleScreenshotUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
                       {!screenshot ? (
-                        <button
-                          onClick={() => screenshotInputRef.current?.click()}
+                    <button
+                      onClick={() => screenshotInputRef.current?.click()}
                           className="flex flex-col items-center space-y-2 text-white/70 hover:text-white transition-colors w-full"
-                        >
-                          <Upload className="w-8 h-8" />
-                          <span>Click to upload screenshot</span>
+                    >
+                      <Upload className="w-8 h-8" />
+                      <span>Click to upload screenshot</span>
                           <p className="text-white/50 text-xs">PNG, JPG, JPEG up to 5MB</p>
                         </button>
                       ) : (
@@ -1025,7 +1025,7 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
                               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
                             >
                               <X className="w-4 h-4" />
-                            </button>
+                    </button>
                           </div>
                           <button
                             onClick={() => screenshotInputRef.current?.click()}
@@ -1105,31 +1105,31 @@ export const WithdrawPage: React.FC<WithdrawPageProps> = ({ user, onUserUpdate }
                         <strong>💡 Tip:</strong> Take a screenshot of your wallet transaction for faster verification. 
                         Make sure the screenshot shows the transaction hash, amount, and recipient address.
                       </p>
-                    </div>
                   </div>
-
-                  {/* Submit Deposit */}
-                  <button
-                    onClick={handleSubmitDeposit}
-                    disabled={!screenshot || !depositAmount}
-                    className="w-full py-4 rounded-lg bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold text-lg shadow-lg hover:from-green-500 hover:to-blue-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Submit Deposit Proof
-                  </button>
                 </div>
-              </div>
 
-              {/* Deposit History */}
-              <div
-                className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg"
-              >
-                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
-                  Deposit History
-                </h2>
-                <DepositHistory userId={user.id} />
+                {/* Submit Deposit */}
+                <button
+                  onClick={handleSubmitDeposit}
+                  disabled={!screenshot || !depositAmount}
+                  className="w-full py-4 rounded-lg bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold text-lg shadow-lg hover:from-green-500 hover:to-blue-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Submit Deposit Proof
+                </button>
               </div>
             </div>
-          )}
+
+            {/* Deposit History */}
+            <div
+              className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">
+                Deposit History
+              </h2>
+              <DepositHistory userId={user.id} />
+            </div>
+            </div>
+        )}
         </div>
       </div>
     </div>

@@ -25,9 +25,9 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
       try {
         console.log('📱 Checking for current session for user:', userId);
         const userSessions = await sessionService.getUserSessions(userId);
-        const currentSession = userSessions.find(s => s.isCurrentSession);
-        
-        if (!currentSession) {
+      const currentSession = userSessions.find(s => s.isCurrentSession);
+      
+      if (!currentSession) {
           console.log('📱 No current session found, creating one...');
           await sessionService.createSessionWithDeviceDetection(userId);
           console.log('📱 Session created successfully, reloading sessions...');
@@ -56,12 +56,12 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
 
   const loadSessions = async () => {
     try {
-      console.log('📱 SessionManager: Loading sessions for user:', userId);
+    console.log('📱 SessionManager: Loading sessions for user:', userId);
       console.log('📱 SessionManager: User ID type:', typeof userId);
       console.log('📱 SessionManager: User ID value:', userId);
       
       const userSessions = await sessionService.getUserSessions(userId);
-      console.log('📱 SessionManager: Found sessions:', userSessions);
+    console.log('📱 SessionManager: Found sessions:', userSessions);
       console.log('📱 SessionManager: Number of sessions:', userSessions.length);
       
       // Check if any sessions have placeholder IP/location and update them
@@ -85,7 +85,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
           setSessions(userSessions);
         }
       } else {
-        setSessions(userSessions);
+    setSessions(userSessions);
       }
       
       setLoading(false);
@@ -95,7 +95,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
       console.error('❌ SessionManager: Error details:', error instanceof Error ? error.message : String(error));
       console.error('❌ SessionManager: Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       setError('Failed to load sessions. Please try again.');
-      setLoading(false);
+    setLoading(false);
     }
   };
 
@@ -443,157 +443,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
           <p>• Sessions are synchronized across all your devices</p>
         </div>
         
-        {/* Debug Button - Visible to all users */}
-        <div className="mt-4 pt-4 border-t border-white/20">
-          <button 
-            onClick={async () => {
-              try {
-                console.log('🔧 Testing session service directly...');
-                const envInfo = sessionService.getEnvironmentInfo();
-                console.log('🔧 Environment info:', envInfo);
-                
-                // Test creating a session directly
-                const testSession = await sessionService.createSessionWithDeviceDetection(userId);
-                console.log('🔧 Test session created:', testSession);
-                
-                // Test getting sessions
-                const sessions = await sessionService.getUserSessions(userId);
-                console.log('🔧 Sessions retrieved:', sessions);
-                
-                alert(`Session Test Complete!\n\nEnvironment: ${envInfo.service}\nHostname: ${envInfo.hostname}\nSessions found: ${sessions.length}\n\nCheck console for details.`);
-                
-                // Reload sessions
-                await loadSessions();
-              } catch (error) {
-                console.error('Error testing session service:', error);
-                alert('Error testing session service. Check console for details.');
-              }
-            }}
-            className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded text-sm font-medium border border-yellow-500/30 hover:border-yellow-500/50 mr-2"
-          >
-            🔧 Debug Session Service
-          </button>
-          <button 
-            onClick={async () => {
-              try {
-                console.log('🌐 Refreshing IP and location for current session...');
-                
-                // Get current session
-                const currentSession = sessions.find(s => s.isCurrentSession);
-                if (!currentSession) {
-                  alert('No current session found. Please create a session first.');
-                  return;
-                }
-                
-                // Create a new session to get fresh IP and location
-                const newSession = await sessionService.createSessionWithDeviceDetection(userId);
-                console.log('🌐 New session with updated IP/location:', newSession);
-                
-                alert(`IP and Location Updated!\n\nNew IP: ${newSession.ipAddress}\nNew Location: ${newSession.location}\n\nSession refreshed successfully.`);
-                
-                // Reload sessions
-                await loadSessions();
-              } catch (error) {
-                console.error('Error refreshing IP and location:', error);
-                alert('Error refreshing IP and location. Check console for details.');
-              }
-            }}
-            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded text-sm font-medium border border-blue-500/30 hover:border-blue-500/50"
-          >
-            🌐 Refresh IP & Location
-          </button>
-          <button 
-            onClick={async () => {
-              try {
-                console.log('🗑️ Clearing all sessions and creating fresh one...');
-                
-                // Clear all sessions for this user
-                await sessionService.terminateAllSessions(userId);
-                console.log('🗑️ All sessions cleared');
-                
-                // Create a fresh session with proper IP detection
-                const freshSession = await sessionService.createSessionWithDeviceDetection(userId);
-                console.log('🆕 Fresh session created:', freshSession);
-                
-                alert(`Sessions Cleared and Fresh Session Created!\n\nNew IP: ${freshSession.ipAddress}\nNew Location: ${freshSession.location}\n\nAll old sessions have been removed.`);
-                
-                // Reload sessions
-                await loadSessions();
-              } catch (error) {
-                console.error('Error clearing and recreating sessions:', error);
-                alert('Error clearing and recreating sessions. Check console for details.');
-              }
-            }}
-            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded text-sm font-medium border border-red-500/30 hover:border-red-500/50 ml-2"
-          >
-            🗑️ Clear & Recreate Sessions
-          </button>
-        </div>
-        
-        {/* Debug Section - Only for Admin Users */}
-        {currentUser && currentUser.username === 'mhamad' && (
-          <div className="mt-4 pt-4 border-t border-white/20">
-            <h5 className="text-white font-medium mb-2">Debug Tools</h5>
-            <div className="space-y-2">
-              <button 
-                onClick={async () => {
-                  console.log('🔧 Manual session creation for user:', userId);
-                  try {
-                    await sessionService.createSessionWithDeviceDetection(userId);
-                    setTimeout(loadSessions, 1000);
-                  } catch (error) {
-                    console.error('Error creating session:', error);
-                  }
-                }}
-                className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded text-xs"
-              >
-                Create Test Session
-              </button>
-              <button 
-                onClick={async () => {
-                  console.log('🔧 Clearing all sessions for user:', userId);
-                  try {
-                    await sessionService.terminateAllSessions(userId);
-                    loadSessions();
-                  } catch (error) {
-                    console.error('Error clearing sessions:', error);
-                  }
-                }}
-                className="px-3 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded text-xs ml-2"
-              >
-                Clear All Sessions
-              </button>
-              <button 
-                onClick={() => {
-                  console.log('🔧 Current user agent:', navigator.userAgent);
-                  console.log('🔧 Current location:', window.location.href);
-                  alert(`User Agent: ${navigator.userAgent}\nLocation: ${window.location.href}`);
-                }}
-                className="px-3 py-1 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded text-xs ml-2"
-              >
-                Show Debug Info
-              </button>
-              <button 
-                onClick={async () => {
-                  console.log('🧪 Testing session functionality...');
-                  try {
-                    const result = await sessionService.testSessionFunctionality();
-                    const stats = await sessionService.getSessionStats(userId);
-                    console.log('📊 Session stats:', stats);
-                    console.log('🧪 Test result:', result);
-                    alert(`Session Test Complete!\n\nTotal Sessions: ${stats.totalSessions}\nActive Sessions: ${stats.activeSessions}\n\nCheck console for detailed results.`);
-                  } catch (error) {
-                    console.error('Error testing sessions:', error);
-                    alert('Error testing sessions. Check console for details.');
-                  }
-                }}
-                className="px-3 py-1 bg-green-500/20 hover:bg-green-500/40 text-green-400 rounded text-xs ml-2"
-              >
-                Test Sessions
-              </button>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );
