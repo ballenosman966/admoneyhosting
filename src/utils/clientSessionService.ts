@@ -48,29 +48,71 @@ class ClientSessionService {
             const { latitude, longitude } = position.coords;
             console.log('🌐 ClientSessionService: Browser geolocation coordinates:', { latitude, longitude });
             
-            // Use reverse geocoding to get location name
-            const response = await fetch(
+            // Try multiple reverse geocoding services
+            const geocodingServices = [
               `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
-              { signal: AbortSignal.timeout(3000) }
-            );
-            
-            if (response.ok) {
-              const data = await response.json();
-              let location = '';
-              
-              if (data.city && data.countryName) {
-                location = `${data.city}, ${data.countryName}`;
-              } else if (data.locality && data.countryName) {
-                location = `${data.locality}, ${data.countryName}`;
-              } else if (data.countryName) {
-                location = data.countryName;
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+              `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=9c7e1b22f2e86b6860e02b276463374c`
+            ];
+
+            for (const service of geocodingServices) {
+              try {
+                const response = await fetch(service, { 
+                  signal: AbortSignal.timeout(3000),
+                  headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': 'SessionManager/1.0'
+                  }
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  let location = '';
+                  
+                  if (service.includes('bigdatacloud')) {
+                    if (data.city && data.countryName) {
+                      location = `${data.city}, ${data.countryName}`;
+                    } else if (data.locality && data.countryName) {
+                      location = `${data.locality}, ${data.countryName}`;
+                    } else if (data.countryName) {
+                      location = data.countryName;
+                    }
+                  } else if (service.includes('nominatim')) {
+                    if (data.address) {
+                      const city = data.address.city || data.address.town || data.address.village;
+                      const country = data.address.country;
+                      if (city && country) {
+                        location = `${city}, ${country}`;
+                      } else if (country) {
+                        location = country;
+                      }
+                    }
+                  } else if (service.includes('opencagedata')) {
+                    if (data.results && data.results[0]) {
+                      const components = data.results[0].components;
+                      const city = components.city || components.town || components.village;
+                      const country = components.country;
+                      if (city && country) {
+                        location = `${city}, ${country}`;
+                      } else if (country) {
+                        location = country;
+                      }
+                    }
+                  }
+                  
+                  if (location) {
+                    console.log('🌐 ClientSessionService: Reverse geocoding successful:', location);
+                    resolve(location);
+                    return;
+                  }
+                }
+              } catch (error) {
+                console.warn('🌐 ClientSessionService: Reverse geocoding service failed:', service, error);
+                continue;
               }
-              
-              console.log('🌐 ClientSessionService: Reverse geocoding result:', location);
-              resolve(location || 'Location unavailable');
-            } else {
-              resolve('Location unavailable');
             }
+            
+            resolve('Location unavailable');
           } catch (error) {
             console.warn('🌐 ClientSessionService: Reverse geocoding failed:', error);
             resolve('Location unavailable');
@@ -88,6 +130,104 @@ class ClientSessionService {
         }
       );
     });
+  }
+
+  // Get basic location from timezone and language
+  private getBasicLocationFromTimezone(): string {
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const language = navigator.language || navigator.languages?.[0] || 'en';
+      
+      console.log('🌐 ClientSessionService: Timezone:', timezone, 'Language:', language);
+      
+      // Map common timezones to locations
+      const timezoneMap: { [key: string]: string } = {
+        'America/New_York': 'Eastern US',
+        'America/Chicago': 'Central US',
+        'America/Denver': 'Mountain US',
+        'America/Los_Angeles': 'Western US',
+        'America/Toronto': 'Canada',
+        'Europe/London': 'United Kingdom',
+        'Europe/Paris': 'France',
+        'Europe/Berlin': 'Germany',
+        'Europe/Rome': 'Italy',
+        'Europe/Madrid': 'Spain',
+        'Europe/Amsterdam': 'Netherlands',
+        'Europe/Stockholm': 'Sweden',
+        'Europe/Oslo': 'Norway',
+        'Europe/Copenhagen': 'Denmark',
+        'Europe/Helsinki': 'Finland',
+        'Europe/Warsaw': 'Poland',
+        'Europe/Prague': 'Czech Republic',
+        'Europe/Budapest': 'Hungary',
+        'Europe/Vienna': 'Austria',
+        'Europe/Zurich': 'Switzerland',
+        'Europe/Brussels': 'Belgium',
+        'Europe/Dublin': 'Ireland',
+        'Europe/Lisbon': 'Portugal',
+        'Europe/Athens': 'Greece',
+        'Europe/Istanbul': 'Turkey',
+        'Asia/Tokyo': 'Japan',
+        'Asia/Seoul': 'South Korea',
+        'Asia/Shanghai': 'China',
+        'Asia/Hong_Kong': 'Hong Kong',
+        'Asia/Singapore': 'Singapore',
+        'Asia/Bangkok': 'Thailand',
+        'Asia/Jakarta': 'Indonesia',
+        'Asia/Manila': 'Philippines',
+        'Asia/Kolkata': 'India',
+        'Asia/Dubai': 'UAE',
+        'Asia/Riyadh': 'Saudi Arabia',
+        'Asia/Tehran': 'Iran',
+        'Asia/Jerusalem': 'Israel',
+        'Africa/Cairo': 'Egypt',
+        'Africa/Lagos': 'Nigeria',
+        'Africa/Johannesburg': 'South Africa',
+        'Australia/Sydney': 'Australia',
+        'Australia/Melbourne': 'Australia',
+        'Australia/Perth': 'Australia',
+        'Pacific/Auckland': 'New Zealand',
+        'Pacific/Honolulu': 'Hawaii'
+      };
+      
+      // Try to get location from timezone
+      if (timezoneMap[timezone]) {
+        return timezoneMap[timezone];
+      }
+      
+      // Try to get location from language
+      const languageMap: { [key: string]: string } = {
+        'en': 'English-speaking region',
+        'es': 'Spanish-speaking region',
+        'fr': 'French-speaking region',
+        'de': 'German-speaking region',
+        'it': 'Italian-speaking region',
+        'pt': 'Portuguese-speaking region',
+        'ru': 'Russian-speaking region',
+        'ja': 'Japanese-speaking region',
+        'ko': 'Korean-speaking region',
+        'zh': 'Chinese-speaking region',
+        'ar': 'Arabic-speaking region',
+        'hi': 'Hindi-speaking region'
+      };
+      
+      const langCode = language.split('-')[0];
+      if (languageMap[langCode]) {
+        return languageMap[langCode];
+      }
+      
+      // Extract country from timezone if possible
+      const timezoneParts = timezone.split('/');
+      if (timezoneParts.length > 1) {
+        const region = timezoneParts[1].replace('_', ' ');
+        return region;
+      }
+      
+      return 'Unknown location';
+    } catch (error) {
+      console.warn('🌐 ClientSessionService: Error getting basic location from timezone:', error);
+      return 'Location unavailable';
+    }
   }
 
   // Get IP address and location from external APIs
@@ -112,6 +252,7 @@ class ClientSessionService {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
+              'User-Agent': 'SessionManager/1.0'
             },
             // Add timeout
             signal: AbortSignal.timeout(3000)
@@ -188,44 +329,67 @@ class ClientSessionService {
       try {
         console.log('🌐 ClientSessionService: Trying dedicated geolocation service...');
         const ipResponse = await fetch('https://api.ipify.org?format=json', {
-          signal: AbortSignal.timeout(2000)
+          signal: AbortSignal.timeout(2000),
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'SessionManager/1.0'
+          }
         });
         const ipData = await ipResponse.json();
         
         if (ipData.ip && ipData.ip !== 'undefined' && ipData.ip !== 'null') {
-          // Try to get location for this IP
-          try {
-            const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`, {
-              signal: AbortSignal.timeout(3000)
-            });
-            const geoData = await geoResponse.json();
-            
-            let location = '';
-            if (geoData.city && geoData.region && geoData.country) {
-              location = `${geoData.city}, ${geoData.region}, ${geoData.country}`;
-            } else if (geoData.city && geoData.country) {
-              location = `${geoData.city}, ${geoData.country}`;
-            } else if (geoData.region && geoData.country) {
-              location = `${geoData.region}, ${geoData.country}`;
-            } else if (geoData.country) {
-              location = geoData.country;
+          // Try to get location for this IP using multiple services
+          const geoServices = [
+            `https://ipapi.co/${ipData.ip}/json/`,
+            `https://ipinfo.io/${ipData.ip}/json`,
+            `https://api.ipapi.com/api/${ipData.ip}?access_key=9c7e1b22f2e86b6860e02b276463374c`
+          ];
+
+          for (const geoService of geoServices) {
+            try {
+              const geoResponse = await fetch(geoService, {
+                signal: AbortSignal.timeout(3000),
+                headers: {
+                  'Accept': 'application/json',
+                  'User-Agent': 'SessionManager/1.0'
+                }
+              });
+              
+              if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                
+                let location = '';
+                if (geoData.city && geoData.region && geoData.country) {
+                  location = `${geoData.city}, ${geoData.region}, ${geoData.country}`;
+                } else if (geoData.city && geoData.country) {
+                  location = `${geoData.city}, ${geoData.country}`;
+                } else if (geoData.region && geoData.country) {
+                  location = `${geoData.region}, ${geoData.country}`;
+                } else if (geoData.country) {
+                  location = geoData.country;
+                }
+                
+                if (location) {
+                  console.log('🌐 ClientSessionService: Dedicated geolocation successful:', { ip: ipData.ip, location });
+                  return { 
+                    ipAddress: ipData.ip, 
+                    location: location
+                  };
+                }
+              }
+            } catch (geoError) {
+              console.warn('🌐 ClientSessionService: Geolocation service failed:', geoService, geoError);
+              continue;
             }
-            
-            console.log('🌐 ClientSessionService: Dedicated geolocation successful:', { ip: ipData.ip, location });
-            return { 
-              ipAddress: ipData.ip, 
-              location: location || 'Location unavailable' 
-            };
-          } catch (geoError) {
-            console.warn('🌐 ClientSessionService: Dedicated geolocation failed:', geoError);
-            
-            // Try browser geolocation as last resort
-            const browserLocation = await this.getBrowserLocation();
-            return { 
-              ipAddress: ipData.ip, 
-              location: browserLocation
-            };
           }
+          
+          // If all geolocation services fail, try browser geolocation
+          console.log('🌐 ClientSessionService: All geolocation services failed, trying browser geolocation...');
+          const browserLocation = await this.getBrowserLocation();
+          return { 
+            ipAddress: ipData.ip, 
+            location: browserLocation
+          };
         }
       } catch (error) {
         console.warn('🌐 ClientSessionService: IP detection failed:', error);
@@ -241,16 +405,23 @@ class ClientSessionService {
         };
       } catch (error) {
         console.warn('🌐 ClientSessionService: Browser geolocation fallback failed:', error);
+        
+        // Ultimate fallback - use timezone and language
+        console.log('🌐 ClientSessionService: Using timezone-based location as ultimate fallback...');
+        const basicLocation = this.getBasicLocationFromTimezone();
         return { 
           ipAddress: 'IP detection in progress...', 
-          location: 'Location detection in progress...' 
+          location: basicLocation
         };
       }
     } catch (error) {
       console.error('🌐 ClientSessionService: Error getting IP and location:', error);
+      
+      // Ultimate fallback - use timezone and language
+      const basicLocation = this.getBasicLocationFromTimezone();
       return { 
         ipAddress: 'IP detection failed', 
-        location: 'Location detection failed' 
+        location: basicLocation
       };
     }
   }
