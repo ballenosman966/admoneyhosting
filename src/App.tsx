@@ -113,6 +113,16 @@ const AppContent = () => {
       
       setCurrentUser(user);
       
+      // Create session in backend after successful authentication
+      try {
+        console.log('Creating session for user:', user.id);
+        await serverSessionService.createSessionWithDeviceDetection(user.id);
+        console.log('Session created successfully for user:', user.id);
+      } catch (error) {
+        console.error('Failed to create session in backend:', error);
+        // Don't fail the login if session creation fails
+      }
+      
       // Redirect admin users to admin panel, others to dashboard
       if (user.username === 'mhamad') {
         navigate('/admin');
@@ -221,6 +231,17 @@ const AppContent = () => {
         userStorage.setCurrentUser(user);
         setCurrentUser(user);
         setIsAdminMode(true);
+        
+        // Create session in backend after successful admin authentication
+        try {
+          console.log('Creating session for admin user:', user.id);
+          await serverSessionService.createSessionWithDeviceDetection(user.id);
+          console.log('Session created successfully for admin user:', user.id);
+        } catch (error) {
+          console.error('Failed to create session in backend for admin:', error);
+          // Don't fail the login if session creation fails
+        }
+        
         navigate('/admin/dashboard');
       } else {
         throw new Error('Access denied. Admin privileges required.');

@@ -191,10 +191,13 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
     // Create session and handle the result
     const createSession = async () => {
       try {
+        console.log('📱 Creating session for user:', userId);
         await serverSessionService.createSessionWithDeviceDetection(userId);
+        console.log('📱 Session created successfully, reloading sessions...');
         await loadSessions();
       } catch (error) {
-        console.error('Error creating session:', error);
+        console.error('❌ Error creating session:', error);
+        console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
         setError('Failed to create session. Please try again.');
       }
     };
