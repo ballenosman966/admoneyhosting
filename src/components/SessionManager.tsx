@@ -420,6 +420,38 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
           <p>• Sessions are synchronized across all your devices</p>
         </div>
         
+        {/* Debug Button - Visible to all users */}
+        <div className="mt-4 pt-4 border-t border-white/20">
+          <button 
+            onClick={async () => {
+              try {
+                console.log('🔧 Testing session service directly...');
+                const envInfo = sessionService.getEnvironmentInfo();
+                console.log('🔧 Environment info:', envInfo);
+                
+                // Test creating a session directly
+                const testSession = await sessionService.createSessionWithDeviceDetection(userId);
+                console.log('🔧 Test session created:', testSession);
+                
+                // Test getting sessions
+                const sessions = await sessionService.getUserSessions(userId);
+                console.log('🔧 Sessions retrieved:', sessions);
+                
+                alert(`Session Test Complete!\n\nEnvironment: ${envInfo.service}\nHostname: ${envInfo.hostname}\nSessions found: ${sessions.length}\n\nCheck console for details.`);
+                
+                // Reload sessions
+                await loadSessions();
+              } catch (error) {
+                console.error('Error testing session service:', error);
+                alert('Error testing session service. Check console for details.');
+              }
+            }}
+            className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded text-sm font-medium border border-yellow-500/30 hover:border-yellow-500/50"
+          >
+            🔧 Debug Session Service
+          </button>
+        </div>
+        
         {/* Debug Section - Only for Admin Users */}
         {currentUser && currentUser.username === 'mhamad' && (
           <div className="mt-4 pt-4 border-t border-white/20">
