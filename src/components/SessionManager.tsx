@@ -479,6 +479,32 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
           >
             🌐 Refresh IP & Location
           </button>
+          <button 
+            onClick={async () => {
+              try {
+                console.log('🗑️ Clearing all sessions and creating fresh one...');
+                
+                // Clear all sessions for this user
+                await sessionService.terminateAllSessions(userId);
+                console.log('🗑️ All sessions cleared');
+                
+                // Create a fresh session with proper IP detection
+                const freshSession = await sessionService.createSessionWithDeviceDetection(userId);
+                console.log('🆕 Fresh session created:', freshSession);
+                
+                alert(`Sessions Cleared and Fresh Session Created!\n\nNew IP: ${freshSession.ipAddress}\nNew Location: ${freshSession.location}\n\nAll old sessions have been removed.`);
+                
+                // Reload sessions
+                await loadSessions();
+              } catch (error) {
+                console.error('Error clearing and recreating sessions:', error);
+                alert('Error clearing and recreating sessions. Check console for details.');
+              }
+            }}
+            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded text-sm font-medium border border-red-500/30 hover:border-red-500/50 ml-2"
+          >
+            🗑️ Clear & Recreate Sessions
+          </button>
         </div>
         
         {/* Debug Section - Only for Admin Users */}
