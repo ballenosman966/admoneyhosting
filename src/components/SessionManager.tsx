@@ -64,7 +64,30 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
       console.log('📱 SessionManager: Found sessions:', userSessions);
       console.log('📱 SessionManager: Number of sessions:', userSessions.length);
       
-      setSessions(userSessions);
+      // Check if any sessions have placeholder IP/location and update them
+      const sessionsToUpdate = userSessions.filter(session => 
+        session.ipAddress === 'Client-side' || 
+        session.ipAddress === 'IP unavailable' || 
+        session.ipAddress === 'IP detection failed' ||
+        session.ipAddress === 'IP detection in progress...'
+      );
+      
+      if (sessionsToUpdate.length > 0) {
+        console.log('📱 SessionManager: Found sessions with placeholder IP/location, updating...');
+        // Force create a new session to get fresh IP and location
+        try {
+          await sessionService.createSessionWithDeviceDetection(userId);
+          // Reload sessions after update
+          const updatedSessions = await sessionService.getUserSessions(userId);
+          setSessions(updatedSessions);
+        } catch (error) {
+          console.error('📱 SessionManager: Error updating sessions:', error);
+          setSessions(userSessions);
+        }
+      } else {
+        setSessions(userSessions);
+      }
+      
       setLoading(false);
       setError(null);
     } catch (error) {

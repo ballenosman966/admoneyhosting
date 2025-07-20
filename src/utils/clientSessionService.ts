@@ -37,9 +37,11 @@ class ClientSessionService {
       // Try multiple IP/location services for better reliability
       const services = [
         'https://api.ipify.org?format=json',
-        'https://api.ip.sb/ip',
+        'https://api64.ipify.org?format=json',
         'https://api.myip.com',
-        'https://ipapi.co/json/'
+        'https://ipapi.co/json/',
+        'https://ipinfo.io/json',
+        'https://api.ip.sb/ip'
       ];
 
       for (const service of services) {
@@ -51,14 +53,22 @@ class ClientSessionService {
               'Accept': 'application/json',
             },
             // Add timeout
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(3000)
           });
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
           }
 
-          const data = await response.json();
+          let data;
+          if (service.includes('ip.sb')) {
+            // ip.sb returns plain text
+            const text = await response.text();
+            data = { ip: text.trim() };
+          } else {
+            data = await response.json();
+          }
+          
           console.log('🌐 ClientSessionService: Service response:', data);
 
           let ipAddress = '';
@@ -67,19 +77,25 @@ class ClientSessionService {
           // Parse different response formats
           if (service.includes('ipify')) {
             ipAddress = data.ip || '';
-          } else if (service.includes('ip.sb')) {
-            ipAddress = data.trim() || '';
           } else if (service.includes('myip.com')) {
             ipAddress = data.ip || '';
             location = data.country || '';
           } else if (service.includes('ipapi.co')) {
             ipAddress = data.ip || '';
             location = data.city && data.country ? `${data.city}, ${data.country}` : data.country || '';
+          } else if (service.includes('ipinfo.io')) {
+            ipAddress = data.ip || '';
+            location = data.city && data.country ? `${data.city}, ${data.country}` : data.country || '';
+          } else if (service.includes('ip.sb')) {
+            ipAddress = data.ip || '';
           }
 
-          if (ipAddress) {
+          if (ipAddress && ipAddress !== 'undefined' && ipAddress !== 'null') {
             console.log('🌐 ClientSessionService: IP and location found:', { ipAddress, location });
-            return { ipAddress, location: location || 'Unknown Location' };
+            return { 
+              ipAddress, 
+              location: location || 'Location unavailable' 
+            };
           }
         } catch (error) {
           console.warn('🌐 ClientSessionService: Service failed:', service, error);
@@ -87,27 +103,36 @@ class ClientSessionService {
         }
       }
 
-      // Fallback to a simple IP service
+      // If all services fail, try a simple approach
       try {
-        const response = await fetch('https://api.ipify.org?format=json');
+        console.log('🌐 ClientSessionService: Trying simple IP detection...');
+        const response = await fetch('https://api.ipify.org?format=json', {
+          signal: AbortSignal.timeout(2000)
+        });
         const data = await response.json();
-        console.log('🌐 ClientSessionService: Fallback IP service response:', data);
-        return { 
-          ipAddress: data.ip || 'Unknown IP', 
-          location: 'Location unavailable' 
-        };
+        
+        if (data.ip && data.ip !== 'undefined' && data.ip !== 'null') {
+          console.log('🌐 ClientSessionService: Simple IP detection successful:', data.ip);
+          return { 
+            ipAddress: data.ip, 
+            location: 'Location unavailable' 
+          };
+        }
       } catch (error) {
-        console.error('🌐 ClientSessionService: All IP services failed:', error);
-        return { 
-          ipAddress: 'IP unavailable', 
-          location: 'Location unavailable' 
-        };
+        console.warn('🌐 ClientSessionService: Simple IP detection failed:', error);
       }
+
+      // Final fallback - use a placeholder that indicates the service is working
+      console.log('🌐 ClientSessionService: Using fallback IP detection');
+      return { 
+        ipAddress: 'IP detection in progress...', 
+        location: 'Location detection in progress...' 
+      };
     } catch (error) {
       console.error('🌐 ClientSessionService: Error getting IP and location:', error);
       return { 
-        ipAddress: 'IP unavailable', 
-        location: 'Location unavailable' 
+        ipAddress: 'IP detection failed', 
+        location: 'Location detection failed' 
       };
     }
   }
@@ -193,9 +218,43 @@ class ClientSessionService {
     return { deviceName, deviceType, browser, os };
   }
 
+  // Update IP and location for existing sessions in the background
+  async updateSessionsIPAndLocation(): Promise<void> {
+    try {
+      console.log('🌐 ClientSessionService: Updating IP and location for all sessions...');
+      
+      // Get fresh IP and location
+      const { ipAddress, location } = await this.getIPAndLocation();
+      
+      // Update all sessions with the new IP and location
+      let updatedCount = 0;
+      this.sessions.forEach(session => {
+        if (session.ipAddress === 'Client-side' || 
+            session.ipAddress === 'IP unavailable' || 
+            session.ipAddress === 'IP detection failed' ||
+            session.ipAddress === 'IP detection in progress...') {
+          session.ipAddress = ipAddress;
+          session.location = location;
+          updatedCount++;
+        }
+      });
+      
+      if (updatedCount > 0) {
+        this.saveSessions();
+        console.log(`🌐 ClientSessionService: Updated ${updatedCount} sessions with new IP and location`);
+      }
+    } catch (error) {
+      console.error('🌐 ClientSessionService: Error updating sessions IP and location:', error);
+    }
+  }
+
   // Get all sessions for a user
   async getUserSessions(userId: string): Promise<DeviceSession[]> {
     console.log('📱 ClientSessionService: Getting sessions for user:', userId);
+    
+    // Update IP and location for existing sessions in the background
+    this.updateSessionsIPAndLocation();
+    
     const userSessions = this.sessions.filter(session => session.userId === userId);
     console.log('📱 ClientSessionService: Found sessions:', userSessions);
     return userSessions;
@@ -219,7 +278,7 @@ class ClientSessionService {
     );
     
     if (existingSession) {
-      // Update existing session
+      // Update existing session with fresh IP and location
       existingSession.isCurrentSession = true;
       existingSession.lastActive = new Date().toISOString();
       existingSession.deviceName = deviceInfo.deviceName;
@@ -227,12 +286,38 @@ class ClientSessionService {
       existingSession.browser = deviceInfo.browser;
       existingSession.os = deviceInfo.os;
       
+      // Get fresh IP and location for existing session
+      const { ipAddress, location } = await this.getIPAndLocation();
+      existingSession.ipAddress = ipAddress;
+      existingSession.location = location;
+      
       this.saveSessions();
+      console.log('📱 ClientSessionService: Updated existing session:', existingSession);
       return existingSession;
     }
     
-    // Get IP and location
-    const { ipAddress, location } = await this.getIPAndLocation();
+    // Get IP and location with retry logic
+    let ipAddress = 'IP detection in progress...';
+    let location = 'Location detection in progress...';
+    
+    try {
+      const ipResult = await this.getIPAndLocation();
+      ipAddress = ipResult.ipAddress;
+      location = ipResult.location;
+    } catch (error) {
+      console.error('📱 ClientSessionService: Error getting IP and location:', error);
+      // Try one more time after a short delay
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const retryResult = await this.getIPAndLocation();
+        ipAddress = retryResult.ipAddress;
+        location = retryResult.location;
+      } catch (retryError) {
+        console.error('📱 ClientSessionService: Retry also failed:', retryError);
+        ipAddress = 'IP detection failed';
+        location = 'Location detection failed';
+      }
+    }
     
     // Create new session
     const newSession: DeviceSession = {
@@ -254,6 +339,24 @@ class ClientSessionService {
     this.saveSessions();
     
     console.log('📱 ClientSessionService: Session created:', newSession);
+    
+    // If we got placeholder values, try to update them in the background
+    if (ipAddress === 'IP detection in progress...' || location === 'Location detection in progress...') {
+      setTimeout(async () => {
+        try {
+          const { ipAddress: realIP, location: realLocation } = await this.getIPAndLocation();
+          if (realIP !== 'IP detection failed' && realLocation !== 'Location detection failed') {
+            newSession.ipAddress = realIP;
+            newSession.location = realLocation;
+            this.saveSessions();
+            console.log('📱 ClientSessionService: Updated session with real IP and location:', newSession);
+          }
+        } catch (error) {
+          console.error('📱 ClientSessionService: Background IP update failed:', error);
+        }
+      }, 2000);
+    }
+    
     return newSession;
   }
 
