@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, LogOut, Clock, Globe, CheckCircle, AlertTriangle, Smartphone, Monitor, Tablet } from 'lucide-react';
-import { serverSessionService, DeviceSession } from '../utils/serverSessionService';
+import { sessionService } from '../utils/sessionService';
+import { DeviceSession } from '../utils/userStorage';
 import { User } from '../utils/userStorage';
 
 interface SessionManagerProps {
@@ -23,12 +24,12 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
     const checkAndCreateSession = async () => {
       try {
         console.log('📱 Checking for current session for user:', userId);
-        const userSessions = await serverSessionService.getUserSessions(userId);
+        const userSessions = await sessionService.getUserSessions(userId);
         const currentSession = userSessions.find(s => s.isCurrentSession);
         
         if (!currentSession) {
           console.log('📱 No current session found, creating one...');
-          await serverSessionService.createSessionWithDeviceDetection(userId);
+          await sessionService.createSessionWithDeviceDetection(userId);
           console.log('📱 Session created successfully, reloading sessions...');
           await loadSessions();
         } else {
@@ -58,9 +59,8 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
       console.log('📱 SessionManager: Loading sessions for user:', userId);
       console.log('📱 SessionManager: User ID type:', typeof userId);
       console.log('📱 SessionManager: User ID value:', userId);
-      console.log('📱 SessionManager: API URL:', 'http://localhost:3001/api/sessions/' + userId);
       
-      const userSessions = await serverSessionService.getUserSessions(userId);
+      const userSessions = await sessionService.getUserSessions(userId);
       console.log('📱 SessionManager: Found sessions:', userSessions);
       console.log('📱 SessionManager: Number of sessions:', userSessions.length);
       
@@ -79,7 +79,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
   const handleTerminateSession = async (sessionId: string) => {
     setTerminatingSession(sessionId);
     try {
-      await serverSessionService.terminateSession(sessionId);
+      await sessionService.terminateSession(sessionId);
       setSessions(prev => prev.filter(s => s.id !== sessionId));
       onSessionTerminated?.();
     } catch (error) {
@@ -93,7 +93,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
   const handleTerminateAllOtherSessions = async () => {
     setTerminatingAll(true);
     try {
-      const result = await serverSessionService.terminateAllOtherSessions(userId);
+      const result = await sessionService.terminateAllOtherSessions(userId);
       setSessions(result.remainingSessions);
       onSessionTerminated?.();
     } catch (error) {
@@ -166,7 +166,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
                 try {
                   setError(null);
                   setLoading(true);
-                  await serverSessionService.createSessionWithDeviceDetection(userId);
+                  await sessionService.createSessionWithDeviceDetection(userId);
                   await loadSessions();
                 } catch (error) {
                   console.error('Error retrying session creation:', error);
@@ -192,7 +192,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
     const createSession = async () => {
       try {
         console.log('📱 Creating session for user:', userId);
-        await serverSessionService.createSessionWithDeviceDetection(userId);
+        await sessionService.createSessionWithDeviceDetection(userId);
         console.log('📱 Session created successfully, reloading sessions...');
         await loadSessions();
       } catch (error) {
@@ -399,7 +399,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
                 onClick={async () => {
                   console.log('🔧 Manual session creation for user:', userId);
                   try {
-                    await serverSessionService.createSessionWithDeviceDetection(userId);
+                    await sessionService.createSessionWithDeviceDetection(userId);
                     setTimeout(loadSessions, 1000);
                   } catch (error) {
                     console.error('Error creating session:', error);
@@ -413,7 +413,7 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
                 onClick={async () => {
                   console.log('🔧 Clearing all sessions for user:', userId);
                   try {
-                    await serverSessionService.terminateAllSessions(userId);
+                    await sessionService.terminateAllSessions(userId);
                     loadSessions();
                   } catch (error) {
                     console.error('Error clearing sessions:', error);
@@ -437,8 +437,8 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
                 onClick={async () => {
                   console.log('🧪 Testing session functionality...');
                   try {
-                    const result = await serverSessionService.testSessionFunctionality();
-                    const stats = await serverSessionService.getSessionStats(userId);
+                    const result = await sessionService.testSessionFunctionality();
+                    const stats = await sessionService.getSessionStats(userId);
                     console.log('📊 Session stats:', stats);
                     console.log('🧪 Test result:', result);
                     alert(`Session Test Complete!\n\nTotal Sessions: ${stats.totalSessions}\nActive Sessions: ${stats.activeSessions}\n\nCheck console for detailed results.`);

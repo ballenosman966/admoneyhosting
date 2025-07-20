@@ -12,7 +12,7 @@ import { ReferralPage } from './components/ReferralPage';
 import { SettingsPage } from './components/SettingsPage';
 import { VIPPage } from './components/VIPPage';
 import { userStorage, User } from './utils/userStorage';
-import { serverSessionService } from './utils/serverSessionService';
+import { sessionService } from './utils/sessionService';
 import { AdminLoginPage } from './components/AdminLoginPage';
 import { AdminDashboard } from './components/AdminDashboard';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -116,7 +116,7 @@ const AppContent = () => {
       // Create session in backend after successful authentication
       try {
         console.log('Creating session for user:', user.id);
-        await serverSessionService.createSessionWithDeviceDetection(user.id);
+        await sessionService.createSessionWithDeviceDetection(user.id);
         console.log('Session created successfully for user:', user.id);
       } catch (error) {
         console.error('Failed to create session in backend:', error);
