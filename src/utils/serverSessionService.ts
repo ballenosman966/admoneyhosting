@@ -59,7 +59,19 @@ class ServerSessionService {
 
   // Get all sessions for a user
   async getUserSessions(userId: string): Promise<DeviceSession[]> {
-    return this.makeRequest(`/sessions/${userId}`);
+    console.log('🌐 ServerSessionService: Getting sessions for user:', userId);
+    console.log('🌐 ServerSessionService: User ID type:', typeof userId);
+    console.log('🌐 ServerSessionService: User ID value:', userId);
+    
+    try {
+      const result = await this.makeRequest(`/sessions/${userId}`);
+      console.log('🌐 ServerSessionService: Successfully got sessions:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ ServerSessionService: Failed to get sessions for user:', userId);
+      console.error('❌ ServerSessionService: Error:', error);
+      throw error;
+    }
   }
 
   // Create a new session

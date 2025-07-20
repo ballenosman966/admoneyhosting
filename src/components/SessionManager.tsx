@@ -22,15 +22,21 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
     // If no current session exists, create one
     const checkAndCreateSession = async () => {
       try {
+        console.log('📱 Checking for current session for user:', userId);
         const userSessions = await serverSessionService.getUserSessions(userId);
         const currentSession = userSessions.find(s => s.isCurrentSession);
         
         if (!currentSession) {
+          console.log('📱 No current session found, creating one...');
           await serverSessionService.createSessionWithDeviceDetection(userId);
-          loadSessions();
+          console.log('📱 Session created successfully, reloading sessions...');
+          await loadSessions();
+        } else {
+          console.log('📱 Current session found:', currentSession.id);
         }
       } catch (error) {
-        console.error('Error checking/creating session:', error);
+        console.error('❌ Error checking/creating session:', error);
+        console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
         setError('Failed to create session. Please try again.');
       }
     };
@@ -50,16 +56,21 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
   const loadSessions = async () => {
     try {
       console.log('📱 SessionManager: Loading sessions for user:', userId);
+      console.log('📱 SessionManager: User ID type:', typeof userId);
+      console.log('📱 SessionManager: User ID value:', userId);
       console.log('📱 SessionManager: API URL:', 'http://localhost:3001/api/sessions/' + userId);
       
       const userSessions = await serverSessionService.getUserSessions(userId);
       console.log('📱 SessionManager: Found sessions:', userSessions);
+      console.log('📱 SessionManager: Number of sessions:', userSessions.length);
+      
       setSessions(userSessions);
       setLoading(false);
       setError(null);
     } catch (error) {
       console.error('❌ SessionManager: Error loading sessions:', error);
       console.error('❌ SessionManager: Error details:', error instanceof Error ? error.message : String(error));
+      console.error('❌ SessionManager: Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       setError('Failed to load sessions. Please try again.');
       setLoading(false);
     }
@@ -143,12 +154,31 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
         <div className="text-center">
           <AlertTriangle className="w-6 h-6 text-red-400 mx-auto mb-2" />
           <p className="text-red-400 text-sm">{error}</p>
-          <button 
-            onClick={loadSessions}
-            className="mt-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded text-sm"
-          >
-            Retry
-          </button>
+          <div className="space-y-2 mt-3">
+            <button 
+              onClick={loadSessions}
+              className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded text-sm mr-2"
+            >
+              Retry Load
+            </button>
+            <button 
+              onClick={async () => {
+                try {
+                  setError(null);
+                  setLoading(true);
+                  await serverSessionService.createSessionWithDeviceDetection(userId);
+                  await loadSessions();
+                } catch (error) {
+                  console.error('Error retrying session creation:', error);
+                  setError('Failed to create session. Please try again.');
+                  setLoading(false);
+                }
+              }}
+              className="px-4 py-2 bg-green-500/20 hover:bg-green-500/40 text-green-400 rounded text-sm"
+            >
+              Create Session
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -157,9 +187,21 @@ export const SessionManager: React.FC<SessionManagerProps> = ({ userId, currentU
   if (sessions.length === 0) {
     // If no sessions found, create one for the current browser
     console.log('📱 No sessions found, creating current session for user:', userId);
-    serverSessionService.createSessionWithDeviceDetection(userId).then(() => {
-      loadSessions();
-    });
+    
+    // Create session and handle the result
+    const createSession = async () => {
+      try {
+        await serverSessionService.createSessionWithDeviceDetection(userId);
+        await loadSessions();
+      } catch (error) {
+        console.error('Error creating session:', error);
+        setError('Failed to create session. Please try again.');
+      }
+    };
+    
+    // Call createSession immediately
+    createSession();
+    
     // Return loading state while creating session
     return (
       <div className="flex items-center justify-center py-8">
