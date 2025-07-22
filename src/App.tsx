@@ -727,6 +727,7 @@ const AppContent = () => {
                   user={currentUser!}
                   onUserUpdate={handleUserUpdate}
                   onBack={handleBackToDashboard}
+                  onLogout={handleLogout}
                   showSecurityAndNotifications={true}
                   onShowNotificationSettings={() => setShowNotificationSettings(true)}
                   onShowTwoFactorAuth={() => setShowTwoFactorAuth(true)}

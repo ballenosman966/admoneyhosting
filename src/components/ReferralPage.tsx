@@ -128,7 +128,7 @@ export const ReferralPage: React.FC<ReferralPageProps> = ({ onBack }) => {
 
         {/* Stats Cards */}
         <div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
+          className="grid grid-cols-3 gap-4 mb-8"
         >
           {[
             {
@@ -152,7 +152,7 @@ export const ReferralPage: React.FC<ReferralPageProps> = ({ onBack }) => {
           ].map((stat, i) => (
             <div
               key={stat.label}
-              className="glass-card border border-white/10 rounded-2xl p-6 text-center backdrop-blur-lg"
+              className="glass-card border border-white/10 rounded-2xl p-6 text-center backdrop-blur-lg h-32 flex flex-col justify-center"
             >
               {stat.icon}
               <span className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent drop-shadow-lg block mt-2`}>

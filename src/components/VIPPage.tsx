@@ -1,24 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Crown, 
-  Star, 
-  DollarSign, 
-  Calendar,
-  CheckCircle,
-  ArrowLeft,
-  CreditCard,
-  Zap,
-  Users,
-  Gift,
-  TrendingUp,
-  Shield,
-  Sparkles,
-  Trophy,
-  PartyPopper
-} from 'lucide-react';
+  CheckCircle} from 'lucide-react';
 import { User } from '../utils/userStorage';
 import { userStorage } from '../utils/userStorage';
 import Aurora from './Aurora';
+import AnimatedContent from './AnimatedContent';
 // Remove: import { motion } from 'framer-motion';
 
 interface VIPPageProps {
@@ -169,7 +156,7 @@ const vipTiers: VIPTier[] = [
   }
 ];
 
-export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) => {
+export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate }) => {
   const [selectedTier, setSelectedTier] = useState<VIPTier | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
@@ -180,7 +167,7 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
   const [upgradeToTier, setUpgradeToTier] = useState<VIPTier | null>(null);
   const [cancellationReason, setCancellationReason] = useState('');
 
-  const userVIPTier = vipTiers.find(tier => tier.id === user.vipTier);
+  const userVIPTier = vipTiers.find(tier => tier.id === user.vipTier) || vipTiers[0];
   // Find the latest active VIP subscription record for the current user:
   const latestVIPSub = user.subscriptionHistory?.filter(sub => sub.type === 'vip' && sub.status === 'active').slice(-1)[0];
 
@@ -207,10 +194,6 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
     }
   };
 
-  const handleUpgradeConfirm = () => {
-    setShowUpgradeWarning(false);
-    setShowConfirmation(true);
-  };
 
   const handleUpgradeCancel = () => {
     setShowUpgradeWarning(false);
@@ -268,15 +251,6 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
     }
   };
 
-  const handleUpgradeSubscription = (tier: VIPTier) => {
-    if (!latestVIPSub) {
-      alert('No active subscription to upgrade');
-      return;
-    }
-    
-    setUpgradeToTier(tier);
-    setShowUpgradeModal(true);
-  };
 
   const handleConfirmUpgrade = () => {
     if (!upgradeToTier) return;
@@ -316,124 +290,7 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
   };
 
   // Confetti effect component
-  const Confetti = () => {
-    const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, color: string, delay: number}>>([]);
 
-    useEffect(() => {
-      const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
-      const newParticles = Array.from({ length: 50 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        delay: Math.random() * 2
-      }));
-      setParticles(newParticles);
-    }, []);
-
-    return (
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="absolute w-2 h-2 rounded-full animate-bounce"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              backgroundColor: particle.color,
-              animationDelay: `${particle.delay}s`,
-              animationDuration: '2s'
-            }}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  const renderVIPTier = (tier: VIPTier) => (
-    <div
-      key={tier.id}
-      className={`relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl border border-white/20 hover:border-white/40 transition-all duration-300 flex flex-col p-6 sm:p-8 ${
-        userVIPTier?.id === tier.id ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/20' : 'hover:shadow-xl hover:shadow-white/10'
-      }`}
-    >
-      {tier.popular && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <span className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-            Most Popular
-          </span>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${tier.color} flex items-center justify-center shadow-lg`}>
-          <Crown className="w-8 h-8 text-white" />
-        </div>
-        <h3 className="text-2xl font-bold text-white mb-3">{tier.name}</h3>
-        <div className="text-4xl font-bold text-yellow-400 mb-2">${tier.price}</div>
-        <p className="text-white/60 text-sm">One-time payment</p>
-      </div>
-
-      {/* Daily Reward */}
-      <div className="text-center mb-6 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-400/30">
-        <p className="text-3xl font-bold text-green-400 mb-1">${tier.dailyReward}</p>
-        <p className="text-white/90 text-sm font-semibold">Daily Reward</p>
-        <p className="text-white/60 text-xs mt-2">
-          ${tier.monthlyReward}/month • ${tier.yearlyReward}/year
-        </p>
-      </div>
-
-      {/* Break-even Info */}
-      <div className="mb-6 p-3 bg-white/5 rounded-lg">
-        <div className="flex justify-between items-center">
-          <span className="text-white/80 text-sm">Break-even:</span>
-          <span className="text-yellow-400 font-bold text-sm">{getDaysUntilBreakEven(tier)} days</span>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="mb-6 flex-1">
-        <h4 className="text-white font-bold mb-3 text-base">Features:</h4>
-        <div className="space-y-2">
-          {tier.features.map((feature, index) => (
-            <div key={index} className="flex items-start space-x-3 text-sm text-white/80">
-              <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-              <span className="leading-relaxed">{feature}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Subscribe Button */}
-      <div className="mt-auto">
-        <button
-          onClick={() => handleSubscribe(tier)}
-          disabled={userVIPTier?.id === tier.id || user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
-          className={`w-full py-4 rounded-xl font-bold transition-all duration-300 text-base ${
-            userVIPTier?.id === tier.id
-              ? 'bg-green-500 text-white cursor-not-allowed shadow-lg'
-              : user.balance < tier.price
-              ? 'bg-red-500 text-white cursor-not-allowed shadow-lg'
-              : userStorage.hasActiveSubscription(user.id)
-              ? 'bg-gray-500 text-white cursor-not-allowed shadow-lg'
-              : `bg-gradient-to-r ${tier.color} text-white hover:scale-105 hover:shadow-xl shadow-lg`
-          }`}
-        >
-          {userVIPTier?.id === tier.id
-            ? 'Current Plan'
-            : user.balance < tier.price
-            ? 'Insufficient Balance'
-            : userStorage.hasActiveSubscription(user.id)
-            ? 'Active Subscription'
-            : userVIPTier
-            ? 'Upgrade Plan'
-            : 'Subscribe Now'
-          }
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="relative min-h-screen w-full max-w-full overflow-x-hidden">
@@ -443,39 +300,39 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
       </div>
       <div className="relative responsive-container w-full max-w-full px-3 sm:px-4 lg:px-8">
         {/* Header */}
-        <div
-          className="mt-4 sm:mt-6 lg:mt-8 mb-6 sm:mb-8"
-        >
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent mb-2 drop-shadow-lg">
-            VIP Membership
+        <AnimatedContent distance={50} duration={0.6} delay={0}>
+          <div className="mt-4 sm:mt-6 lg:mt-8 mb-6 sm:mb-8 text-center">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-2 drop-shadow-lg">
+              VIP Membership
             </h1>
-          <p className="text-white/80 text-base sm:text-lg">
-            Unlock exclusive rewards and higher earnings
-          </p>
-        </div>
+            <p className="text-white/80 text-base sm:text-lg">
+              Unlock premium features and higher earnings
+            </p>
+          </div>
+        </AnimatedContent>
 
         {/* Enhanced Current VIP Status Card */}
-        {userVIPTier && (
-          <div className="glass-card border border-purple-400/30 shadow-2xl rounded-3xl p-8 mb-8 backdrop-blur-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-              <div className="flex items-center space-x-6">
-                <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 rounded-full shadow-lg">
-                  <Crown className="w-12 h-12 text-white drop-shadow-glow" />
+        <AnimatedContent distance={60} duration={0.7} delay={0.1}>
+          <div className="glass-card border border-purple-400/30 shadow-2xl rounded-3xl p-6 sm:p-8 mb-8 backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+              <div className="flex items-center space-x-4 sm:space-x-6">
+                <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 sm:p-4 rounded-full shadow-lg">
+                  <Crown className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white drop-shadow-glow" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                     {userVIPTier.name}
                   </h3>
-                  <p className="text-white/70 text-base">Daily reward: ${userVIPTier.dailyReward} USDT</p>
-                  <p className="text-white/70 text-base">Start: {latestVIPSub?.startDate ? new Date(latestVIPSub.startDate).toLocaleDateString() : '-'}</p>
-                  <p className="text-white/70 text-base">End: {latestVIPSub?.endDate ? new Date(latestVIPSub.endDate).toLocaleDateString() : '-'}</p>
-                  <p className="text-white/70 text-base">Days left: {latestVIPSub?.endDate ? Math.max(0, Math.ceil((new Date(latestVIPSub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : '-'}</p>
+                  <p className="text-white/70 text-sm sm:text-base">Daily reward: ${userVIPTier.dailyReward} USDT</p>
+                  <p className="text-white/70 text-sm sm:text-base">Start: {latestVIPSub?.startDate ? new Date(latestVIPSub.startDate).toLocaleDateString() : '-'}</p>
+                  <p className="text-white/70 text-sm sm:text-base">End: {latestVIPSub?.endDate ? new Date(latestVIPSub.endDate).toLocaleDateString() : '-'}</p>
+                  <p className="text-white/70 text-sm sm:text-base">Days left: {latestVIPSub?.endDate ? Math.max(0, Math.ceil((new Date(latestVIPSub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : '-'}</p>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 min-w-[180px]">
+              <div className="flex flex-col gap-2 min-w-[150px] sm:min-w-[180px]">
                 {/* Cancel Plan Button */}
                 <button
-                  className="glass-card border border-red-400/30 text-red-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-400/10 transition"
+                  className="glass-card border border-red-400/30 text-red-400 font-bold py-2 px-3 sm:px-4 rounded-xl shadow hover:bg-red-400/10 transition text-xs sm:text-sm"
                   onClick={handleCancelSubscription}
                   disabled={latestVIPSub?.status !== 'active'}
                 >
@@ -483,7 +340,7 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
                 </button>
                 {/* Upgrade Plan Button */}
                 <button
-                  className="glass-card border border-blue-400/30 text-blue-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-blue-400/10 transition"
+                  className="glass-card border border-blue-400/30 text-blue-400 font-bold py-2 px-3 sm:px-4 rounded-xl shadow hover:bg-blue-400/10 transition text-xs sm:text-sm"
                   onClick={() => setShowUpgradeModal(true)}
                   disabled={latestVIPSub?.status !== 'active'}
                 >
@@ -492,7 +349,7 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
                 {/* Renew Plan Button (if <7 days left) */}
                 {latestVIPSub?.endDate && Math.ceil((new Date(latestVIPSub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 7 && (
                   <button
-                    className="glass-card border border-yellow-400/30 text-yellow-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-yellow-400/10 transition"
+                    className="glass-card border border-yellow-400/30 text-yellow-400 font-bold py-2 px-3 sm:px-4 rounded-xl shadow hover:bg-yellow-400/10 transition text-xs sm:text-sm"
                     onClick={() => handleConfirmSubscription()}
                   >
                     Renew Plan
@@ -501,153 +358,133 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
               </div>
             </div>
           </div>
-        )}
+        </AnimatedContent>
 
         {/* Subscription History Table */}
-        {user.subscriptionHistory && user.subscriptionHistory.filter(sub => sub.type === 'vip').length > 0 && (
-          <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
-            <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
-              VIP Subscription History
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-white/90">
-                <thead>
-                  <tr className="bg-white/5">
-                    <th className="px-4 py-2 text-left">Tier</th>
-                    <th className="px-4 py-2 text-left">Start Date</th>
-                    <th className="px-4 py-2 text-left">End Date</th>
-                    <th className="px-4 py-2 text-left">Amount</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {user.subscriptionHistory.filter(sub => sub.type === 'vip').map((sub, idx) => (
-                    <tr key={sub.id} className={idx % 2 === 0 ? 'bg-white/0' : 'bg-white/5'}>
-                      <td className="px-4 py-2">{sub.notes?.includes('VIP') ? sub.notes.split('VIP ')[1].split(' ')[0] : sub.type}</td>
-                      <td className="px-4 py-2">{sub.startDate ? new Date(sub.startDate).toLocaleDateString() : '-'}</td>
-                      <td className="px-4 py-2">{sub.endDate ? new Date(sub.endDate).toLocaleDateString() : '-'}</td>
-                      <td className="px-4 py-2">${sub.amount}</td>
-                      <td className="px-4 py-2 capitalize">{sub.status}</td>
+        <AnimatedContent distance={70} duration={0.8} delay={0.2}>
+          {user.subscriptionHistory && user.subscriptionHistory.filter(sub => sub.type === 'vip').length > 0 && (
+            <div className="glass-card border border-white/10 rounded-3xl p-4 sm:p-6 lg:p-8 mb-8 backdrop-blur-lg">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-4 sm:mb-6">
+                VIP Subscription History
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-white/90 text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-white/5">
+                      <th className="px-2 sm:px-4 py-2 text-left">Tier</th>
+                      <th className="px-2 sm:px-4 py-2 text-left">Start Date</th>
+                      <th className="px-2 sm:px-4 py-2 text-left">End Date</th>
+                      <th className="px-2 sm:px-4 py-2 text-left">Amount</th>
+                      <th className="px-2 sm:px-4 py-2 text-left">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {user.subscriptionHistory.filter(sub => sub.type === 'vip').map((sub, idx) => (
+                      <tr key={sub.id} className={idx % 2 === 0 ? 'bg-white/0' : 'bg-white/5'}>
+                        <td className="px-2 sm:px-4 py-2">{sub.notes?.includes('VIP') ? sub.notes.split('VIP ')[1].split(' ')[0] : sub.type}</td>
+                        <td className="px-2 sm:px-4 py-2">{sub.startDate ? new Date(sub.startDate).toLocaleDateString() : '-'}</td>
+                        <td className="px-2 sm:px-4 py-2">{sub.endDate ? new Date(sub.endDate).toLocaleDateString() : '-'}</td>
+                        <td className="px-2 sm:px-4 py-2">${sub.amount}</td>
+                        <td className="px-2 sm:px-4 py-2 capitalize">{sub.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </AnimatedContent>
 
         {/* VIP Tiers */}
-        <div
-          className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg"
-        >
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
-            Choose Your VIP Plan
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {vipTiers.map((tier, index) => (
-              <div
-                key={tier.id}
-                className={`relative p-6 rounded-2xl border transition-all duration-300 cursor-pointer hover:scale-105 flex flex-col h-full ${
-                  userVIPTier?.id === tier.id
-                    ? 'glass-card border-purple-400/50 shadow-2xl'
-                    : 'bg-white/10 border-white/20 hover:bg-white/15'
-                }`}
-              >
-                {userVIPTier?.id === tier.id && (
-                  <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1">
-                    <CheckCircle className="w-4 h-4 text-white" />
-        </div>
-      )}
-
-                <div className="text-center flex-1">
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Crown className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
-                    {tier.name}
-                  </h3>
-                  
-                  <div className="space-y-2 mb-6">
-                    {tier.features.map((feature, i) => (
-                      <div key={i} className="flex items-center space-x-2 text-white/80 text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span>{feature}</span>
+        <AnimatedContent distance={70} duration={0.8} delay={0.2}>
+          <div
+            className="glass-card border border-white/10 rounded-3xl p-4 sm:p-6 lg:p-8 mb-8 backdrop-blur-lg"
+          >
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-4 sm:mb-6">
+              Choose Your VIP Plan
+            </h2>
+            
+            <div className="w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 sm:gap-6">
+                {vipTiers.map((tier) => (
+                  <div
+                    key={tier.id}
+                    className={`relative w-full bg-gradient-to-br from-purple-400/20 to-pink-400/20 bg-opacity-80 backdrop-blur-lg border ${userVIPTier?.id === tier.id ? 'border-yellow-400' : 'border-white/10'} rounded-2xl shadow-xl flex flex-col items-center p-4 xl:p-3 ${
+                      userVIPTier?.id === tier.id ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/20' : 'hover:shadow-2xl hover:shadow-white/10'
+                    }`}
+                  >
+                    {/* Icon */}
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center mb-4">
+                      <Crown className="w-8 h-8 text-white" />
                     </div>
-                  ))}
-              </div>
-
-                  <div className="text-center">
-                    <span className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                      ${tier.price}
-                    </span>
-                    <p className="text-white/60 text-sm">per month</p>
-                  </div>
-                </div>
-                <div className="mt-auto pt-4">
-                  {!userVIPTier && (
+                    {/* Title */}
+                    <h3 className="text-xl font-bold text-white mb-2">{tier.name}</h3>
+                    {/* Features */}
+                    <ul className="mb-4 space-y-2 w-full">
+                      {tier.features.map((feature, i) => (
+                        <li key={i} className="flex items-center text-white/90 text-sm">
+                          <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    {/* Price */}
+                    <div className="text-2xl font-bold text-yellow-400 mb-1">${tier.price}</div>
+                    <div className="text-white/70 text-sm mb-4">per month</div>
+                    {/* Button */}
                     <button
-                      className="glass-card border border-purple-400/30 text-purple-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-purple-400/10 transition w-full"
                       onClick={() => handleSubscribe(tier)}
-                      disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
+                      disabled={userVIPTier?.id === tier.id || user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
+                      className={`w-full py-3 rounded-xl font-bold transition-all duration-300 text-base mt-auto border border-white/20 bg-white/10 text-white hover:bg-white/20 ${
+                        userVIPTier?.id === tier.id
+                          ? 'bg-yellow-400/90 text-white cursor-not-allowed shadow-lg' // Current plan button is yellow
+                          : user.balance < tier.price
+                          ? 'bg-red-500 text-white cursor-not-allowed shadow-lg'
+                          : userStorage.hasActiveSubscription(user.id)
+                          ? 'bg-gray-500 text-white cursor-not-allowed shadow-lg'
+                          : ''
+                      }`}
                     >
-                      Subscribe Now
+                      {userVIPTier?.id === tier.id
+                        ? 'Current Plan'
+                        : user.balance < tier.price
+                        ? 'Insufficient Balance'
+                        : userStorage.hasActiveSubscription(user.id)
+                        ? 'Active Subscription'
+                        : userVIPTier
+                        ? 'Upgrade Plan'
+                        : 'Subscribe Now'
+                      }
                     </button>
-                  )}
-                  {userVIPTier && tier.id > userVIPTier.id && (
-                    <button
-                      className="glass-card border border-blue-400/30 text-blue-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-blue-400/10 transition w-full"
-                      onClick={() => handleUpgradeSubscription(tier)}
-                      disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
-                    >
-                      Upgrade to {tier.name}
-                    </button>
-                  )}
-                  {userVIPTier && tier.id < userVIPTier.id && (
-                    <button
-                      className="glass-card border border-red-400/30 text-red-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-400/10 transition w-full"
-                      onClick={() => handleUpgradeSubscription(tier)}
-                      disabled={user.balance < tier.price || userStorage.hasActiveSubscription(user.id)}
-                    >
-                      Downgrade to {tier.name}
-                    </button>
-                  )}
-                  {userVIPTier?.id === tier.id && (
-                    <button
-                      className="glass-card border border-green-400/30 text-green-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-green-400/10 transition w-full"
-                      disabled
-                    >
-                      Current Plan
-                    </button>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
-        </div>
+        </AnimatedContent>
 
 
       </div>
 
       {/* Confirmation Modal */}
       {showConfirmation && selectedTier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="glass-card border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
-            <h2 className="text-xl font-bold text-white mb-4">Confirm VIP Upgrade</h2>
-            <p className="text-white/80 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="glass-card border border-white/20 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
+            <h2 className="text-lg sm:text-xl font-bold text-white mb-4">Confirm VIP Upgrade</h2>
+            <p className="text-white/80 mb-6 text-sm sm:text-base">
               You are about to upgrade your VIP plan to <span className="font-semibold">{selectedTier.name}</span>.
               This will deduct <span className="font-semibold">${selectedTier.price}</span> from your wallet balance.
               Are you sure you want to proceed?
             </p>
-            <div className="flex justify-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-4 sm:px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px] text-sm sm:text-base"
                 onClick={handleUpgradeCancel}
               >
                 Cancel
               </button>
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-4 sm:px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px] text-sm sm:text-base"
                 onClick={handleConfirmSubscription}
               >
                 Confirm Subscription
@@ -659,16 +496,16 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
 
       {/* Congratulations Modal */}
       {showCongratulations && purchasedTier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="glass-card border border-green-400/30 rounded-2xl p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
-            <h2 className="text-xl font-bold text-green-400 mb-4">Congratulations!</h2>
-            <p className="text-white/80 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="glass-card border border-green-400/30 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
+            <h2 className="text-lg sm:text-xl font-bold text-green-400 mb-4">Congratulations!</h2>
+            <p className="text-white/80 mb-6 text-sm sm:text-base">
               You have successfully upgraded to the <span className="font-semibold">{purchasedTier.name}</span> VIP plan.
               Your daily reward is now <span className="font-semibold">${purchasedTier.dailyReward}</span>.
             </p>
             <div className="flex justify-center">
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[100px]"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-4 sm:px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[100px] text-sm sm:text-base"
                 onClick={handleCloseCongratulations}
               >
                 OK
@@ -680,23 +517,23 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
 
       {/* Upgrade Modal */}
       {showUpgradeModal && upgradeToTier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="glass-card border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
-            <h2 className="text-xl font-bold text-white mb-4">Confirm VIP Upgrade</h2>
-            <p className="text-white/80 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="glass-card border border-white/20 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
+            <h2 className="text-lg sm:text-xl font-bold text-white mb-4">Confirm VIP Upgrade</h2>
+            <p className="text-white/80 mb-6 text-sm sm:text-base">
               You are about to upgrade your VIP plan from <span className="font-semibold">{userVIPTier?.name}</span> to <span className="font-semibold">{upgradeToTier.name}</span>.
               This will deduct <span className="font-semibold">${upgradeToTier.price}</span> from your wallet balance.
               Are you sure you want to proceed?
             </p>
-            <div className="flex justify-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-4 sm:px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px] text-sm sm:text-base"
                 onClick={() => setShowUpgradeModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="glass-card border border-white/20 text-white font-bold py-2 px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px]"
+                className="glass-card border border-white/20 text-white font-bold py-2 px-4 sm:px-6 rounded-xl shadow hover:bg-white/10 transition min-w-[120px] text-sm sm:text-base"
                 onClick={handleConfirmUpgrade}
               >
                 Confirm Upgrade
@@ -708,26 +545,26 @@ export const VIPPage: React.FC<VIPPageProps> = ({ user, onUserUpdate, onBack }) 
 
       {/* Cancel Plan Confirmation Modal */}
       {showCancellationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="glass-card border border-red-400/30 rounded-2xl p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
-            <h2 className="text-xl font-bold text-red-400 mb-4">Cancel VIP Plan?</h2>
-            <p className="text-white/80 mb-6">Are you sure you want to cancel your VIP subscription? This action cannot be undone.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="glass-card border border-red-400/30 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl backdrop-blur-xl">
+            <h2 className="text-lg sm:text-xl font-bold text-red-400 mb-4">Cancel VIP Plan?</h2>
+            <p className="text-white/80 mb-6 text-sm sm:text-base">Are you sure you want to cancel your VIP subscription? This action cannot be undone.</p>
             <div className="flex flex-col gap-3">
               <input
-                className="glass-card border border-white/10 rounded-lg px-3 py-2 text-white bg-transparent mb-2"
+                className="glass-card border border-white/10 rounded-lg px-3 py-2 text-white bg-transparent mb-2 text-sm sm:text-base"
                 placeholder="Reason for cancellation (optional)"
                 value={cancellationReason}
                 onChange={e => setCancellationReason(e.target.value)}
               />
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
-                  className="glass-card border border-red-400/30 text-red-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-400/10 transition flex-1"
+                  className="glass-card border border-red-400/30 text-red-400 font-bold py-2 px-4 rounded-xl shadow hover:bg-red-400/10 transition flex-1 text-sm sm:text-base"
                   onClick={handleConfirmCancellation}
                 >
                   Confirm Cancel
                 </button>
                 <button
-                  className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition flex-1"
+                  className="glass-card border border-white/20 text-white font-bold py-2 px-4 rounded-xl shadow hover:bg-white/10 transition flex-1 text-sm sm:text-base"
                   onClick={() => setShowCancellationModal(false)}
                 >
                   Go Back

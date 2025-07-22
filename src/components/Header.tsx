@@ -24,6 +24,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogout, user }) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuClosing, setIsMenuClosing] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
  
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -35,6 +36,21 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
     { id: 'withdraw', label: 'Wallet', icon: Wallet },
     { id: 'profile', label: 'Profile', icon: User },
   ];
+
+  const closeMenu = () => {
+    setIsMenuClosing(true);
+    setTimeout(() => {
+      setIsMobileMenuOpen(false);
+      setIsMenuClosing(false);
+    }, 300); // Match the animation duration
+  };
+
+  // Close menu when navigating to different pages
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      closeMenu();
+    }
+  }, [currentPage]);
 
   // Load notifications from userStorage
   useEffect(() => {
@@ -72,6 +88,32 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
 
   return (
     <>
+      <style>
+        {`
+          @keyframes fadeInMenu {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          
+          @keyframes fadeOutMenu {
+            from {
+              opacity: 1;
+              transform: translateY(0);
+            }
+            to {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+          }
+        `}
+      </style>
+      
       {/* Mobile Top Bar */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 w-full">
           <div
@@ -130,7 +172,13 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
           {/* More Menu Button */}
           <div className="relative">
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={() => {
+                if (isMobileMenuOpen) {
+                  closeMenu();
+                } else {
+                  setIsMobileMenuOpen(true);
+                }
+              }}
               className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-200 ${
                 isMobileMenuOpen 
                   ? 'bg-yellow-400/20 text-yellow-400' 
@@ -151,13 +199,14 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                   backdropFilter: 'blur(230px)',
                   WebkitBackdropFilter: 'blur(230px)',
                 border: '2px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6)'
+                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6)',
+                  animation: `${isMenuClosing ? 'fadeOutMenu' : 'fadeInMenu'} 0.3s ease-out`
                 }}
               >
                 <button
                   onClick={() => {
                     onNavigate('vip');
-                    setIsMobileMenuOpen(false);
+                    closeMenu();
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                 >
@@ -168,7 +217,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                 <button
                   onClick={() => {
                     onNavigate('referrals');
-                    setIsMobileMenuOpen(false);
+                    closeMenu();
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                 >
@@ -179,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                 <button
                   onClick={() => {
                     onNavigate('settings');
-                    setIsMobileMenuOpen(false);
+                    closeMenu();
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                 >
@@ -190,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                 <div className="border-t border-white/10">
                   <button
                     onClick={() => {
-                      setIsMobileMenuOpen(false);
+                      closeMenu();
                       setShowLogoutModal(true);
                     }}
                     className="w-full flex items-center space-x-3 px-4 py-3 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all"

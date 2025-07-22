@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Page } from '../App';
 import { User } from '../utils/userStorage';
-import { Play, Crown } from 'lucide-react';
+import { Play, Crown, Wallet } from 'lucide-react';
 import Aurora from './Aurora';
+import AnimatedContent from './AnimatedContent';
 // Framer Motion removed
 
 interface Ad {
@@ -135,102 +136,108 @@ export const AdViewer: React.FC<AdViewerProps> = ({ user }) => {
       </div>
       <div className="relative responsive-container w-full max-w-full px-3 sm:px-4 lg:px-8">
         {/* Header */}
-        <div
-          className="mt-4 sm:mt-6 lg:mt-8 mb-6 sm:mb-8"
-        >
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-2 drop-shadow-lg">
-            Watch Ads & Earn USDT
-          </h1>
-          <p className="text-white/80 text-base sm:text-lg">
-            Complete ads to earn instant rewards
-          </p>
-        </div>
+        <AnimatedContent distance={50} duration={0.6} delay={0}>
+          <div
+            className="mt-4 sm:mt-6 lg:mt-8 mb-6 sm:mb-8 text-center"
+          >
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-2 drop-shadow-lg">
+              Watch Ads & Earn USDT
+            </h1>
+            <p className="text-white/80 text-base sm:text-lg">
+              Complete ads to earn instant rewards
+            </p>
+          </div>
+        </AnimatedContent>
 
         {/* Daily Stats */}
-        <div
-          className="glass-card border border-yellow-400/30 shadow-2xl rounded-3xl p-6 mb-8 backdrop-blur-xl"
-        >
-          <div className="grid grid-cols-3 gap-2 sm:gap-4">
-            <div className="text-center">
-              <p className="text-white/70 text-xs sm:text-sm mb-1">Today's Earnings</p>
-              <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg">
-                ${dailyStats.totalEarned.toFixed(2)}
-              </span>
-            </div>
-            <div className="text-center">
-              <p className="text-white/70 text-xs sm:text-sm mb-1">Ads Watched</p>
-              <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
-                {dailyStats.adsWatched}/{dailyStats.dailyLimit}
-              </span>
-            </div>
-            <div className="text-center">
-              <p className="text-white/70 text-xs sm:text-sm mb-1">Current Balance</p>
-              <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-lg">
-                ${user.balance.toFixed(2)}
-              </span>
+        <AnimatedContent distance={60} duration={0.7} delay={0.1}>
+          <div
+            className="glass-card border border-yellow-400/30 shadow-2xl rounded-3xl p-6 mb-8 backdrop-blur-xl"
+          >
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="text-center">
+                <p className="text-white/70 text-xs sm:text-sm mb-1">Today's Earnings</p>
+                <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg">
+                  ${dailyStats.totalEarned.toFixed(2)}
+                </span>
+              </div>
+              <div className="text-center">
+                <p className="text-white/70 text-xs sm:text-sm mb-1">Ads Watched</p>
+                <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
+                  {dailyStats.adsWatched}/{dailyStats.dailyLimit}
+                </span>
+              </div>
+              <div className="text-center">
+                <p className="text-white/70 text-xs sm:text-sm mb-1">Current Balance</p>
+                <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-lg">
+                  ${user.balance.toFixed(2)}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        </AnimatedContent>
 
         {/* VIP Progress */}
         {vipProgress && (
-          <div
-            className="glass-card border border-purple-400/30 shadow-2xl rounded-3xl p-6 mb-8 backdrop-blur-xl"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <Crown className="w-8 h-8 text-purple-400 drop-shadow-glow" />
-                <div>
-                  <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    VIP Progress
-                  </h3>
-                  <p className="text-white/70 text-sm">Daily reward: ${vipProgress.dailyReward} USDT</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                {vipProgress.adsWatched}/{vipProgress.totalAdsRequired}
-              </span>
-            </div>
-            <div className="w-full bg-white/10 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full"
-              />
-            </div>
-          </div>
-        )}
-
-
-
-        {/* Available Ads */}
-        <div
-          className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg"
-        >
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
-            Available Ads
-          </h2>
-          {getTodaysAds().length === 0 ? (
-            <div className="text-white/60 text-center py-8">No ads available right now.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {getTodaysAds().map((ad) => (
-                <div
-                  key={ad.id}
-                  className="bg-white/10 border border-white/10 rounded-2xl p-4 hover:scale-105 transition-transform duration-200 cursor-pointer"
-                >
-                  <div className="text-center">
-                    <Play className="w-8 h-8 text-yellow-400 mx-auto mb-2 drop-shadow-glow" />
-                    <h3 className="text-white font-semibold mb-1">{ad.title}</h3>
-                    <p className="text-white/70 text-sm mb-2">{ad.description}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white/60 text-xs">{ad.duration}s</span>
-                      <span className="text-green-400 font-bold">${ad.reward.toFixed(2)}</span>
-                    </div>
+          <AnimatedContent distance={70} duration={0.8} delay={0.2}>
+            <div
+              className="glass-card border border-purple-400/30 shadow-2xl rounded-3xl p-6 mb-8 backdrop-blur-xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Crown className="w-8 h-8 text-purple-400 drop-shadow-glow" />
+                  <div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      VIP Progress
+                    </h3>
+                    <p className="text-white/70 text-sm">Daily reward: ${vipProgress.dailyReward} USDT</p>
                   </div>
                 </div>
-              ))}
+                <span className="text-lg font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                  {vipProgress.adsWatched}/{vipProgress.totalAdsRequired}
+                </span>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full"
+                />
+              </div>
             </div>
-          )}
-        </div>
+          </AnimatedContent>
+        )}
+
+        {/* Available Ads */}
+        <AnimatedContent distance={80} duration={0.9} delay={0.3}>
+          <div
+            className="glass-card border border-white/10 rounded-3xl p-8 backdrop-blur-lg"
+          >
+            <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+              Available Ads
+            </h2>
+            {getTodaysAds().length === 0 ? (
+              <div className="text-white/60 text-center py-8">No ads available right now.</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getTodaysAds().map((ad) => (
+                  <div
+                    key={ad.id}
+                    className="bg-white/10 border border-white/10 rounded-2xl p-4 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                  >
+                    <div className="text-center">
+                      <Play className="w-8 h-8 text-yellow-400 mx-auto mb-2 drop-shadow-glow" />
+                      <h3 className="text-white font-semibold mb-1">{ad.title}</h3>
+                      <p className="text-white/70 text-sm mb-2">{ad.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 text-xs">{ad.duration}s</span>
+                        <span className="text-green-400 font-bold">${ad.reward.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </AnimatedContent>
       </div>
     </div>
   );
