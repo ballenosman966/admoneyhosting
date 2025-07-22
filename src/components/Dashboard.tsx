@@ -164,6 +164,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, onUserUp
           ].map((stat, i) => (
             <div
               key={stat.label}
+              onClick={() => {
+                if (stat.label === 'Ads Watched') {
+                  onNavigate('ads');
+                }
+              }}
               className="glass-card border border-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-6 text-center hover:scale-105 hover:shadow-2xl transition-all duration-300 cursor-pointer backdrop-blur-lg shadow-xl shadow-black/20 bg-white/5"
             >
               <div className="w-6 h-6 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-yellow-400 drop-shadow-lg shadow-yellow-400/30">

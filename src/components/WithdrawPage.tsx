@@ -102,21 +102,54 @@ const DepositHistory: React.FC<DepositHistoryProps> = ({ userId }) => {
     </div>
       {/* Modal Popup for Screenshot */}
       {modalImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center super-blur">
-          <div className="relative bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-6 max-w-lg w-full flex flex-col items-center">
-            <button
-              className="absolute top-3 right-3 text-white/70 hover:text-white bg-black/30 rounded-full p-1"
-              onClick={() => setModalImage(null)}
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <h2 className="text-xl font-bold text-white mb-4">Deposit Screenshot</h2>
-            <img
-              src={modalImage}
-              alt="Deposit Screenshot"
-              className="rounded-xl max-h-[60vh] w-auto border border-white/10 shadow-lg"
-              style={{ objectFit: 'contain' }}
-            />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-4 max-w-md mx-4 flex flex-col items-center backdrop-blur-lg">
+            {/* Header with title and controls */}
+            <div className="flex items-center justify-between w-full mb-4">
+              <h2 className="text-lg font-bold text-white">Deposit Screenshot</h2>
+              <div className="flex items-center space-x-2">
+                {/* Download Button */}
+                <button
+                  className="text-white/70 hover:text-white bg-green-500/20 hover:bg-green-500/30 rounded-full p-2 transition-colors"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = modalImage;
+                    link.download = `deposit-screenshot-${Date.now()}.png`;
+                    link.click();
+                  }}
+                  title="Download Screenshot"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                {/* Close Button */}
+                <button
+                  className="text-white/70 hover:text-white bg-red-500/20 hover:bg-red-500/30 rounded-full p-2 transition-colors"
+                  onClick={() => setModalImage(null)}
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Image Container */}
+            <div className="w-full max-h-[50vh] overflow-hidden rounded-xl border border-white/10">
+              <img
+                src={modalImage}
+                alt="Deposit Screenshot"
+                className="w-full h-auto max-h-[50vh] object-contain bg-white/5"
+                style={{ 
+                  objectFit: 'contain',
+                  userSelect: 'none',
+                  pointerEvents: 'none'
+                }}
+              />
+            </div>
+            
+            {/* Footer with download info */}
+            <p className="text-white/60 text-xs text-center mt-3">
+              Click download button to save the screenshot
+            </p>
           </div>
         </div>
       )}

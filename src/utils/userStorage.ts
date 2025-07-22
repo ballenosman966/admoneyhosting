@@ -2371,56 +2371,64 @@ class UserStorage {
     };
   }
 
-  // Update session with real IP information (call this after getting IP)
+  // Update session with timezone-based location (IP services disabled)
   async updateSessionWithIP(sessionId: string): Promise<void> {
-    console.log('🔧 Updating session with IP info:', sessionId);
+    console.log('🔧 Updating session with timezone-based location:', sessionId);
     
     try {
-      // Try to get real IP and location from a public API
-      console.log('🔧 Fetching location data from ipapi.co...');
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      console.log('🔧 Location API response:', data);
+      // Use timezone instead of external APIs (to prevent rate limiting)
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log('🔧 Detected timezone:', timezone);
+      
+      const timezoneToLocation: { [key: string]: string } = {
+        'Asia/Baghdad': 'Baghdad, Iraq',
+        'America/New_York': 'New York, United States',
+        'America/Los_Angeles': 'Los Angeles, United States',
+        'Europe/London': 'London, United Kingdom',
+        'Europe/Berlin': 'Berlin, Germany',
+        'Europe/Paris': 'Paris, France',
+        'Asia/Tokyo': 'Tokyo, Japan',
+        'Asia/Dubai': 'Dubai, United Arab Emirates'
+      };
+      
+      const locationData = timezoneToLocation[timezone] || 'Unknown Location';
+      console.log('🔧 Timezone-based location:', locationData);
       
       const sessions = this.getSessions();
       const sessionIndex = sessions.findIndex(s => s.id === sessionId);
       
       if (sessionIndex !== -1) {
-        sessions[sessionIndex].ipAddress = data.ip || 'Unknown IP';
+        sessions[sessionIndex].ipAddress = 'Private Network';
+        sessions[sessionIndex].location = locationData;
         
-        // Build location string from available data
-        const locationParts = [];
-        if (data.city) locationParts.push(data.city);
-        if (data.region) locationParts.push(data.region);
-        if (data.country_name) locationParts.push(data.country_name);
-        
-        if (locationParts.length > 0) {
-          sessions[sessionIndex].location = locationParts.join(', ');
-        } else {
-          sessions[sessionIndex].location = 'Location unavailable';
-        }
-        
-        console.log('🔧 Updated session with location:', sessions[sessionIndex].location);
+        console.log('🔧 Updated session with timezone-based location:', sessions[sessionIndex].location);
         this.saveSessions(sessions);
       }
     } catch (error) {
-      console.log('🔧 ipapi.co failed, trying ipify.org...', error);
-      // Fallback to simple IP detection
+      console.log('🔧 IP geolocation services disabled (rate limiting), using timezone fallback...', error);
+      // Use timezone-based location instead of external APIs
       try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const timezoneToLocation: { [key: string]: string } = {
+          'Asia/Baghdad': 'Baghdad, Iraq',
+          'America/New_York': 'New York, United States',
+          'America/Los_Angeles': 'Los Angeles, United States',
+          'Europe/London': 'London, United Kingdom',
+          'Europe/Berlin': 'Berlin, Germany',
+          'Asia/Tokyo': 'Tokyo, Japan'
+        };
         
         const sessions = this.getSessions();
         const sessionIndex = sessions.findIndex(s => s.id === sessionId);
         
         if (sessionIndex !== -1) {
-          sessions[sessionIndex].ipAddress = data.ip;
-          sessions[sessionIndex].location = 'IP detected, location unavailable';
-          console.log('🔧 Updated session with IP only:', data.ip);
+          sessions[sessionIndex].ipAddress = 'Private Network';
+          sessions[sessionIndex].location = timezoneToLocation[timezone] || 'Unknown Location';
+          console.log('🔧 Updated session with timezone-based location:', sessions[sessionIndex].location);
           this.saveSessions(sessions);
         }
-      } catch (ipError) {
-        console.log('🔧 ipify.org failed, trying local network...', ipError);
+      } catch (timezoneError) {
+        console.log('🔧 Timezone detection failed, using default...', timezoneError);
         // If API fails, try to get local network IP
         try {
           const localIP = await this.getLocalNetworkIP();

@@ -230,198 +230,54 @@ class ClientSessionService {
     }
   }
 
-  // Get IP address and location from external APIs
+  // Get IP address and location (disabled external APIs to prevent rate limiting)
   private async getIPAndLocation(): Promise<{ ipAddress: string; location: string }> {
     try {
-      console.log('🌐 ClientSessionService: Fetching IP and location...');
+      console.log('🌐 ClientSessionService: Using local detection only (external APIs disabled)');
       
-      // Try multiple IP/location services for better reliability
-      const services = [
-        'https://ipapi.co/json/',
-        'https://ipinfo.io/json',
-        'https://api.myip.com',
-        'https://api.ipify.org?format=json',
-        'https://api64.ipify.org?format=json',
-        'https://api.ip.sb/ip'
-      ];
+      // External IP services disabled due to rate limiting and CORS issues
+      // Using timezone-based location detection instead
+      
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log('🌐 Detected timezone:', timezone);
+      
+      const timezoneToLocation: { [key: string]: string } = {
+        'America/New_York': 'New York, United States',
+        'America/Los_Angeles': 'Los Angeles, United States', 
+        'America/Chicago': 'Chicago, United States',
+        'America/Denver': 'Denver, United States',
+        'America/Toronto': 'Toronto, Canada',
+        'America/Vancouver': 'Vancouver, Canada',
+        'Europe/London': 'London, United Kingdom',
+        'Europe/Berlin': 'Berlin, Germany',
+        'Europe/Paris': 'Paris, France',
+        'Europe/Rome': 'Rome, Italy',
+        'Europe/Madrid': 'Madrid, Spain',
+        'Europe/Amsterdam': 'Amsterdam, Netherlands',
+        'Asia/Tokyo': 'Tokyo, Japan',
+        'Asia/Shanghai': 'Shanghai, China',
+        'Asia/Seoul': 'Seoul, South Korea',
+        'Asia/Kolkata': 'Mumbai, India',
+        'Asia/Baghdad': 'Baghdad, Iraq',
+        'Asia/Dubai': 'Dubai, United Arab Emirates',
+        'Australia/Sydney': 'Sydney, Australia'
+      };
 
-      for (const service of services) {
-        try {
-          console.log('🌐 ClientSessionService: Trying service:', service);
-          const response = await fetch(service, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'SessionManager/1.0'
-            },
-            // Add timeout
-            signal: AbortSignal.timeout(3000)
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-
-          let data;
-          if (service.includes('ip.sb')) {
-            // ip.sb returns plain text
-            const text = await response.text();
-            data = { ip: text.trim() };
-          } else {
-            data = await response.json();
-          }
-          
-          console.log('🌐 ClientSessionService: Service response:', data);
-
-          let ipAddress = '';
-          let location = '';
-
-          // Parse different response formats with better location detection
-          if (service.includes('ipapi.co')) {
-            ipAddress = data.ip || '';
-            if (data.city && data.region && data.country) {
-              location = `${data.city}, ${data.region}, ${data.country}`;
-            } else if (data.city && data.country) {
-              location = `${data.city}, ${data.country}`;
-            } else if (data.region && data.country) {
-              location = `${data.region}, ${data.country}`;
-            } else if (data.country) {
-              location = data.country;
-            }
-          } else if (service.includes('ipinfo.io')) {
-            ipAddress = data.ip || '';
-            if (data.city && data.region && data.country) {
-              location = `${data.city}, ${data.region}, ${data.country}`;
-            } else if (data.city && data.country) {
-              location = `${data.city}, ${data.country}`;
-            } else if (data.region && data.country) {
-              location = `${data.region}, ${data.country}`;
-            } else if (data.country) {
-              location = data.country;
-            }
-          } else if (service.includes('myip.com')) {
-            ipAddress = data.ip || '';
-            if (data.city && data.country) {
-              location = `${data.city}, ${data.country}`;
-            } else if (data.country) {
-              location = data.country;
-            }
-          } else if (service.includes('ipify')) {
-            ipAddress = data.ip || '';
-          } else if (service.includes('ip.sb')) {
-            ipAddress = data.ip || '';
-          }
-
-          if (ipAddress && ipAddress !== 'undefined' && ipAddress !== 'null') {
-            console.log('🌐 ClientSessionService: IP and location found:', { ipAddress, location });
-            return { 
-              ipAddress, 
-              location: location || 'Location unavailable' 
-            };
-          }
-        } catch (error) {
-          console.warn('🌐 ClientSessionService: Service failed:', service, error);
-          continue;
-        }
-      }
-
-      // If we have an IP but no location, try a dedicated geolocation service
-      try {
-        console.log('🌐 ClientSessionService: Trying dedicated geolocation service...');
-        const ipResponse = await fetch('https://api.ipify.org?format=json', {
-          signal: AbortSignal.timeout(2000),
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'SessionManager/1.0'
-          }
-        });
-        const ipData = await ipResponse.json();
-        
-        if (ipData.ip && ipData.ip !== 'undefined' && ipData.ip !== 'null') {
-          // Try to get location for this IP using multiple services
-          const geoServices = [
-            `https://ipapi.co/${ipData.ip}/json/`,
-            `https://ipinfo.io/${ipData.ip}/json`,
-            `https://api.ipapi.com/api/${ipData.ip}?access_key=9c7e1b22f2e86b6860e02b276463374c`
-          ];
-
-          for (const geoService of geoServices) {
-            try {
-              const geoResponse = await fetch(geoService, {
-                signal: AbortSignal.timeout(3000),
-                headers: {
-                  'Accept': 'application/json',
-                  'User-Agent': 'SessionManager/1.0'
-                }
-              });
-              
-              if (geoResponse.ok) {
-                const geoData = await geoResponse.json();
-                
-                let location = '';
-                if (geoData.city && geoData.region && geoData.country) {
-                  location = `${geoData.city}, ${geoData.region}, ${geoData.country}`;
-                } else if (geoData.city && geoData.country) {
-                  location = `${geoData.city}, ${geoData.country}`;
-                } else if (geoData.region && geoData.country) {
-                  location = `${geoData.region}, ${geoData.country}`;
-                } else if (geoData.country) {
-                  location = geoData.country;
-                }
-                
-                if (location) {
-                  console.log('🌐 ClientSessionService: Dedicated geolocation successful:', { ip: ipData.ip, location });
+      const location = timezoneToLocation[timezone] || 'Unknown Location';
+      
+      console.log('🌐 ClientSessionService: Using timezone-based location:', location);
                   return { 
-                    ipAddress: ipData.ip, 
+        ipAddress: 'Private Network',
                     location: location
                   };
-                }
-              }
-            } catch (geoError) {
-              console.warn('🌐 ClientSessionService: Geolocation service failed:', geoService, geoError);
-              continue;
-            }
-          }
-          
-          // If all geolocation services fail, try browser geolocation
-          console.log('🌐 ClientSessionService: All geolocation services failed, trying browser geolocation...');
-          const browserLocation = await this.getBrowserLocation();
-          return { 
-            ipAddress: ipData.ip, 
-            location: browserLocation
-          };
-        }
-      } catch (error) {
-        console.warn('🌐 ClientSessionService: IP detection failed:', error);
-      }
-
-      // Final fallback - try browser geolocation
-      try {
-        console.log('🌐 ClientSessionService: Trying browser geolocation as fallback...');
-        const browserLocation = await this.getBrowserLocation();
-        return { 
-          ipAddress: 'IP unavailable', 
-          location: browserLocation
-        };
-      } catch (error) {
-        console.warn('🌐 ClientSessionService: Browser geolocation fallback failed:', error);
-        
-        // Ultimate fallback - use timezone and language
-        console.log('🌐 ClientSessionService: Using timezone-based location as ultimate fallback...');
-        const basicLocation = this.getBasicLocationFromTimezone();
-        return { 
-          ipAddress: 'IP detection in progress...', 
-          location: basicLocation
-        };
-      }
-    } catch (error) {
-      console.error('🌐 ClientSessionService: Error getting IP and location:', error);
       
-      // Ultimate fallback - use timezone and language
-      const basicLocation = this.getBasicLocationFromTimezone();
+    } catch (error) {
+      console.error('🌐 ClientSessionService: Error getting timezone location:', error);
+      
+      // Ultimate fallback
       return { 
-        ipAddress: 'IP detection failed', 
-        location: basicLocation
+        ipAddress: 'Private Network', 
+        location: 'Unknown Location'
       };
     }
   }

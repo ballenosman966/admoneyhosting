@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, 
   Save, 
@@ -22,6 +22,80 @@ import {
 import type { User as UserType } from '../utils/userStorage';
 import Aurora from './Aurora';
 // Framer Motion removed
+
+// Country codes mapping
+const countryCodes: { [key: string]: string } = {
+  'United States': '+1',
+  'Canada': '+1',
+  'United Kingdom': '+44',
+  'Germany': '+49',
+  'France': '+33',
+  'Italy': '+39',
+  'Spain': '+34',
+  'Netherlands': '+31',
+  'Belgium': '+32',
+  'Switzerland': '+41',
+  'Austria': '+43',
+  'Sweden': '+46',
+  'Norway': '+47',
+  'Denmark': '+45',
+  'Finland': '+358',
+  'Poland': '+48',
+  'Czech Republic': '+420',
+  'Hungary': '+36',
+  'Portugal': '+351',
+  'Greece': '+30',
+  'Turkey': '+90',
+  'Russia': '+7',
+  'China': '+86',
+  'Japan': '+81',
+  'South Korea': '+82',
+  'India': '+91',
+  'Australia': '+61',
+  'New Zealand': '+64',
+  'Brazil': '+55',
+  'Mexico': '+52',
+  'Argentina': '+54',
+  'Chile': '+56',
+  'Colombia': '+57',
+  'Peru': '+51',
+  'Venezuela': '+58',
+  'South Africa': '+27',
+  'Egypt': '+20',
+  'Nigeria': '+234',
+  'Kenya': '+254',
+  'Morocco': '+212',
+  'Algeria': '+213',
+  'Tunisia': '+216',
+  'Libya': '+218',
+  'Israel': '+972',
+  'Saudi Arabia': '+966',
+  'United Arab Emirates': '+971',
+  'Qatar': '+974',
+  'Kuwait': '+965',
+  'Bahrain': '+973',
+  'Oman': '+968',
+  'Jordan': '+962',
+  'Lebanon': '+961',
+  'Syria': '+963',
+  'Iraq': '+964',
+  'Iran': '+98',
+  'Afghanistan': '+93',
+  'Pakistan': '+92',
+  'Bangladesh': '+880',
+  'Sri Lanka': '+94',
+  'Nepal': '+977',
+  'Thailand': '+66',
+  'Vietnam': '+84',
+  'Malaysia': '+60',
+  'Singapore': '+65',
+  'Indonesia': '+62',
+  'Philippines': '+63',
+  'Cambodia': '+855',
+  'Myanmar': '+95',
+  'Laos': '+856',
+  'Brunei': '+673'
+};
 
 // Country to timezone mapping
 const countryTimezones: { [key: string]: string } = {
@@ -271,6 +345,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationType, setVerificationType] = useState<'email' | 'phone' | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [locationDetected, setLocationDetected] = useState(false);
+  const [isSocialEditing, setIsSocialEditing] = useState(false);
   
   // Form states
   const [formData, setFormData] = useState({
@@ -281,12 +357,88 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
     displayName: user.displayName || user.username,
     bio: user.bio || '',
     phone: user.phone || '',
+    countryCode: (user as any).countryCode || '+1',
     country: user.country || '',
     timezone: user.timezone || 'UTC',
     language: user.language || 'en',
     birthday: user.birthday || ''
   });
 
+    // Auto-detect location using timezone only (no external APIs)
+  const detectUserLocation = () => {
+    if (locationDetected || formData.country) return; // Don't override existing data
+    
+    try {
+      // Use browser timezone to detect country
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log('Detected timezone:', timezone);
+       
+      const timezoneToCountry: { [key: string]: string } = {
+        'America/New_York': 'United States',
+        'America/Los_Angeles': 'United States', 
+        'America/Chicago': 'United States',
+        'America/Denver': 'United States',
+        'America/Toronto': 'Canada',
+        'America/Vancouver': 'Canada',
+        'Europe/London': 'United Kingdom',
+        'Europe/Berlin': 'Germany',
+        'Europe/Paris': 'France',
+        'Europe/Rome': 'Italy',
+        'Europe/Madrid': 'Spain',
+        'Europe/Amsterdam': 'Netherlands',
+        'Europe/Brussels': 'Belgium',
+        'Europe/Zurich': 'Switzerland',
+        'Europe/Vienna': 'Austria',
+        'Europe/Stockholm': 'Sweden',
+        'Europe/Oslo': 'Norway',
+        'Europe/Copenhagen': 'Denmark',
+        'Europe/Helsinki': 'Finland',
+        'Asia/Tokyo': 'Japan',
+        'Asia/Shanghai': 'China',
+        'Asia/Seoul': 'South Korea',
+        'Asia/Kolkata': 'India',
+        'Asia/Baghdad': 'Iraq',
+        'Asia/Kuwait': 'Kuwait',
+        'Asia/Riyadh': 'Saudi Arabia',
+        'Asia/Dubai': 'United Arab Emirates',
+        'Australia/Sydney': 'Australia',
+        'Australia/Melbourne': 'Australia'
+      };
+       
+      const countryFromTimezone = timezoneToCountry[timezone];
+      if (countryFromTimezone && countryCodes[countryFromTimezone]) {
+        console.log(`Timezone detection found: ${countryFromTimezone} with code: ${countryCodes[countryFromTimezone]}`);
+        setFormData(prev => ({
+          ...prev,
+          country: countryFromTimezone,
+          countryCode: countryCodes[countryFromTimezone]
+        }));
+        setLocationDetected(true);
+      } else {
+        console.log('Timezone not found in mapping:', timezone);
+      }
+       
+    } catch (error) {
+      console.log('Timezone location detection failed:', error);
+    }
+  };
+
+  // Manual country override for development/testing
+  const setManualLocation = (country: string) => {
+    if (countryCodes[country]) {
+      setFormData(prev => ({
+        ...prev,
+        country: country,
+        countryCode: countryCodes[country]
+      }));
+      setLocationDetected(true);
+    }
+  };
+
+  // Run location detection on component mount
+  useEffect(() => {
+    detectUserLocation();
+  }, []); // Empty dependency array to run only once
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -324,12 +476,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
       displayName: formData.displayName,
       bio: formData.bio,
       phone: formData.phone,
+      countryCode: formData.countryCode,
       country: formData.country,
       timezone: formData.timezone,
       language: formData.language,
       birthday: formData.birthday,
       profileImage: profileImage || undefined
-    };
+    } as any;
     
     onUserUpdate(updatedUser);
     setIsEditing(false);
@@ -427,7 +580,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
       <div className="relative responsive-container w-full max-w-full px-3 sm:px-4 lg:px-8">
         {/* Header */}
         <div
-          className="mt-4 sm:mt-6 lg:mt-8 mb-6 sm:mb-8"
+          className="mt-4 sm:mt-6 lg:mt-8 mb-6 sm:mb-8 text-center"
         >
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-2 drop-shadow-lg">
             Profile Settings
@@ -478,29 +631,30 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
           className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg relative"
         >
           {/* Edit/Save/Cancel Button Group - Top Right */}
-          <div className="absolute top-6 right-8 z-20 flex space-x-4">
+          <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-20 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-400 to-purple-400 text-white font-semibold hover:from-blue-500 hover:to-purple-500 transition-colors shadow-lg flex items-center space-x-2"
+                className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-gradient-to-r from-blue-400 to-purple-400 text-white text-sm font-medium hover:from-blue-500 hover:to-purple-500 transition-colors shadow-lg flex items-center justify-center space-x-2"
               >
                 <Edit3 className="w-4 h-4" />
-                <span>Edit Profile</span>
+                <span className="hidden sm:inline">Edit Profile</span>
+                <span className="sm:hidden">Edit</span>
               </button>
             ) : (
               <>
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="px-6 py-3 rounded-lg bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition-colors shadow-lg"
+                  className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/20 transition-colors shadow-lg"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveProfile}
-                  className="px-6 py-3 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-400 text-black font-semibold hover:from-yellow-500 hover:to-orange-500 transition-colors shadow-lg flex items-center space-x-2"
+                  className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-400 text-black text-sm font-medium hover:from-yellow-500 hover:to-orange-500 transition-colors shadow-lg flex items-center justify-center space-x-2"
                 >
                   <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
+                  <span>Save</span>
                 </button>
               </>
             )}
@@ -509,168 +663,255 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
             Personal Information
           </h2>
               
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            {/* First Name and Last Name Row */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div>
-              <label className="block text-white/90 font-medium mb-2">First Name</label>
-                  <input
-                    type="text"
-                      value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
-                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
-                }`}
-                      placeholder="Enter first name"
-                    />
+                <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">First Name</label>
+                                  <input
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  disabled={!isEditing}
+                  className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
+                    isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                  }`}
+                  style={{ color: 'white' }}
+                  placeholder="First name"
+                />
           </div>
 
                   <div>
-              <label className="block text-white/90 font-medium mb-2">Last Name</label>
-                  <input
-                    type="text"
-                      value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
-                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
-                }`}
-                      placeholder="Enter last name"
-                    />
+                <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">Last Name</label>
+                                  <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  disabled={!isEditing}
+                  className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
+                    isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                  }`}
+                  style={{ color: 'white' }}
+                  placeholder="Last name"
+                />
+              </div>
+          </div>
+
+            {/* Username and Display Name Row */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">Username</label>
+                                  <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  disabled={!isEditing}
+                  className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
+                    isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                  }`}
+                  style={{ color: 'white' }}
+                  placeholder="Username"
+                />
           </div>
 
                   <div>
-              <label className="block text-white/90 font-medium mb-2">Username</label>
-                  <input
-                    type="text"
-                      value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
-                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
-                }`}
-                      placeholder="Enter username"
-                    />
+                <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">Display Name</label>
+                                  <input
+                  type="text"
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  disabled={!isEditing}
+                  className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
+                    isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                  }`}
+                  style={{ color: 'white' }}
+                  placeholder="Display name"
+                />
+              </div>
           </div>
 
+            {/* Email Field */}
                   <div>
-              <label className="block text-white/90 font-medium mb-2">Display Name</label>
-                  <input
-                    type="text"
-                      value={formData.displayName}
-                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                      disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
-                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
-                }`}
-                      placeholder="Enter display name"
-                    />
-          </div>
-
-                  <div>
-              <label className="block text-white/90 font-medium mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
+              <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">Email</label>
+                                  <input
+                type="email"
+                value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
+                disabled={!isEditing}
+                className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                   isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                 }`}
-                      placeholder="Enter email"
-                    />
+                style={{ color: 'white' }}
+                placeholder="Enter email"
+              />
                   </div>
 
+            {/* Birthday Field */}
                   <div>
-              <label className="block text-white/90 font-medium mb-2">Birthday</label>
-                    <input
-                      type="date"
-                      value={formData.birthday}
+              <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">Birthday</label>
+                                  <input
+                type="date"
+                value={formData.birthday}
                 onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-                      disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
+                disabled={!isEditing}
+                className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                   isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                 }`}
-                      max={new Date().toISOString().split('T')[0]}
-                    />
+                style={{ color: 'white' }}
+                max={new Date().toISOString().split('T')[0]}
+              />
                   </div>
 
+            {/* Phone Field */}
                   <div>
-              <label className="block text-white/90 font-medium mb-2">Phone</label>
-                  <input
-                      type="tel"
-                      value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
-                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
-                }`}
-                      placeholder="Enter phone number"
-                    />
+              <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">
+                Phone
+              </label>
+              <div className="flex space-x-2">
+                {/* Country Code Selector */}
+                <div className="relative">
+                  <select
+                    value={formData.countryCode}
+                    onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
+                    disabled={!isEditing}
+                    className={`border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
+                      isEditing ? 'bg-white/10 hover:bg-white/20 cursor-pointer active:bg-white/30' : 'bg-white/5 cursor-not-allowed opacity-60'
+                    } w-16 sm:w-20 z-[100] relative`}
+                    style={{ 
+                      WebkitAppearance: 'menulist',
+                      MozAppearance: 'menulist',
+                      appearance: 'menulist',
+                      minHeight: '44px',
+                      fontSize: '16px',
+                      color: 'white'
+                    }}
+                  >
+                    {Object.entries(countryCodes).map(([country, code]) => (
+                      <option key={country} value={code} style={{ backgroundColor: 'white', color: 'black' }}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                  {/* Custom dropdown arrow - hidden on mobile to avoid conflicts */}
+                  <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none hidden sm:flex">
+                    <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                
+                {/* Phone Number Input */}
+                                  <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  disabled={!isEditing}
+                  className={`flex-1 border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
+                    isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
+                  }`}
+                  style={{ color: 'white' }}
+                  placeholder="Enter phone number"
+                />
+              </div>
               </div>
               
+            {/* Country Field */}
                   <div>
-              <label className="block text-white/90 font-medium mb-2">Country</label>
+              <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">
+                Country
+              </label>
+              
+              <div className="relative">
                     <select
                       value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  onChange={(e) => {
+                    const selectedCountry = e.target.value;
+                    setFormData({ 
+                      ...formData, 
+                      country: selectedCountry,
+                      countryCode: countryCodes[selectedCountry] || formData.countryCode
+                    });
+                  }}
                       disabled={!isEditing}
-                className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all ${
-                  isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
-                }`}
-              >
-                <option value="">Select country</option>
-                {Object.keys(countryTimezones).map(country => (
-                  <option key={country} value={country} style={{ backgroundColor: '#1f2937', color: 'white' }}>
-                    {country}
-                        </option>
-                      ))}
-                    </select>
+                  className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base relative z-[100] ${
+                    isEditing ? 'bg-white/10 hover:bg-white/20 cursor-pointer active:bg-white/30' : 'bg-white/5 cursor-not-allowed opacity-60'
+                  }`}
+                  style={{
+                    WebkitAppearance: 'menulist',
+                    MozAppearance: 'menulist',
+                    appearance: 'menulist',
+                    minHeight: '44px',
+                    fontSize: '16px',
+                    color: 'white'
+                  }}
+                                >
+                  <option value="" style={{ backgroundColor: 'white', color: 'black' }}>Select country</option>
+                  {Object.keys(countryTimezones).map(country => (
+                    <option key={country} value={country} style={{ backgroundColor: 'white', color: 'black' }}>
+                      {country}
+                    </option>
+                  ))}
+                </select>
+                
+                {/* Custom dropdown arrow - hidden on mobile to avoid conflicts */}
+                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none hidden sm:flex">
+                  <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
                   </div>
                 </div>
 
-          <div className="mt-6">
-            <label className="block text-white/90 font-medium mb-2">Bio</label>
-                  <textarea
-                    value={formData.bio}
+          {/* Bio Field */}
+          <div>
+            <label className="block text-white/90 font-medium mb-2 text-sm sm:text-base">Bio</label>
+                              <textarea
+              value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    disabled={!isEditing}
+              disabled={!isEditing}
               rows={4}
-              className={`w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all resize-none ${
+              className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all resize-none text-sm sm:text-base ${
                 isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
               }`}
-                    placeholder="Tell us about yourself..."
-                  />
+              style={{ color: 'white' }}
+              placeholder="Tell us about yourself..."
+            />
                 </div>
           {/* Remove the old button group from the bottom of the form */}
         </div>
 
         {/* Verification Status Section */}
-        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+        <div className="glass-card border border-white/10 rounded-3xl p-4 sm:p-8 mb-8 backdrop-blur-lg">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-4 sm:mb-6 text-center">
             Verification Status
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
             {/* Email Verification */}
-            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <Mail className="w-6 h-6 text-blue-400" />
-                  <span className="text-white font-semibold">Email</span>
-                </div>
+            <div className="glass-card border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 backdrop-blur-md text-center">
+              <div className="flex flex-col items-center space-y-2 sm:space-y-3">
+                <div className="relative">
+                  <Mail className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-blue-400 mx-auto" />
+                  <div className="absolute -top-1 -right-1">
                 {verificationStatus.emailVerified ? (
-                  <CheckCircle className="w-6 h-6 text-green-400" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 bg-white rounded-full" />
                 ) : (
-                  <XCircle className="w-6 h-6 text-red-400" />
+                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 bg-white rounded-full" />
                 )}
               </div>
-              <p className="text-white/70 text-sm mb-4">
-                {verificationStatus.emailVerified ? 'Email verified successfully' : 'Email not verified'}
-              </p>
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-sm sm:text-base">Email</h3>
+                  <p className="text-white/70 text-xs sm:text-sm mt-1">
+                    {verificationStatus.emailVerified ? 'Email verified' : 'Email not verified'}
+                  </p>
+                </div>
+              </div>
               {!verificationStatus.emailVerified && (
                 <button
                   onClick={() => sendVerificationCode('email')}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-blue-400 to-purple-400 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 transition-colors"
+                  className="w-full mt-3 sm:mt-4 px-2 sm:px-3 py-2 bg-gradient-to-r from-blue-400 to-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:from-blue-500 hover:to-blue-700 transition-colors"
                 >
                   Verify Email
                 </button>
@@ -678,25 +919,29 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
             </div>
 
             {/* Phone Verification */}
-            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <Smartphone className="w-6 h-6 text-green-400" />
-                  <span className="text-white font-semibold">Phone</span>
-                </div>
+            <div className="glass-card border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 backdrop-blur-md text-center">
+              <div className="flex flex-col items-center space-y-2 sm:space-y-3">
+                <div className="relative">
+                  <Smartphone className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-green-400 mx-auto" />
+                  <div className="absolute -top-1 -right-1">
                 {verificationStatus.phoneVerified ? (
-                  <CheckCircle className="w-6 h-6 text-green-400" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 bg-white rounded-full" />
                 ) : (
-                  <XCircle className="w-6 h-6 text-red-400" />
+                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 bg-white rounded-full" />
                 )}
               </div>
-              <p className="text-white/70 text-sm mb-4">
-                {verificationStatus.phoneVerified ? 'Phone verified successfully' : 'Phone not verified'}
-              </p>
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-sm sm:text-base">Phone</h3>
+                  <p className="text-white/70 text-xs sm:text-sm mt-1">
+                    {verificationStatus.phoneVerified ? 'Phone verified' : 'Phone not verified'}
+                  </p>
+                </div>
+              </div>
               {!verificationStatus.phoneVerified && (
                 <button
                   onClick={() => sendVerificationCode('phone')}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-green-400 to-teal-400 text-white rounded-lg hover:from-green-500 hover:to-teal-500 transition-colors"
+                  className="w-full mt-3 sm:mt-4 px-2 sm:px-3 py-2 bg-gradient-to-r from-green-400 to-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:from-green-500 hover:to-green-700 transition-colors"
                 >
                   Verify Phone
                 </button>
@@ -704,29 +949,33 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
             </div>
 
             {/* KYC Verification */}
-            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <Shield className="w-6 h-6 text-purple-400" />
-                  <span className="text-white font-semibold">KYC</span>
-                </div>
+            <div className="glass-card border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 backdrop-blur-md text-center">
+              <div className="flex flex-col items-center space-y-2 sm:space-y-3">
+                <div className="relative">
+                  <Shield className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-400 mx-auto" />
+                  <div className="absolute -top-1 -right-1">
                 {verificationStatus.kycVerified ? (
-                  <CheckCircle className="w-6 h-6 text-green-400" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 bg-white rounded-full" />
                 ) : verificationStatus.kycStatus === 'pending' ? (
-                  <Clock className="w-6 h-6 text-yellow-400" />
+                      <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 bg-white rounded-full" />
                 ) : (
-                  <XCircle className="w-6 h-6 text-red-400" />
+                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 bg-white rounded-full" />
                 )}
               </div>
-              <p className="text-white/70 text-sm mb-4">
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-sm sm:text-base">KYC</h3>
+                  <p className="text-white/70 text-xs sm:text-sm mt-1">
                 {verificationStatus.kycVerified ? 'KYC approved' : 
-                 verificationStatus.kycStatus === 'pending' ? 'KYC under review' :
+                     verificationStatus.kycStatus === 'pending' ? 'Under review' :
                  verificationStatus.kycStatus === 'rejected' ? 'KYC rejected' : 'KYC not submitted'}
               </p>
+                </div>
+              </div>
               {verificationStatus.kycStatus === 'not_submitted' && (
                 <button
                   onClick={() => navigate('/kyc')}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors"
+                  className="w-full mt-3 sm:mt-4 px-2 sm:px-3 py-2 bg-gradient-to-r from-purple-400 to-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:from-purple-500 hover:to-purple-700 transition-colors"
                 >
                   Submit KYC
                 </button>
@@ -769,197 +1018,150 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
         </div>
 
         {/* Referral Statistics Section */}
-        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
+        <div className="glass-card border border-white/10 rounded-3xl p-4 sm:p-8 mb-8 backdrop-blur-lg">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-4 sm:mb-6 text-center">
             Referral Statistics
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
-              <Users className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white mb-1">{referralStats.totalReferrals}</div>
-              <div className="text-white/70 text-sm">Total Referrals</div>
+          <div className="grid grid-cols-4 gap-1 sm:gap-3 md:gap-4 lg:gap-6">
+            <div className="glass-card border border-white/10 rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-6 backdrop-blur-md text-center">
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-400 mx-auto mb-2 sm:mb-3" />
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">{referralStats.totalReferrals}</div>
+              <div className="text-white/70 text-xs sm:text-sm">Total Referrals</div>
             </div>
             
-            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
-              <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white mb-1">{referralStats.activeReferrals}</div>
-              <div className="text-white/70 text-sm">Active Referrals</div>
+            <div className="glass-card border border-white/10 rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-6 backdrop-blur-md text-center">
+              <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-green-400 mx-auto mb-2 sm:mb-3" />
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">{referralStats.activeReferrals}</div>
+              <div className="text-white/70 text-xs sm:text-sm">Active Referrals</div>
             </div>
             
-            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
-              <DollarSign className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white mb-1">${referralStats.totalEarnings.toFixed(2)}</div>
-              <div className="text-white/70 text-sm">Total Earnings</div>
+            <div className="glass-card border border-white/10 rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-6 backdrop-blur-md text-center">
+              <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-yellow-400 mx-auto mb-2 sm:mb-3" />
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">${referralStats.totalEarnings.toFixed(2)}</div>
+              <div className="text-white/70 text-xs sm:text-sm">Total Earnings</div>
             </div>
             
-            <div className="glass-card border border-white/10 rounded-2xl p-6 backdrop-blur-md text-center">
-              <Clock className="w-8 h-8 text-orange-400 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white mb-1">${referralStats.pendingEarnings.toFixed(2)}</div>
-              <div className="text-white/70 text-sm">Pending Earnings</div>
+            <div className="glass-card border border-white/10 rounded-xl sm:rounded-2xl p-2 sm:p-4 md:p-6 backdrop-blur-md text-center">
+              <Clock className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-400 mx-auto mb-2 sm:mb-3" />
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1">${referralStats.pendingEarnings.toFixed(2)}</div>
+              <div className="text-white/70 text-xs sm:text-sm">Pending Earnings</div>
             </div>
           </div>
         </div>
 
-        {/* Privacy Settings Section */}
-        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
-            Privacy Settings
+
+        {/* Social Media Links Section - Redesigned */}
+        <div className="glass-card border border-white/10 rounded-3xl p-6 mb-8 backdrop-blur-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent">
+              Social Media Links
           </h2>
           
-          <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
-              <div>
-                <h3 className="text-white font-semibold mb-1">Profile Visibility</h3>
-                <p className="text-white/70 text-sm">Control who can see your profile</p>
-              </div>
-              <select
-                value={privacySettings.profileVisibility}
-                onChange={(e) => updatePrivacySettings('profileVisibility', e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50"
+            {/* Edit Button */}
+            {!isSocialEditing && (
+              <button
+                onClick={() => setIsSocialEditing(true)}
+                className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-gradient-to-r from-blue-400 to-purple-400 text-white text-sm font-medium hover:from-blue-500 hover:to-purple-500 transition-colors shadow-lg flex items-center space-x-2"
               >
-                <option value="public">Public</option>
-                <option value="friends">Friends Only</option>
-                <option value="private">Private</option>
-              </select>
+                <Edit3 className="w-4 h-4" />
+                <span>Edit</span>
+              </button>
+            )}
             </div>
             
-            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
-              <div>
-                <h3 className="text-white font-semibold mb-1">Show Email</h3>
-                <p className="text-white/70 text-sm">Display email on public profile</p>
+          {/* Social Media Links - Full Width Rows */}
+          <div className="space-y-4">
+            {[
+              { platform: 'instagram', icon: Instagram, color: 'text-pink-400', placeholder: 'Enter your Instagram username', label: 'Instagram' },
+              { platform: 'facebook', icon: Facebook, color: 'text-blue-600', placeholder: 'Enter your Facebook profile URL', label: 'Facebook' },
+              { platform: 'youtube', icon: Youtube, color: 'text-red-500', placeholder: 'Enter your YouTube channel URL', label: 'YouTube' },
+            ].map(({ platform, icon: Icon, color, placeholder, label }) => {
+              const value = socialLinks[platform as keyof typeof socialLinks];
+              const hasValue = value && value.length > 0;
+              
+              return (
+                <div key={platform} className="flex items-center space-x-4">
+                  {/* Social Icon */}
+                  <div className={`
+                    relative w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-full border-2 
+                    ${hasValue 
+                      ? 'border-green-400/50 bg-green-400/10' 
+                      : 'border-white/20 bg-white/5'
+                    } 
+                    flex items-center justify-center transition-all duration-200
+                  `}>
+                    <Icon className={`w-6 h-6 sm:w-7 sm:h-7 ${color}`} />
+                    
+                    {/* Status Indicator */}
+                    {hasValue && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white/20 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
               </div>
-              <button
-                onClick={() => updatePrivacySettings('showEmail', !privacySettings.showEmail)}
-                className={`w-12 h-6 rounded-full transition-colors ${
-                  privacySettings.showEmail 
-                    ? 'bg-gradient-to-r from-green-400 to-teal-400' 
-                    : 'bg-white/20'
-                }`}
-              >
-                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                  privacySettings.showEmail ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
-              <div>
-                <h3 className="text-white font-semibold mb-1">Show Phone</h3>
-                <p className="text-white/70 text-sm">Display phone on public profile</p>
-              </div>
-              <button
-                onClick={() => updatePrivacySettings('showPhone', !privacySettings.showPhone)}
-                className={`w-12 h-6 rounded-full transition-colors ${
-                  privacySettings.showPhone 
-                    ? 'bg-gradient-to-r from-green-400 to-teal-400' 
-                    : 'bg-white/20'
-                }`}
-              >
-                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                  privacySettings.showPhone ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 glass-card border border-white/10 rounded-2xl backdrop-blur-md">
-              <div>
-                <h3 className="text-white font-semibold mb-1">Show Referral Stats</h3>
-                <p className="text-white/70 text-sm">Display referral statistics publicly</p>
-              </div>
-              <button
-                onClick={() => updatePrivacySettings('showReferralStats', !privacySettings.showReferralStats)}
-                className={`w-12 h-6 rounded-full transition-colors ${
-                  privacySettings.showReferralStats 
-                    ? 'bg-gradient-to-r from-green-400 to-teal-400' 
-                    : 'bg-white/20'
-                }`}
-              >
-                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                  privacySettings.showReferralStats ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-          </div>
+                    )}
         </div>
 
-        {/* Social Media Links Section */}
-        <div className="glass-card border border-white/10 rounded-3xl p-8 mb-8 backdrop-blur-lg">
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6">
-            Social Media Links
-          </h2>
+                  {/* Platform Info and Input */}
+                  <div className="flex-1 min-w-0">
+                    {/* Platform Label */}
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-white font-medium text-sm sm:text-base">
+                        {label}
+                      </h3>
+                      {!isSocialEditing && hasValue && (
+                        <span className="text-xs text-green-400 font-medium">✓ Connected</span>
+                      )}
+            </div>
+            
+                    {/* Input Field or Display */}
+                    {isSocialEditing ? (
+              <input
+                type="text"
+                        value={value}
+                        onChange={(e) => updateSocialLinks(platform, e.target.value)}
+                        className="w-full px-4 py-3 border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base"
+                        placeholder={placeholder}
+                      />
+                    ) : (
+                      <div className="w-full px-4 py-3 border border-white/10 rounded-lg bg-white/5 text-sm sm:text-base">
+                        {hasValue ? (
+                          <span className="text-white">
+                            {platform === 'instagram' ? `@${value}` : value}
+                          </span>
+                        ) : (
+                          <span className="text-white/40">Not connected</span>
+                        )}
+            </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            </div>
+            
+          {/* Save Button */}
+          {isSocialEditing && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={() => {
+                  // Save social links - they're already updated in real-time via updateSocialLinks
+                  setIsSocialEditing(false);
+                }}
+                className="px-6 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-400 text-black text-sm font-medium hover:from-yellow-500 hover:to-orange-500 transition-colors flex items-center space-x-2"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Links</span>
+              </button>
+            </div>
+          )}
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
-                <Instagram className="w-5 h-5 text-pink-400" />
-                <span>Instagram</span>
-              </label>
-              <input
-                type="text"
-                value={socialLinks.instagram}
-                onChange={(e) => updateSocialLinks('instagram', e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
-                placeholder="Your Instagram username"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
-                <Twitter className="w-5 h-5 text-blue-400" />
-                <span>Twitter</span>
-              </label>
-              <input
-                type="text"
-                value={socialLinks.twitter}
-                onChange={(e) => updateSocialLinks('twitter', e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
-                placeholder="Your Twitter username"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
-                <Facebook className="w-5 h-5 text-blue-600" />
-                <span>Facebook</span>
-              </label>
-              <input
-                type="text"
-                value={socialLinks.facebook}
-                onChange={(e) => updateSocialLinks('facebook', e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
-                placeholder="Your Facebook profile URL"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
-                <Linkedin className="w-5 h-5 text-blue-500" />
-                <span>LinkedIn</span>
-              </label>
-              <input
-                type="text"
-                value={socialLinks.linkedin}
-                onChange={(e) => updateSocialLinks('linkedin', e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
-                placeholder="Your LinkedIn profile URL"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-white/90 font-medium mb-2 flex items-center space-x-2">
-                <Youtube className="w-5 h-5 text-red-500" />
-                <span>YouTube</span>
-              </label>
-              <input
-                type="text"
-                value={socialLinks.youtube}
-                onChange={(e) => updateSocialLinks('youtube', e.target.value)}
-                className="w-full border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all bg-white/10"
-                placeholder="Your YouTube channel URL"
-              />
-            </div>
-          </div>
+          {/* Instructions */}
+          <p className="text-white/60 text-xs text-center mt-4">
+            {isSocialEditing 
+              ? "Enter your usernames or profile URLs above" 
+              : "Click 'Edit' to add your social media links"
+            }
+          </p>
         </div>
 
         {/* Verification Modal */}
