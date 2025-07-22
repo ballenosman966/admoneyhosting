@@ -1159,7 +1159,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                         placeholder={placeholder}
                       />
                     ) : (
-                      <div className="w-full px-4 py-3 border border-white/10 rounded-lg bg-white/5 text-sm sm:text-base">
+                      <div className="w-full px-4 py-3 border border-white/10 rounded-lg bg-white/5 text-sm sm:text-base overflow-x-auto" style={{wordBreak: 'break-all'}}>
                         {hasValue ? (
                           <span className="text-white">
                             {platform === 'instagram' ? `@${value}` : value}
