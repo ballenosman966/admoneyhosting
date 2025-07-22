@@ -676,7 +676,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                   className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                     isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                   }`}
-                  style={{ color: 'white' }}
+                  style={{ 
+                    color: 'white !important',
+                    WebkitTextFillColor: 'white !important',
+                    opacity: '1 !important'
+                  }}
                   placeholder="First name"
                 />
           </div>
@@ -691,7 +695,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                   className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                     isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                   }`}
-                  style={{ color: 'white' }}
+                  style={{ 
+                    color: 'white !important',
+                    WebkitTextFillColor: 'white !important',
+                    opacity: '1 !important'
+                  }}
                   placeholder="Last name"
                 />
               </div>
@@ -709,7 +717,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                   className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                     isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                   }`}
-                  style={{ color: 'white' }}
+                  style={{ 
+                    color: 'white !important',
+                    WebkitTextFillColor: 'white !important',
+                    opacity: '1 !important'
+                  }}
                   placeholder="Username"
                 />
           </div>
@@ -724,7 +736,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                   className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                     isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                   }`}
-                  style={{ color: 'white' }}
+                  style={{ 
+                    color: 'white !important',
+                    WebkitTextFillColor: 'white !important',
+                    opacity: '1 !important'
+                  }}
                   placeholder="Display name"
                 />
               </div>
@@ -741,7 +757,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                 className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                   isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                 }`}
-                style={{ color: 'white' }}
+                style={{ 
+                  color: 'white !important',
+                  WebkitTextFillColor: 'white !important',
+                  opacity: '1 !important'
+                }}
                 placeholder="Enter email"
               />
                   </div>
@@ -757,7 +777,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                 className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                   isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                 }`}
-                style={{ color: 'white' }}
+                style={{ 
+                  color: 'white !important',
+                  WebkitTextFillColor: 'white !important',
+                  opacity: '1 !important'
+                }}
                 max={new Date().toISOString().split('T')[0]}
               />
                   </div>
@@ -783,7 +807,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                       appearance: 'menulist',
                       minHeight: '44px',
                       fontSize: '16px',
-                      color: 'white'
+                      color: 'white !important',
+                      WebkitTextFillColor: 'white !important',
+                      opacity: '1 !important'
                     }}
                   >
                     {Object.entries(countryCodes).map(([country, code]) => (
@@ -809,7 +835,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                   className={`flex-1 border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm sm:text-base ${
                     isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
                   }`}
-                  style={{ color: 'white' }}
+                  style={{ 
+                    color: 'white !important',
+                    WebkitTextFillColor: 'white !important',
+                    opacity: '1 !important'
+                  }}
                   placeholder="Enter phone number"
                 />
               </div>
@@ -842,7 +872,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
                     appearance: 'menulist',
                     minHeight: '44px',
                     fontSize: '16px',
-                    color: 'white'
+                    color: 'white !important',
+                    WebkitTextFillColor: 'white !important',
+                    opacity: '1 !important'
                   }}
                                 >
                   <option value="" style={{ backgroundColor: 'white', color: 'black' }}>Select country</option>
@@ -874,7 +906,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUserUpdate, na
               className={`w-full border border-white/20 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all resize-none text-sm sm:text-base ${
                 isEditing ? 'bg-white/10' : 'bg-white/5 cursor-not-allowed'
               }`}
-              style={{ color: 'white' }}
+              style={{ 
+                color: 'white !important',
+                WebkitTextFillColor: 'white !important',
+                opacity: '1 !important'
+              }}
               placeholder="Tell us about yourself..."
             />
                 </div>

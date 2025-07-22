@@ -1,7 +1,76 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Eye, EyeOff, User, ArrowLeft, Loader2, Mail, Globe, Gift, CheckCircle, Info } from 'lucide-react';
+import { Eye, EyeOff, User, ArrowLeft, Loader2, Mail, Globe, Gift, CheckCircle, Info, Smartphone } from 'lucide-react';
 import { userStorage } from '../utils/userStorage';
 import Aurora from './Aurora';
+
+// Country codes mapping
+const countryCodes: { [key: string]: string } = {
+  'United States': '+1',
+  'Canada': '+1',
+  'United Kingdom': '+44',
+  'Germany': '+49',
+  'France': '+33',
+  'Italy': '+39',
+  'Spain': '+34',
+  'Netherlands': '+31',
+  'Belgium': '+32',
+  'Switzerland': '+41',
+  'Austria': '+43',
+  'Sweden': '+46',
+  'Norway': '+47',
+  'Denmark': '+45',
+  'Finland': '+358',
+  'Poland': '+48',
+  'Czech Republic': '+420',
+  'Hungary': '+36',
+  'Portugal': '+351',
+  'Greece': '+30',
+  'Turkey': '+90',
+  'Russia': '+7',
+  'China': '+86',
+  'Japan': '+81',
+  'South Korea': '+82',
+  'India': '+91',
+  'Australia': '+61',
+  'New Zealand': '+64',
+  'Brazil': '+55',
+  'Mexico': '+52',
+  'Argentina': '+54',
+  'Chile': '+56',
+  'Colombia': '+57',
+  'Peru': '+51',
+  'Venezuela': '+58',
+  'South Africa': '+27',
+  'Egypt': '+20',
+  'Nigeria': '+234',
+  'Kenya': '+254',
+  'Morocco': '+212',
+  'Algeria': '+213',
+  'Tunisia': '+216',
+  'Libya': '+218',
+  'Israel': '+972',
+  'Saudi Arabia': '+966',
+  'United Arab Emirates': '+971',
+  'Qatar': '+974',
+  'Kuwait': '+965',
+  'Bahrain': '+973',
+  'Oman': '+968',
+  'Jordan': '+962',
+  'Lebanon': '+961',
+  'Syria': '+963',
+  'Iraq': '+964',
+  'Iran': '+98',
+  'Afghanistan': '+93',
+  'Pakistan': '+92',
+  'Bangladesh': '+880',
+  'Sri Lanka': '+94',
+  'Malaysia': '+60',
+  'Singapore': '+65',
+  'Thailand': '+66',
+  'Vietnam': '+84',
+  'Philippines': '+63',
+  'Indonesia': '+62'
+};
 
 // Country list for dropdown
 const countries = [
@@ -28,7 +97,7 @@ const countries = [
 ].sort();
 
 interface AuthPageProps {
-  onAuth: (userData: { email?: string; password: string; username?: string; firstName?: string; lastName?: string; birthday?: string; country?: string; referralCode?: string; referrerId?: string }) => void;
+  onAuth: (userData: { email?: string; password: string; username?: string; firstName?: string; lastName?: string; birthday?: string; phone?: string; countryCode?: string; country?: string; referralCode?: string; referrerId?: string }) => void;
   onBack: () => void;
   onResetPassword: () => void;
   isLoading: boolean;
@@ -47,6 +116,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
   const firstNameRef = useRef<HTMLInputElement>(null);
   const lastNameRef = useRef<HTMLInputElement>(null);
   const birthdayRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const countryCodeRef = useRef<HTMLSelectElement>(null);
   const countryRef = useRef<HTMLSelectElement>(null);
   const referralCodeRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -97,12 +168,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
       if (currentField === 'username') return passwordRef;
       if (currentField === 'password') return null; // Submit form
     } else {
-      // Signup form: username -> email -> firstName -> lastName -> birthday -> country -> referralCode -> password -> confirmPassword
+      // Signup form: username -> email -> firstName -> lastName -> birthday -> countryCode -> phone -> country -> referralCode -> password -> confirmPassword
       if (currentField === 'username') return emailRef;
       if (currentField === 'email') return firstNameRef;
       if (currentField === 'firstName') return lastNameRef;
       if (currentField === 'lastName') return birthdayRef;
-      if (currentField === 'birthday') return countryRef;
+      if (currentField === 'birthday') return countryCodeRef;
+      if (currentField === 'countryCode') return phoneRef;
+      if (currentField === 'phone') return countryRef;
       if (currentField === 'country') return referralCodeRef;
       if (currentField === 'referralCode') return passwordRef;
       if (currentField === 'password') return confirmPasswordRef;
@@ -123,6 +196,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
     firstName: '',
     lastName: '',
     birthday: '',
+    phone: '',
+    countryCode: '+1',
     country: '',
     referralCode: urlReferralCode || '',
     referrerId: ''
@@ -176,6 +251,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
     }
     if (name === 'email' && !isLogin) {
       validateEmail(value);
+    }
+    
+    // Auto-update country code when country is selected
+    if (name === 'country' && !isLogin && value && countryCodes[value]) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        countryCode: countryCodes[value]
+      }));
+      return; // Return early since we've already updated formData
     }
     
       // Debug referral code validation
@@ -472,7 +557,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
 
             {/* Birthday Field - only for signup */}
             {!isLogin && (
-              <div className="transition-all duration-500 max-h-16 opacity-100 overflow-hidden">
+              <div className="transition-all duration-500 opacity-100 relative z-10">
                 <div>
                   <label className="block text-sm font-medium text-white/90 mb-2">
                     Birthday
@@ -504,9 +589,88 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
               </div>
             )}
 
+            {/* Phone Field - only for signup */}
+            {!isLogin && (
+              <div className="transition-all duration-500 opacity-100 relative z-15">
+                <div>
+                  <label className="block text-sm font-medium text-white/90 mb-2">
+                    Phone Number
+                  </label>
+                  <div className="flex space-x-2">
+                    {/* Country Code Selector */}
+                    <div className="relative">
+                      <select
+                        ref={countryCodeRef}
+                        name="countryCode"
+                        value={formData.countryCode}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => {
+                          const nextField = getNextFieldRef('countryCode');
+                          if (nextField) {
+                            handleKeyDown(e, nextField);
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                            if (submitButton && !submitButton.disabled) {
+                              submitButton.click();
+                            }
+                          }
+                        }}
+                        className="bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm w-20 relative z-30"
+                        style={{ 
+                          WebkitAppearance: 'menulist',
+                          MozAppearance: 'menulist',
+                          appearance: 'menulist',
+                          minHeight: '44px',
+                          fontSize: '16px',
+                          color: 'white'
+                        }}
+                        required={!isLogin}
+                        disabled={isLoading}
+                      >
+                        {Object.entries(countryCodes).map(([country, code]) => (
+                          <option key={country} value={code} style={{ backgroundColor: 'white', color: 'black' }}>
+                            {code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {/* Phone Number Input */}
+                    <div className="relative flex-1">
+                      <input
+                        ref={phoneRef}
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => {
+                          const nextField = getNextFieldRef('phone');
+                          if (nextField) {
+                            handleKeyDown(e, nextField);
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                            if (submitButton && !submitButton.disabled) {
+                              submitButton.click();
+                            }
+                          }
+                        }}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm pr-12"
+                        placeholder="Enter phone number"
+                        required={!isLogin}
+                        disabled={isLoading}
+                      />
+                      <Smartphone className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Country Field - only for signup */}
             {!isLogin && (
-              <div className="transition-all duration-500 max-h-16 opacity-100 overflow-hidden">
+              <div className="transition-all duration-500 opacity-100 relative z-20">
                 <div>
                   <label className="block text-sm font-medium text-white/90 mb-2">
                     Country
@@ -529,18 +693,26 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth, onBack, onResetPassw
                           }
                         }
                       }}
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm appearance-none"
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all text-sm relative z-30"
+                      style={{
+                        WebkitAppearance: 'menulist',
+                        MozAppearance: 'menulist',
+                        appearance: 'menulist',
+                        minHeight: '44px',
+                        fontSize: '16px',
+                        color: 'white'
+                      }}
                       required={!isLogin}
                       disabled={isLoading}
                     >
-                      <option value="" disabled>Select your country</option>
+                      <option value="" disabled style={{ backgroundColor: '#1f2937', color: 'white' }}>Select your country</option>
                       {countries.map((country) => (
-                        <option key={country} value={country} className="bg-white text-gray-800">
+                        <option key={country} value={country} style={{ backgroundColor: 'white', color: 'black' }}>
                           {country}
                         </option>
                       ))}
                     </select>
-                    <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
+                    <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none hidden sm:block" />
                   </div>
                 </div>
               </div>

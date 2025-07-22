@@ -430,15 +430,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                 )}
               </div>
               
-              {/* Desktop Logout Button */}
-              <button
-                onClick={() => setShowLogoutModal(true)}
-                className="hidden xl:flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-red-500/80 text-white font-bold text-lg shadow hover:bg-red-600 transition-colors border border-red-500/30"
-                style={{ minWidth: '120px' }}
-              >
-                <LogOut className="w-5 h-5" />
-                <span>Logout</span>
-              </button>
+
             </div>
           </div>
         </div>
