@@ -15,7 +15,6 @@ import { Page } from '../App';
 import { User } from '../utils/userStorage';
 import { userStorage } from '../utils/userStorage';
 import { VIPRewardNotification } from './VIPRewardNotification';
-import TransactionHistory from './TransactionHistory';
 import Aurora from './Aurora';
 import BlurText from './BlurText';
 // Framer Motion removed
@@ -105,7 +104,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, onUserUp
 
         {/* Welcome Section */}
         <div
-          className="mt-8 sm:mt-6 lg:mt-8 xl:mt-10 2xl:mt-12 mb-6 sm:mb-8 lg:mb-12 xl:mb-16 2xl:mb-20"
+          className="mt-8 sm:mt-6 lg:mt-8 xl:mt-10 2xl:mt-12 mb-6 sm:mb-8 lg:mb-12 xl:mb-16 2xl:mb-20 text-center sm:text-left"
         >
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-2 lg:mb-4 xl:mb-6 drop-shadow-lg">
             {`Welcome back, ${user.displayName || user.username}!`}
@@ -117,61 +116,63 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, onUserUp
 
         {/* Balance Card */}
         <div
-          className="glass-card border border-yellow-400/30 shadow-2xl rounded-3xl p-6 sm:p-10 mb-8 w-full max-w-full backdrop-blur-xl"
+          className="glass-card border border-yellow-400/30 shadow-2xl rounded-2xl p-4 sm:p-6 mb-6 w-full max-w-full backdrop-blur-xl"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 w-full">
-            <div>
-              <p className="text-white/70 text-sm sm:text-base mb-1">Current Balance</p>
-              <span className="text-4xl sm:text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-xl">
+          <div className="flex items-center justify-between w-full gap-4">
+            <div className="flex-1">
+              <p className="text-white/70 text-xs sm:text-sm mb-1">Current Balance</p>
+              <span className="text-xl sm:text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-xl block">
                 ${user.balance.toFixed(2)}
               </span>
-              <p className="text-white/60 text-sm mt-1">USDT</p>
+              <p className="text-white/60 text-xs mt-1">USDT</p>
             </div>
-            <div className="text-left sm:text-right">
-              <p className="text-white/70 text-sm mb-1">Total Earned</p>
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg">
+            <div className="flex-1 text-right">
+              <p className="text-white/70 text-xs sm:text-sm mb-1">Total Earned</p>
+              <span className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg block">
                 ${user.totalEarned.toFixed(2)}
               </span>
-              <p className="text-white/60 text-sm">Lifetime</p>
+              <p className="text-white/60 text-xs">Lifetime</p>
             </div>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+          className="grid grid-cols-4 gap-2 sm:gap-4 mb-8"
         >
           {[
             {
-              icon: <Eye className="w-12 h-12 mx-auto mb-3 text-yellow-400 drop-shadow-lg shadow-yellow-400/30" />,
+              icon: <Eye className="text-yellow-400 drop-shadow-lg shadow-yellow-400/30" />,
               value: stats.adsWatched,
               label: 'Ads Watched',
             },
             {
-              icon: <Calendar className="w-12 h-12 mx-auto mb-3 text-green-400 drop-shadow-lg shadow-green-400/30" />,
+              icon: <Calendar className="text-green-400 drop-shadow-lg shadow-green-400/30" />,
               value: stats.currentStreak,
               label: 'Day Streak',
             },
             {
-              icon: <Users className="w-12 h-12 mx-auto mb-3 text-purple-400 drop-shadow-lg shadow-purple-400/30" />,
+              icon: <Users className="text-purple-400 drop-shadow-lg shadow-purple-400/30" />,
               value: stats.referrals,
               label: 'Referrals',
             },
             {
-              icon: <TrendingUp className="w-12 h-12 mx-auto mb-3 text-pink-400 drop-shadow-lg shadow-pink-400/30" />,
+              icon: <TrendingUp className="text-pink-400 drop-shadow-lg shadow-pink-400/30" />,
               value: `$${user.referralEarnings.toFixed(2)}`,
               label: 'Referral Earnings',
             },
           ].map((stat, i) => (
             <div
               key={stat.label}
-              className="glass-card border border-white/20 rounded-2xl p-6 text-center hover:scale-105 hover:shadow-2xl transition-all duration-300 cursor-pointer backdrop-blur-lg shadow-xl shadow-black/20 bg-white/5"
+              className="glass-card border border-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-6 text-center hover:scale-105 hover:shadow-2xl transition-all duration-300 cursor-pointer backdrop-blur-lg shadow-xl shadow-black/20 bg-white/5"
             >
-              {stat.icon}
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-xl shadow-black/50">
+              <div className="w-6 h-6 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-yellow-400 drop-shadow-lg shadow-yellow-400/30">
+                {React.cloneElement(stat.icon, { className: 'w-full h-full' })}
+              </div>
+              <span className="text-sm sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-xl shadow-black/50 block">
                 {stat.value}
               </span>
-              <p className="text-white/90 text-sm mt-2 font-medium">{stat.label}</p>
+              <p className="text-white/90 text-xs sm:text-sm mt-1 sm:mt-2 font-medium">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -203,19 +204,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, onUserUp
 
         {/* Recent Activity */}
         <div
-          className="glass-card border border-white/10 rounded-3xl p-8 w-full max-w-full mb-8 backdrop-blur-lg"
+          className="glass-card border border-white/10 rounded-3xl p-4 sm:p-6 w-full max-w-full mb-0 sm:mb-2 backdrop-blur-lg"
         >
-          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-6 drop-shadow-lg">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mb-3 sm:mb-4 drop-shadow-lg">
             Recent Activity
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-3">
             {(user.activityLog && user.activityLog.length > 0) ? (
               user.activityLog.slice(0, 5).map((activity, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-4 bg-white/10 border border-white/10 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform duration-200"
+                  className="flex items-center justify-between p-3 sm:p-4 bg-white/10 border border-white/10 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform duration-200"
                 >
-                  <div className={`p-3 rounded-full shadow-lg ${
+                  <div className={`p-2 sm:p-3 rounded-full shadow-lg ${
                     activity.type === 'ad' ? 'bg-yellow-400/20' :
                     activity.type === 'referral' ? 'bg-green-500/20' :
                     activity.type === 'withdrawal' ? 'bg-red-500/20' :
@@ -223,30 +224,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user, onUserUp
                     activity.type === 'vip' ? 'bg-purple-500/20' :
                     'bg-gray-500/20'
                   }`}>
-                    {activity.type === 'ad' && <Play className="w-6 h-6 text-yellow-400" />}
-                    {activity.type === 'referral' && <Gift className="w-6 h-6 text-green-400" />}
-                    {activity.type === 'withdrawal' && <DollarSign className="w-6 h-6 text-red-400" />}
-                    {activity.type === 'deposit' && <DollarSign className="w-6 h-6 text-blue-400" />}
-                    {activity.type === 'vip' && <Crown className="w-6 h-6 text-purple-400" />}
+                    {activity.type === 'ad' && <Play className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />}
+                    {activity.type === 'referral' && <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />}
+                    {activity.type === 'withdrawal' && <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />}
+                    {activity.type === 'deposit' && <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />}
+                    {activity.type === 'vip' && <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />}
                   </div>
-                  <div className="flex-1 min-w-0 ml-4">
-                    <p className="text-white text-base truncate">{activity.message}</p>
+                  <div className="flex-1 min-w-0 ml-3 sm:ml-4">
+                    <p className="text-white text-sm sm:text-base truncate">{activity.message}</p>
                     <p className="text-white/60 text-xs">{activity.date}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-white/60 text-base">No recent activity.</p>
+              <p className="text-white/60 text-sm sm:text-base">No recent activity.</p>
             )}
           </div>
         </div>
 
-        {/* Transaction History */}
-        <div
-          className="glass-card border border-white/10 rounded-3xl p-8 w-full max-w-full mb-8 backdrop-blur-lg"
-        >
-          <TransactionHistory user={user} />
-        </div>
+
       </div>
     </div>
   );

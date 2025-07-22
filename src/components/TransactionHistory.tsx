@@ -238,15 +238,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
     <>
       <div className="relative">
         <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 -z-10" />
-        <div
-          className={
-            'relative w-full md:pb-8 ' +
-            (filteredTransactions.length === 0 ? 'min-h-0 pb-0' : 'min-h-screen pb-24')
-          }
-        >
-          <div className="w-full max-w-4xl mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
+        <div className="relative w-full min-h-0">
+          <div className="w-full">
+            <div className="flex items-center justify-between mb-2 md:mb-3">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent drop-shadow-lg">
                 Transaction History
               </h2>
               <div className="flex flex-col items-end gap-2 w-full sm:w-auto ml-auto mr-2">
@@ -277,7 +272,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
             </div>
 
             {/* Quick Filter Chips */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-1 md:mb-2">
               {[
                 { label: 'All', value: 'all', icon: <Eye className="w-4 h-4" /> },
                 { label: 'Earnings', value: 'ad_earnings', icon: <TrendingUp className="w-4 h-4" /> },
@@ -309,7 +304,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="mb-6 overflow-hidden"
+                  className="mb-2 md:mb-3 overflow-hidden"
                 >
                   <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
@@ -451,7 +446,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
             </AnimatePresence>
 
             {/* Search Bar */}
-            <div className="relative mb-6">
+            <div className="relative mb-1 md:mb-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
               <input
                 type="text"
@@ -471,7 +466,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
             </div>
 
             {/* Results Summary */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-1">
               <div className="text-white/60 text-sm">
                 Showing {displayedTransactions.length} of {filteredTransactions.length} transactions
                 {filteredTransactions.length !== realTransactions.length && (
@@ -490,7 +485,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
 
             {/* Activity-style List */}
             <div
-              className={`space-y-4 ${
+              className={`${filteredTransactions.length === 0 ? 'space-y-0' : 'space-y-4'} ${
                 filteredTransactions.length > 0 && !isExpanded
                   ? 'max-h-[60vh] overflow-y-auto md:max-h-none md:overflow-visible'
                   : ''
@@ -498,9 +493,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
               style={filteredTransactions.length > 0 && !isExpanded ? { WebkitOverflowScrolling: 'touch' } : {}}
             >
               {filteredTransactions.length === 0 ? (
-                <div className="text-center py-8 min-h-0 flex-grow-0">
-                  <Zap className="w-8 h-8 text-white/40 mx-auto mb-2" />
-                  <p className="text-white/60 text-base">No transactions found</p>
+                <div className="text-center py-1 md:py-2 min-h-0 flex-grow-0">
+                  <Zap className="w-4 h-4 md:w-5 md:h-5 text-white/40 mx-auto mb-1" />
+                  <p className="text-white/60 text-xs md:text-sm">No transactions found</p>
                   {getActiveFiltersCount() > 0 && (
                     <button
                       onClick={clearFilters}
@@ -584,7 +579,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user }) => {
             {/* Show Less Button */}
             {isExpanded && (
               <motion.div
-                className="flex justify-center mt-6"
+                className="flex justify-center mt-3"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}

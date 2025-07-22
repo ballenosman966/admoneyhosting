@@ -170,6 +170,7 @@ const AppContent = () => {
 
   // Memoize navigation handler
   const navigateToPage = useCallback((page: Page) => {
+    console.log('navigateToPage called with:', page);
     window.scrollTo({ top: 0, behavior: 'auto' });
     switch (page) {
       case 'landing':

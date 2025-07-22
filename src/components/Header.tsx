@@ -150,6 +150,13 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Replace the mobile menu navigation items with a static, robust implementation:
+  const mobileMenuItems = [
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'vip', label: 'VIP', icon: Crown },
+    // Add more items as needed
+  ];
+
   return (
     <>
       {/* Main Header - Hidden on mobile, visible on tablet and desktop */}
@@ -508,15 +515,16 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
 
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="fixed inset-0 z-[99999] bg-black/50 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
             <div 
-              className="absolute left-4 right-4 rounded-2xl overflow-hidden max-w-sm mx-auto"
+              className="absolute left-4 right-4 rounded-2xl overflow-hidden max-w-sm mx-auto z-[99999] pointer-events-auto"
               style={{
                 background: 'linear-gradient(135deg, rgba(88, 28, 135, 0.98) 0%, rgba(147, 51, 234, 0.95) 100%)',
                 backdropFilter: 'blur(30px)',
                 WebkitBackdropFilter: 'blur(30px)',
                 border: '2px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                pointerEvents: 'auto'
               }}
             >
               {/* Header */}
@@ -533,17 +541,18 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
 
               {/* Additional Navigation Items */}
               <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
-                {navigationItems.slice(4).map(({ id, label, icon: Icon }) => (
+                {mobileMenuItems.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
                     onClick={() => {
+                      console.log('Mobile menu navigation clicked:', id);
                       onNavigate(id as Page);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 font-medium text-sm ${
+                    className={`w-full flex items-center space-x-3 px-4 py-4 rounded-lg transition-all duration-300 font-medium text-sm min-h-[56px] ${
                       currentPage === id
                         ? 'text-yellow-400'
-                        : 'text-white/90 hover:text-white'
+                        : 'text-white/90 hover:text-white active:bg-white/20'
                     }`}
                     style={{
                       background: currentPage === id 
