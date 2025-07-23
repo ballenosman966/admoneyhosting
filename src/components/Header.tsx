@@ -269,8 +269,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                 {/* KYC Verification */}
                 <button
                   onClick={() => {
-                    // Navigate to KYC or open KYC modal
-                    window.location.href = '#kyc'; // Placeholder - you can modify this as needed
+                    onNavigate('kyc');
                     closeMenu();
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all group"
@@ -483,19 +482,18 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                     <span className="flex items-center leading-none">Referrals</span>
                   </button>
 
-                  {/* KYC Verification */}
+                                    {/* KYC Verification */}
                   <button
                     onClick={() => {
-                      // Navigate to KYC or open KYC modal
-                      window.location.href = '#kyc'; // Placeholder - you can modify this as needed
+                      onNavigate('kyc');
                       setIsMobileMenuOpen(false);
                     }}
-                                          className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all group"
-                    >
-                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                        <img src="/kyc.png" alt="KYC" className="w-8 h-8 opacity-80 group-hover:opacity-100 transition-all" style={{filter: 'brightness(0) invert(1)'}} />
-                      </div>
-                      <span className="flex items-center leading-none">KYC Verification</span>
+                    className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all group"
+                  >
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      <img src="/kyc.png" alt="KYC" className="w-8 h-8 opacity-80 group-hover:opacity-100 transition-all" style={{filter: 'brightness(0) invert(1)'}} />
+                    </div>
+                    <span className="flex items-center leading-none">KYC Verification</span>
                   </button>
 
                   {/* Add to Home Screen */}

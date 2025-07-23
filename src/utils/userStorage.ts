@@ -58,6 +58,10 @@ export interface User {
   isSubscribed?: boolean;
   subscriptionType?: 'basic' | 'premium' | 'vip';
   subscriptionStartDate?: string;
+  // KYC additional fields (main kycData is defined later)
+  kycLevel?: 1 | 2 | 3;
+  verificationScore?: number;
+  withdrawalLimit?: number;
   subscriptionEndDate?: string;
   subscriptionStatus?: 'active' | 'expired' | 'cancelled';
   subscriptionHistory?: SubscriptionRecord[];

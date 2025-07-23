@@ -18,13 +18,13 @@ import { AdminDashboard } from './components/AdminDashboard';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import NotificationSettings from './components/NotificationSettings';
 import TwoFactorAuth from './components/TwoFactorAuth';
-import KYCVerification from './components/KYCVerification';
+import { KYCVerification } from './components/KYCVerification';
 import AdminAnalytics from './components/AdminAnalytics';
 import SupportPage from './components/SupportPage';
 import AboutPage from './components/AboutPage';
 import FeaturesPage from './components/FeaturesPage';
 
-export type Page = 'landing' | 'auth' | 'dashboard' | 'ads' | 'withdraw' | 'profile' | 'admin' | 'referrals' | 'settings' | 'security' | 'notifications' | 'vip' | 'analytics' | 'support' | 'features';
+export type Page = 'landing' | 'auth' | 'dashboard' | 'ads' | 'withdraw' | 'profile' | 'admin' | 'referrals' | 'settings' | 'security' | 'notifications' | 'vip' | 'analytics' | 'support' | 'features' | 'kyc';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, user }: { children: React.ReactNode; user: User | null }) => {
@@ -218,6 +218,9 @@ const AppContent = () => {
       case 'features':
         navigate('/features');
         break;
+      case 'kyc':
+        navigate('/kyc');
+        break;
     }
   }, [navigate]);
 
@@ -380,6 +383,8 @@ const AppContent = () => {
         return 'support';
       case '/features':
         return 'features';
+      case '/kyc':
+        return 'kyc';
       default:
         return 'landing';
     }
@@ -731,7 +736,7 @@ const AppContent = () => {
                   showSecurityAndNotifications={true}
                   onShowNotificationSettings={() => setShowNotificationSettings(true)}
                   onShowTwoFactorAuth={() => setShowTwoFactorAuth(true)}
-                  onShowKYCVerification={() => setShowKYCVerification(true)}
+                  onShowKYCVerification={() => navigateToPage('kyc')}
                 />
               </ProtectedRoute>
             } 
@@ -766,6 +771,18 @@ const AppContent = () => {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/kyc" 
+            element={
+              <ProtectedRoute user={currentUser}>
+                <KYCVerification 
+                  user={currentUser!}
+                  onUserUpdate={handleUserUpdate}
+                  onBack={handleBackToDashboard}
+                />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -781,9 +798,6 @@ const AppContent = () => {
       )}
       {showTwoFactorAuth && (
         <TwoFactorAuth onClose={() => setShowTwoFactorAuth(false)} />
-      )}
-      {showKYCVerification && (
-        <KYCVerification onClose={() => setShowKYCVerification(false)} />
       )}
     </div>
   );
