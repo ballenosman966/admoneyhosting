@@ -1,16 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Home, 
-  Play, 
-  Wallet, 
   User, 
   LogOut,
   Settings,
   Bell,
-  Crown,
   Menu,
-  MoreHorizontal
+  MoreHorizontal,
+  Shield,
+  Download,
+  Send,
+  Wallet
 } from 'lucide-react';
+import { 
+  AnimatedHomeIcon, 
+  AnimatedPlayIcon, 
+  AnimatedWalletIcon, 
+  AnimatedCrownIcon, 
+  AnimatedMoreIcon 
+} from './AnimatedIcons';
 import { Page } from '../App';
 import { User as UserType, userStorage, Notification } from '../utils/userStorage';
 
@@ -30,11 +37,41 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
   const notificationsRef = useRef<HTMLDivElement>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  // PWA Install functionality
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setShowInstallButton(false);
+    }
+    setDeferredPrompt(null);
+  };
+
   const navigationItems = [
-    { id: 'dashboard', label: 'Home', icon: Home },
-    { id: 'ads', label: 'Ads', icon: Play },
-    { id: 'withdraw', label: 'Wallet', icon: Wallet },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'dashboard', label: 'Home', icon: AnimatedHomeIcon },
+    { id: 'ads', label: 'Ads', icon: AnimatedPlayIcon },
+    { id: 'withdraw', label: 'Wallet', icon: AnimatedWalletIcon },
+    { id: 'vip', label: 'VIP', icon: AnimatedCrownIcon },
   ];
 
   const closeMenu = () => {
@@ -164,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
               }`}
               style={{ minWidth: '60px', minHeight: '60px' }}
             >
-              <item.icon className="w-6 h-6 mb-1" />
+              <item.icon isActive={currentPage === item.id} className="w-6 h-6 mb-1" />
               <span className="text-xs font-medium">{item.label}</span>
             </button>
           ))}
@@ -186,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
               }`}
               style={{ minWidth: '60px', minHeight: '60px' }}
             >
-              <MoreHorizontal className="w-6 h-6 mb-1" />
+              <AnimatedMoreIcon isActive={isMobileMenuOpen} className="w-6 h-6 mb-1" />
             <span className="text-xs font-medium">More</span>
           </button>
 
@@ -205,13 +242,15 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
               >
                 <button
                   onClick={() => {
-                    onNavigate('vip');
+                    onNavigate('profile');
                     closeMenu();
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                 >
-                  <Crown className="w-5 h-5" />
-                  <span>VIP</span>
+                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <span className="flex items-center leading-none">Profile</span>
                 </button>
                 
                 <button
@@ -221,8 +260,55 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                 >
-                  <User className="w-5 h-5" />
-                  <span>Referrals</span>
+                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                    <img src="/referral-icon.png" alt="Referrals" className="w-5 h-5" />
+                  </div>
+                  <span className="flex items-center leading-none">Referrals</span>
+                </button>
+
+                {/* KYC Verification */}
+                <button
+                  onClick={() => {
+                    // Navigate to KYC or open KYC modal
+                    window.location.href = '#kyc'; // Placeholder - you can modify this as needed
+                    closeMenu();
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all group"
+                >
+                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                    <img src="/kyc.png" alt="KYC" className="w-8 h-8 opacity-80 group-hover:opacity-100 transition-all" style={{filter: 'brightness(0) invert(1)'}} />
+                  </div>
+                  <span className="flex items-center leading-none">KYC Verification</span>
+                </button>
+
+                {/* Add to Home Screen */}
+                {showInstallButton && (
+                  <button
+                    onClick={() => {
+                      handleInstallClick();
+                      closeMenu();
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      <Download className="w-5 h-5" />
+                    </div>
+                    <span className="flex items-center leading-none">Add to Home Screen</span>
+                  </button>
+                )}
+
+                {/* Telegram Channel */}
+                <button
+                  onClick={() => {
+                    window.open('https://t.me/admoney_official', '_blank');
+                    closeMenu();
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                    <Send className="w-5 h-5" />
+                  </div>
+                  <span className="whitespace-nowrap flex items-center leading-none">Telegram Channel</span>
                 </button>
                 
                 <button
@@ -232,8 +318,10 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                 >
+                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                   <Settings className="w-5 h-5" />
-                  <span>Settings</span>
+                  </div>
+                  <span className="flex items-center leading-none">Settings</span>
                 </button>
 
                 <div className="border-t border-white/10">
@@ -244,8 +332,10 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                     }}
                     className="w-full flex items-center space-x-3 px-4 py-3 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all"
                   >
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                     <LogOut className="w-5 h-5" />
-                    <span>Logout</span>
+                    </div>
+                    <span className="flex items-center leading-none">Logout</span>
                   </button>
                 </div>
               </div>
@@ -291,7 +381,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon isActive={currentPage === item.id} className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
               </button>
             ))}
@@ -369,13 +459,15 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                 >
                   <button
                     onClick={() => {
-                      onNavigate('vip');
+                      onNavigate('profile');
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                   >
-                    <Crown className="w-5 h-5" />
-                    <span>VIP</span>
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <span className="flex items-center leading-none">Profile</span>
                   </button>
                   
                   <button
@@ -385,8 +477,55 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                     }}
                     className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                   >
-                    <User className="w-5 h-5" />
-                    <span>Referrals</span>
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                      <img src="/referral-icon.png" alt="Referrals" className="w-5 h-5" />
+                    </div>
+                    <span className="flex items-center leading-none">Referrals</span>
+                  </button>
+
+                  {/* KYC Verification */}
+                  <button
+                    onClick={() => {
+                      // Navigate to KYC or open KYC modal
+                      window.location.href = '#kyc'; // Placeholder - you can modify this as needed
+                      setIsMobileMenuOpen(false);
+                    }}
+                                          className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all group"
+                    >
+                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <img src="/kyc.png" alt="KYC" className="w-8 h-8 opacity-80 group-hover:opacity-100 transition-all" style={{filter: 'brightness(0) invert(1)'}} />
+                      </div>
+                      <span className="flex items-center leading-none">KYC Verification</span>
+                  </button>
+
+                  {/* Add to Home Screen */}
+                  {showInstallButton && (
+                    <button
+                      onClick={() => {
+                        handleInstallClick();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
+                    >
+                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <Download className="w-5 h-5" />
+                      </div>
+                      <span className="flex items-center leading-none">Add to Home Screen</span>
+                    </button>
+                  )}
+
+                  {/* Telegram Channel */}
+                  <button
+                    onClick={() => {
+                      window.open('https://t.me/admoney_official', '_blank');
+                      setIsMobileMenuOpen(false);
+                    }}
+                                          className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
+                    >
+                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <Send className="w-5 h-5" />
+                      </div>
+                      <span className="whitespace-nowrap flex items-center leading-none">Telegram Channel</span>
                   </button>
                   
                   <button
@@ -396,8 +535,10 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                     }}
                     className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all"
                   >
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                     <Settings className="w-5 h-5" />
-                    <span>Settings</span>
+                    </div>
+                    <span className="flex items-center leading-none">Settings</span>
                   </button>
                   
                   <div className="border-t border-white/10">
@@ -408,8 +549,10 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, onLogou
                       }}
                       className="w-full flex items-center space-x-3 px-4 py-3 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all"
                     >
+                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                       <LogOut className="w-5 h-5" />
-                      <span>Logout</span>
+                      </div>
+                      <span className="flex items-center leading-none">Logout</span>
             </button>
                   </div>
                 </div>

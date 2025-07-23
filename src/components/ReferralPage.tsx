@@ -6,12 +6,7 @@ import {
   Share2, 
   CheckCircle, 
   XCircle, 
-  TrendingUp,
-  Calendar,
-  ArrowLeft,
-  ExternalLink,
   Gift,
-  Star,
   Check
 } from 'lucide-react';
 import { userStorage, User, ReferralRecord } from '../utils/userStorage';
@@ -149,7 +144,7 @@ export const ReferralPage: React.FC<ReferralPageProps> = ({ onBack }) => {
               label: 'Per Referral',
               color: 'from-yellow-400 to-orange-400'
             }
-          ].map((stat, i) => (
+          ].map((stat) => (
             <div
               key={stat.label}
               className="glass-card border border-white/10 rounded-2xl p-6 text-center backdrop-blur-lg h-32 flex flex-col justify-center"
